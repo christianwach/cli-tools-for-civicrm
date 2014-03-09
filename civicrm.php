@@ -22,6 +22,7 @@ class CiviCRM_Command extends WP_CLI_Command {
             'api'          => 'api',
             'enable-debug' => 'enableDebug',
             'sql-conf'     => 'sqlConf',
+            'sql-connect'  => 'sqlConnect',
             'update-cfg'   => 'updateConfig',
             'upgrade-db'   => 'upgradeDB'
         );
@@ -123,6 +124,32 @@ class CiviCRM_Command extends WP_CLI_Command {
         WP_CLI::line(print_r(DB::parseDSN(CIVICRM_DSN), true));
     
     }
+
+    /**
+     * Implementation of command 'sql-connect'
+     */
+    private function sqlConnect() {
+        
+        civicrm_initialize();
+        if (!defined('CIVICRM_DSN'))
+            WP_CLI::error('CIVICRM_DSN is not defined.');            
+
+        $dsn = DB::parseDSN(CIVICRM_DSN);
+        
+        $output = sprintf(
+            "mysql --database=%s --host=%s --user=%s --password=%s",
+            $dsn['database'],
+            $dsn['hostspec'],
+            $dsn['username'],
+            $dsn['password']
+        );
+
+        if (isset($dsn['port']) and !empty($dsn['port']))
+            $output .= ' --port=' . $dsn['port'];
+
+        WP_CLI::line($output);
+    
+    }  
 
     /**
      * Implementation of command 'update-cfg'
