@@ -22,6 +22,7 @@ class CiviCRM_Command extends WP_CLI_Command {
             'api'          => 'api',
             'cache-clear'  => 'cacheClear',
             'enable-debug' => 'enableDebug',
+            'sql-cli'      => 'sqlCLI',
             'sql-conf'     => 'sqlConf',
             'sql-connect'  => 'sqlConnect',
             'sql-dump'     => 'sqlDump',
@@ -243,6 +244,28 @@ class CiviCRM_Command extends WP_CLI_Command {
             'user'     => $dsn['username'],
             'password' => $dsn['password'],
             'execute'  => $query
+        );
+
+        \WP_CLI\Utils\run_mysql_command('mysql --no-defaults', $mysql_args);
+
+    }
+
+    /**
+     * Implementation of command 'sql-cli'
+     */
+    private function sqlCLI() {
+
+        civicrm_initialize();
+        if (!defined('CIVICRM_DSN'))
+            WP_CLI::error('CIVICRM_DSN is not defined.');            
+
+        $dsn = DB::parseDSN(CIVICRM_DSN);
+        
+        $mysql_args = array(
+            'host'     => $dsn['hostspec'],
+            'database' => $dsn['database'],
+            'user'     => $dsn['username'],
+            'password' => $dsn['password']
         );
 
         \WP_CLI\Utils\run_mysql_command('mysql --no-defaults', $mysql_args);
