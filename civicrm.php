@@ -22,6 +22,7 @@ class CiviCRM_Command extends WP_CLI_Command {
             'api'          => 'api',
             'enable-debug' => 'enableDebug',
             'sql-conf'     => 'sqlConf',
+            'update-cfg'   => 'updateConfig',
             'upgrade-db'   => 'upgradeDB'
         );
 
@@ -107,6 +108,7 @@ class CiviCRM_Command extends WP_CLI_Command {
         CRM_Admin_Form_Setting::commonProcess($params);
     
         WP_CLI::success('Debug setting enabled.');
+    
     }
 
     /**
@@ -122,42 +124,79 @@ class CiviCRM_Command extends WP_CLI_Command {
     
     }
 
+    /**
+     * Implementation of command 'update-cfg'
+     */
+    private function updateConfig() {
+
+        civicrm_initialize();
+
+        $defaultValues = array();
+        $states        = array('old', 'new');
+        
+        for ($i = 1; $i <= 3; $i++) {
+            foreach ($states as $state) {
+                $name = "{$state}Val_{$i}";
+                $value = $this->getOption($name, NULL);
+                if ($value) 
+                    $defaultValues[$name] = $value;
+                
+            }
+        }
+
+        require_once 'CRM/Core/I18n.php';
+        require_once 'CRM/Core/BAO/ConfigSetting.php';
+        $result = CRM_Core_BAO_ConfigSetting::doSiteMove($defaultValues);
+
+        if ($result) {
+            WP_CLI::success('Config successfully updated.');
+        } else {
+            WP_CLI::error('Config update failed.');
+        }
+    
+    }
+
+    /**
+     * Implementation of command 'upgrade-db'
+     */
     private function upgradeDB() {
 
-      civicrm_initialize();
-  if (class_exists('CRM_Upgrade_Headless')) {
-    // Note: CRM_Upgrade_Headless introduced in 4.2 -- at the same time as class auto-loading
-    try {
-        $upgradeHeadless = new CRM_Upgrade_Headless();
-        // FIXME Exception handling?
-        $result = $upgradeHeadless->run();
-        WP_CLI::line("Upgrade outputs: " . "\"" . $result['message'] . "\"");
-    } catch (Exception $e) {
-        WP_CLI::error($e->getMessage());
+        civicrm_initialize();
+        if (class_exists('CRM_Upgrade_Headless')) {
+            // Note: CRM_Upgrade_Headless introduced in 4.2 -- at the same time as class auto-loading
+            try {
+                $upgradeHeadless = new CRM_Upgrade_Headless();
+                $result = $upgradeHeadless->run();
+                WP_CLI::line("Upgrade outputs: " . "\"" . $result['message'] . "\"");
+            } catch (Exception $e) {
+                WP_CLI::error($e->getMessage());
+            }
+
+        } else {
+            
+            require_once 'CRM/Core/Smarty.php';
+            $template = CRM_Core_Smarty::singleton();
+
+            require_once ('CRM/Upgrade/Page/Upgrade.php');
+            $upgrade = new CRM_Upgrade_Page_Upgrade();
+
+            // new since CiviCRM 4.1
+            if (is_callable(array(
+                $upgrade, 'setPrint'))) {
+                $upgrade->setPrint(TRUE);
+            }
+
+            // to suppress html output /w source code.
+            ob_start();
+            $upgrade->run();
+            // capture the required message.
+            $result = $template->get_template_vars('message');
+            ob_end_clean();
+            WP_CLI::line("Upgrade outputs: " . "\"$result\"");
+        
+        }
+    
     }
-  }
-  else {
-    require_once 'CRM/Core/Smarty.php';
-    $template = CRM_Core_Smarty::singleton();
-
-    require_once ('CRM/Upgrade/Page/Upgrade.php');
-    $upgrade = new CRM_Upgrade_Page_Upgrade();
-
-    // new since CiviCRM 4.1
-    if (is_callable(array(
-      $upgrade, 'setPrint'))) {
-      $upgrade->setPrint(TRUE);
-    }
-
-    // to suppress html output /w source code.
-    ob_start();
-    $upgrade->run();
-    // capture the required message.
-    $result = $template->get_template_vars('message');
-    ob_end_clean();
-    drush_print("Upgrade outputs: " . "\"$result\"");
-  }
-}
 
     /**
      * Helper function to replicate functionality of drush_get_option
@@ -200,9 +239,8 @@ class CiviCRM_Command extends WP_CLI_Command {
       include_once $civicrmSettingsFile;
       global $civicrm_root;
       
-      if (!is_dir($civicrm_root)) {
-        return WP_CLI::error('Could not locate CiviCRM codebase. Make sure CiviCRM settings file has correct information.');
-      }
+      if (!is_dir($civicrm_root)) 
+          return WP_CLI::error('Could not locate CiviCRM codebase. Make sure CiviCRM settings file has correct information.');
 
       // Autoload was added in 4.2
       require_once 'CRM/Utils/System.php';
