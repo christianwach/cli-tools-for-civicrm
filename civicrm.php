@@ -25,6 +25,7 @@ class CiviCRM_Command extends WP_CLI_Command {
             'sql-conf'     => 'sqlConf',
             'sql-connect'  => 'sqlConnect',
             'sql-dump'     => 'sqlDump',
+            'sql-query'    => 'sqlQuery',
             'update-cfg'   => 'updateConfig',
             'upgrade-db'   => 'upgradeDB'
         );
@@ -216,7 +217,37 @@ class CiviCRM_Command extends WP_CLI_Command {
         if (!$stdout) 
             WP_CLI::success(sprintf('Exported to %s', $assoc_args['result-file']));
 
-    }  
+    }
+
+    /**
+     * Implementation of command 'sql-query'
+     */
+    private function sqlQuery() {
+
+        if (!isset($this->args[0])) {
+            WP_CLI::error("No query specified.");
+            return;
+        }
+
+        $query = $this->args[0];
+
+        civicrm_initialize();
+        if (!defined('CIVICRM_DSN'))
+            WP_CLI::error('CIVICRM_DSN is not defined.');            
+
+        $dsn = DB::parseDSN(CIVICRM_DSN);
+        
+        $mysql_args = array(
+            'host'     => $dsn['hostspec'],
+            'database' => $dsn['database'],
+            'user'     => $dsn['username'],
+            'password' => $dsn['password'],
+            'execute'  => $query
+        );
+
+        \WP_CLI\Utils\run_mysql_command('mysql --no-defaults', $mysql_args);
+
+    }
 
     /**
      * Implementation of command 'update-cfg'
