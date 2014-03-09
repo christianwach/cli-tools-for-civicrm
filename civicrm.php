@@ -19,6 +19,7 @@ class CiviCRM_Command extends WP_CLI_Command {
 
         // define command router
         $command_router = array(
+            'api'          => 'api',
             'enable-debug' => 'enableDebug'
         );
 
@@ -33,14 +34,67 @@ class CiviCRM_Command extends WP_CLI_Command {
         $this->assoc_args = $assoc_args;
 
         // initialize Civi and run command
-        $this->_civicrm_init();
+        //$this->_civicrm_init();
         return $this->{$command_router[$command]}($args, $assoc_args);
                    
     }
 
+    /**
+     * Implementation of command 'civicrm-api'
+     */
+    private function api() {
+      $DEFAULTS = array('version' => 3);
+
+      list($entity, $action) = explode('.', $this->args[0]);
+      array_shift($this->args);
+
+      // Parse $params
+
+      switch (isset($this->assoc_args['in']) ? $this->assoc_args['in'] : 'args') {
+        case 'args':
+          $params = $DEFAULTS;
+          foreach ($this->args as $arg) {
+            preg_match('/^([^=]+)=(.*)$/', $arg, $matches);
+            $params[$matches[1]] = $matches[2];
+          }
+          break;
+
+        case 'json':
+          $json = stream_get_contents(STDIN);
+          if (empty($json)) {
+            $params = $DEFAULTS;
+          }
+          else {
+            $params = array_merge($DEFAULTS, json_decode($json, TRUE));
+          }
+          break;
+
+        default:
+          WP_CLI::error('Unknown format: ' . $format);
+          break;
+      }
+
+      civicrm_initialize();
+      $result = civicrm_api($entity, $action, $params);
+
+      switch (isset($this->assoc_args['out']) ? $this->assoc_args['out'] : 'pretty') {
+        case 'pretty':
+          print_r($result);
+          break;
+
+        case 'json':
+          print(json_encode($result));
+          break;
+
+        default:
+          return WP_CLI::error('Unknown format: ' . $format);
+      }
+    }
 
     private function enableDebug($args, $assoc_args) {
-    
+        
+        civicrm_initialize();
+
         $params['debug']     = 1;
         $params['backtrace'] = 1;
 
@@ -76,11 +130,12 @@ class CiviCRM_Command extends WP_CLI_Command {
       if (!file_exists($civicrmSettingsFile)) {
         return WP_CLI::error('Could not locate civicrm settings file.');
       }
-      
+
       // include settings file
       define('CIVICRM_SETTINGS_PATH', $civicrmSettingsFile);
       include_once $civicrmSettingsFile;
       global $civicrm_root;
+      print 'civicrm_root = ' . $civicrm_root . "\n";
       if (!is_dir($civicrm_root)) {
         return WP_CLI::error('Could not locate CiviCRM codebase. Make sure CiviCRM settings file has correct information.');
       }
