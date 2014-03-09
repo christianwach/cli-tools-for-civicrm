@@ -2,7 +2,7 @@
 
 /**
  * WP-CLI port of drush-civicrm integration
- * andyw, 08/03/2014
+ * andyw@circle, 08/03/2014
  */
 class CiviCRM_Command extends WP_CLI_Command {
 
@@ -10,7 +10,49 @@ class CiviCRM_Command extends WP_CLI_Command {
 
     /**
      * WP-CLI integration with CiviCRM.
+     *
+     * wp civicrm rest
+     * ===============
+     * Rest interface for accessing CiviCRM APIs. It can return xml or json formatted data.
+     *
+     * wp civicrm restore
+     * ==================
+     * Restore CiviCRM codebase and database back from the specified backup directory
+     *
+     * wp civicrm sql-conf
+     * ===================
+     * Show civicrm database connection details.
+     *
+     * wp civicrm sql-connect
+     * ======================
+     * A string which connects to the civicrm database.
+     *
+     * wp civicrm sql-cli
+     * ==================
+     * Quickly enter the mysql command line.
+     *
+     * wp civicrm sql-dump
+     * ===================
+     * Prints the whole CiviCRM database to STDOUT or save to a file.
+     *
+     * wp civicrm sql-query
+     * ====================
+     * Usage: wp civicrm sql-query <query> <options>...\n<query> is a SQL statement, which can alternatively be passed via STDIN. Any additional arguments are passed to the mysql command directly.";
+     *  
+     * wp civicrm update-cfg
+     * =====================
+     * Update config_backend to correct config settings, especially when the CiviCRM site has been cloned / migrated.
+     * 
+     * wp civicrm upgrade
+     * ==================
+     * Take backups, replace CiviCRM codebase with new specified tarfile and upgrade database by executing the CiviCRM upgrade process - civicrm/upgrade?reset=1. Use civicrm-restore to revert to previous state in case anything goes wrong. 
+     *      
+     * wp civicrm upgrade-db
+     * =====================      
+     * Run civicrm/upgrade?reset=1 just as a web browser would.
+     *   
      */
+
     public function __invoke($args, $assoc_args) {
        
         # check for existence of Civi
@@ -19,16 +61,18 @@ class CiviCRM_Command extends WP_CLI_Command {
 
         # define command router
         $command_router = array(
-            'api'          => 'api',
-            'cache-clear'  => 'cacheClear',
-            'enable-debug' => 'enableDebug',
-            'sql-cli'      => 'sqlCLI',
-            'sql-conf'     => 'sqlConf',
-            'sql-connect'  => 'sqlConnect',
-            'sql-dump'     => 'sqlDump',
-            'sql-query'    => 'sqlQuery',
-            'update-cfg'   => 'updateConfig',
-            'upgrade-db'   => 'upgradeDB'
+            'api'                => 'api',
+            'cache-clear'        => 'cacheClear',
+            'enable-debug'       => 'enableDebug',
+            'member-records'     => 'memberRecords',
+            'process-mail-queue' => 'processMailQueue',
+            'sql-cli'            => 'sqlCLI',
+            'sql-conf'           => 'sqlConf',
+            'sql-connect'        => 'sqlConnect',
+            'sql-dump'           => 'sqlDump',
+            'sql-query'          => 'sqlQuery',
+            'update-cfg'         => 'updateConfig',
+            'upgrade-db'         => 'upgradeDB'
         );
 
         # get command
@@ -37,9 +81,6 @@ class CiviCRM_Command extends WP_CLI_Command {
         # check existence of router entry / handler method
         if (!isset($command_router[$command]) or !method_exists($this, $command_router[$command]))
             return WP_CLI::error("Unrecognized command - '$command'");
-
-        $this->args       = $args;
-        $this->assoc_args = $assoc_args;
 
         # run command
         return $this->{$command_router[$command]}();
@@ -138,6 +179,20 @@ class CiviCRM_Command extends WP_CLI_Command {
     
         WP_CLI::success('Debug setting enabled.');
     
+    }
+
+    /**
+     * Implementation of command 'member-records'
+     */
+    private function memberRecords() {
+
+    }
+
+    /**
+     * Implementation of command 'process-mail-queue'
+     */
+    private function processMailQueue() {
+
     }
 
     /**
