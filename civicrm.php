@@ -20,6 +20,7 @@ class CiviCRM_Command extends WP_CLI_Command {
         # define command router
         $command_router = array(
             'api'          => 'api',
+            'cache-clear'  => 'cacheClear',
             'enable-debug' => 'enableDebug',
             'sql-conf'     => 'sqlConf',
             'sql-connect'  => 'sqlConnect',
@@ -98,7 +99,31 @@ class CiviCRM_Command extends WP_CLI_Command {
     
     }
 
-    private function enableDebug($args, $assoc_args) {
+    /**
+     * Implementation of command 'cache-clear'
+     */
+    private function cacheClear() {
+        
+        civicrm_initialize();
+        require_once 'CRM/Core/Config.php';
+        $config = CRM_Core_Config::singleton();
+
+        # clear db caching
+        $config->clearDBCache();
+
+        # also cleanup the templates_c directory
+        $config->cleanup(1, FALSE);
+
+        # also cleanup the session object
+        $session = CRM_Core_Session::singleton();
+        $session->reset(1);
+    
+    }
+
+    /**
+     * Implementation of command 'enable-debug'
+     */
+    private function enableDebug() {
         
         civicrm_initialize();
 
