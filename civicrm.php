@@ -190,14 +190,8 @@ class CiviCRM_Command extends WP_CLI_Command {
 
         if (substr(CRM_Utils_System::version(), 0, 3) >= '4.3') {
             
-            $result = civicrm_api('Job', 'Execute', array(
-                'version'    => 3,
-                'api_action' => 'process_membership'
-            ));
-            
-            if ($result['is_error'])
-                return WP_CLI::error($result['error_message']);
-
+            $job = new CRM_Core_JobManager();
+            $job->executeJobByAction('job', 'process_membership');
             WP_CLI::success("Executed 'process_membership' job.");
 
         } else {
@@ -235,21 +229,17 @@ class CiviCRM_Command extends WP_CLI_Command {
         civicrm_initialize();
 
         if (substr(CRM_Utils_System::version(), 0, 3) >= '4.3') {
-            
-            $result = civicrm_api('Job', 'Execute', array(
-                'version'    => 3,
-                'api_action' => 'process_mailing'
-            ));
-            
-            if ($result['is_error'])
-                return WP_CLI::error($result['error_message']);
 
+            $job = new CRM_Core_JobManager();
+            $job->executeJobByAction('job', 'process_mailing');
             WP_CLI::success("Executed 'process_mailing' job.");
 
         } else { 
+
             $result = civicrm_api('Mailing', 'Process', array('version' => 3));
             if ($result['is_error'])
                 WP_CLI::error($result['error_message']);
+        
         }
 
     }
