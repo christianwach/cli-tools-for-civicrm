@@ -59,6 +59,9 @@ class CiviCRM_Command extends WP_CLI_Command {
         if (!function_exists('civicrm_initialize')) 
             return WP_CLI::error("Unable to find CiviCRM install.");
 
+        $this->args       = $args;
+        $this->assoc_args = $assoc_args;
+
         # define command router
         $command_router = array(
             'api'                => 'api',
@@ -66,6 +69,7 @@ class CiviCRM_Command extends WP_CLI_Command {
             'enable-debug'       => 'enableDebug',
             'member-records'     => 'memberRecords',
             'process-mail-queue' => 'processMailQueue',
+            'rest'               => 'rest',
             'sql-cli'            => 'sqlCLI',
             'sql-conf'           => 'sqlConf',
             'sql-connect'        => 'sqlConnect',
@@ -242,6 +246,45 @@ class CiviCRM_Command extends WP_CLI_Command {
         
         }
 
+    }
+
+    /**
+     * Implementation of command 'rest'
+     */
+    private function rest() {
+    
+        civicrm_initialize();
+
+        if (!$query = $this->getOption('query', false))
+            return WP_CLI::error('query not specified.');
+
+        $query     = explode('&', $query);
+        $_GET['q'] = array_shift($query);
+        
+        foreach ($query as $keyVal) {
+            list($key, $val) = explode('=', $keyVal);
+            $_REQUEST[$key]  = $val;
+            $_GET[$key]      = $val;
+        }
+
+        require_once 'CRM/Utils/REST.php';
+        $rest = new CRM_Utils_REST();
+
+        require_once 'CRM/Core/Config.php';
+        $config = CRM_Core_Config::singleton();
+
+        global $civicrm_root;
+        // adding dummy script, since based on this api file path is computed.
+        $_SERVER['SCRIPT_FILENAME'] = "$civicrm_root/extern/rest.php";
+
+        if (isset($_GET['json']) && $_GET['json']) {
+            header('Content-Type: text/javascript');
+        } else {
+            header('Content-Type: text/xml');
+        }
+
+        echo $rest->run($config);
+    
     }
 
     /**
