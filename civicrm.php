@@ -24,6 +24,7 @@ class CiviCRM_Command extends WP_CLI_Command {
             'enable-debug' => 'enableDebug',
             'sql-conf'     => 'sqlConf',
             'sql-connect'  => 'sqlConnect',
+            'sql-dump'     => 'sqlDump',
             'update-cfg'   => 'updateConfig',
             'upgrade-db'   => 'upgradeDB'
         );
@@ -174,6 +175,47 @@ class CiviCRM_Command extends WP_CLI_Command {
 
         WP_CLI::line($output);
     
+    }
+
+    /**
+     * Implementation of command 'sql-dump'
+     */
+    private function sqlDump() {
+
+        civicrm_initialize();
+        if (!defined('CIVICRM_DSN'))
+            WP_CLI::error('CIVICRM_DSN is not defined.');            
+
+        $dsn = DB::parseDSN(CIVICRM_DSN);
+    
+        $assoc_args       = $this->assoc_args;
+        $stdout           = !isset($assoc_args['result-file']);
+        $command          = "mysqldump --no-defaults --host={$dsn['host']} --user={$dsn['username']} --password={$dsn['password']} %s";
+        $command_esc_args = array($dsn['database']);
+
+        if (isset($assoc_args['tables'])) {
+            $tables = explode(',', $assoc_args['tables'] );
+            unset($assoc_args['tables']);
+            $command .= ' --tables';
+            foreach ($tables as $table) {
+                $command .= ' %s';
+                $command_esc_args[] = trim($table);
+            }
+        }
+
+        $escaped_command = call_user_func_array(
+            '\WP_CLI\Utils\esc_cmd', 
+            array_merge(
+                array($command), 
+                $command_esc_args 
+            )
+        );
+
+        \WP_CLI\Utils\run_mysql_command($escaped_command, $assoc_args);
+
+        if (!$stdout) 
+            WP_CLI::success(sprintf('Exported to %s', $assoc_args['result-file']));
+
     }  
 
     /**
