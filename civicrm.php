@@ -78,11 +78,11 @@ class CiviCRM_Command extends WP_CLI_Command {
 
       switch ($this->getOption('out', 'pretty')) {
         case 'pretty':
-          print_r($result);
+          WP_CLI::line(print_r($result, true));
           break;
 
         case 'json':
-          print(json_encode($result));
+          WP_CLI::line(json_encode($result));
           break;
 
         default:
@@ -143,7 +143,7 @@ class CiviCRM_Command extends WP_CLI_Command {
       define('CIVICRM_SETTINGS_PATH', $civicrmSettingsFile);
       include_once $civicrmSettingsFile;
       global $civicrm_root;
-      print 'civicrm_root = ' . $civicrm_root . "\n";
+      
       if (!is_dir($civicrm_root)) {
         return WP_CLI::error('Could not locate CiviCRM codebase. Make sure CiviCRM settings file has correct information.');
       }
