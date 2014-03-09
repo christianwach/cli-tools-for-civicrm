@@ -186,12 +186,71 @@ class CiviCRM_Command extends WP_CLI_Command {
      */
     private function memberRecords() {
 
+        civicrm_initialize();
+
+        if (substr(CRM_Utils_System::version(), 0, 3) >= '4.3') {
+            
+            $result = civicrm_api('Job', 'Execute', array(
+                'version'    => 3,
+                'api_action' => 'process_membership'
+            ));
+            
+            if ($result['is_error'])
+                return WP_CLI::error($result['error_message']);
+
+            WP_CLI::success("Executed 'process_membership' job.");
+
+        } else {
+
+            $_REQUEST['name'] = $this->getOption('civicrm_cron_username', NULL);
+            $_REQUEST['pass'] = $this->getOption('civicrm_cron_password', NULL);
+            $_REQUEST['key']  = $this->getOption('civicrm_sitekey', NULL);
+
+            global $argv;
+            $argv = array(
+                0 => "drush",
+                1 => "-u" . $_REQUEST['name'],
+                2 => "-p" . $_REQUEST['pass'],
+                3 => "-s" . $this->getOption('uri', FALSE),
+            );
+
+            # not really sure what this should be set to on WP .. maybe 
+            # I should just comment it out then pretend it wasn't me.
+
+            # if (!defined('CIVICRM_CONFDIR')) {
+            #     define('CIVICRM_CONFDIR', ABSPATH . '/wp-content/plugins/civicrm');
+            # }
+
+            include "bin/UpdateMembershipRecord.php";
+        
+        }
+
     }
 
     /**
      * Implementation of command 'process-mail-queue'
      */
     private function processMailQueue() {
+        
+        civicrm_initialize();
+
+        if (substr(CRM_Utils_System::version(), 0, 3) >= '4.3') {
+            
+            $result = civicrm_api('Job', 'Execute', array(
+                'version'    => 3,
+                'api_action' => 'process_mailing'
+            ));
+            
+            if ($result['is_error'])
+                return WP_CLI::error($result['error_message']);
+
+            WP_CLI::success("Executed 'process_mailing' job.");
+
+        } else { 
+            $result = civicrm_api('Mailing', 'Process', array('version' => 3));
+            if ($result['is_error'])
+                WP_CLI::error($result['error_message']);
+        }
 
     }
 
