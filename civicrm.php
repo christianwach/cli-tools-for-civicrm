@@ -20,7 +20,8 @@ class CiviCRM_Command extends WP_CLI_Command {
         # define command router
         $command_router = array(
             'api'          => 'api',
-            'enable-debug' => 'enableDebug'
+            'enable-debug' => 'enableDebug',
+            'upgrade-db'   => 'upgradeDB'
         );
 
         # get command
@@ -34,60 +35,64 @@ class CiviCRM_Command extends WP_CLI_Command {
         $this->assoc_args = $assoc_args;
 
         # run command
-        return $this->{$command_router[$command]}($args, $assoc_args);
+        return $this->{$command_router[$command]}();
                    
     }
 
     /**
-     * Implementation of command 'civicrm-api'
+     * Implementation of command 'api'
      */
     private function api() {
-      $DEFAULTS = array('version' => 3);
+        
+        $defaults = array('version' => 3);
 
-      list($entity, $action) = explode('.', $this->args[0]);
-      array_shift($this->args);
+        list($entity, $action) = explode('.', $this->args[0]);
+        array_shift($this->args);
 
-      // Parse $params
+        # parse $params
 
-      switch ($this->getOption('in', 'args')) {
-        case 'args':
-          $params = $DEFAULTS;
-          foreach ($this->args as $arg) {
-            preg_match('/^([^=]+)=(.*)$/', $arg, $matches);
-            $params[$matches[1]] = $matches[2];
-          }
-          break;
+        switch ($this->getOption('in', 'args')) {
+            
+            # input params supplied via args ..
+            case 'args':
+                $params = $defaults;
+                foreach ($this->args as $arg) {
+                    preg_match('/^([^=]+)=(.*)$/', $arg, $matches);
+                    $params[$matches[1]] = $matches[2];
+                }
+                break;
 
-        case 'json':
-          $json = stream_get_contents(STDIN);
-          if (empty($json)) {
-            $params = $DEFAULTS;
-          }
-          else {
-            $params = array_merge($DEFAULTS, json_decode($json, TRUE));
-          }
-          break;
+            # input params supplied via json
+            case 'json':
+                $json   = stream_get_contents(STDIN);
+                $params = (empty($json) ? $defaults : array_merge($defaults, json_decode($json, true)));
+                break;
 
-        default:
-          WP_CLI::error('Unknown format: ' . $format);
-          break;
-      }
+            default:
+                WP_CLI::error('Unknown format: ' . $format);
+                break;
+        }
 
-      civicrm_initialize();
-      $result = civicrm_api($entity, $action, $params);
+        civicrm_initialize();
+        $result = civicrm_api($entity, $action, $params);
 
-      switch ($this->getOption('out', 'pretty')) {
-        case 'pretty':
-          WP_CLI::line(print_r($result, true));
-          break;
+        switch ($this->getOption('out', 'pretty')) {
+            
+            # pretty-print output (default)
+            case 'pretty':
+                WP_CLI::line(print_r($result, true));
+                break;
 
-        case 'json':
-          WP_CLI::line(json_encode($result));
-          break;
+            # display output as json
+            case 'json':
+                WP_CLI::line(json_encode($result));
+                break;
 
-        default:
-          return WP_CLI::error('Unknown format: ' . $format);
-      }
+            default:
+                return WP_CLI::error('Unknown format: ' . $format);
+        
+        }
+    
     }
 
     private function enableDebug($args, $assoc_args) {
@@ -102,6 +107,43 @@ class CiviCRM_Command extends WP_CLI_Command {
     
         WP_CLI::success('Debug setting enabled.');
     }
+
+    private function upgradeDB() {
+
+      civicrm_initialize();
+  if (class_exists('CRM_Upgrade_Headless')) {
+    // Note: CRM_Upgrade_Headless introduced in 4.2 -- at the same time as class auto-loading
+    try {
+        $upgradeHeadless = new CRM_Upgrade_Headless();
+        // FIXME Exception handling?
+        $result = $upgradeHeadless->run();
+        WP_CLI::line("Upgrade outputs: " . "\"" . $result['message'] . "\"");
+    } catch (Exception $e) {
+        WP_CLI::error($e->getMessage());
+    }
+  }
+  else {
+    require_once 'CRM/Core/Smarty.php';
+    $template = CRM_Core_Smarty::singleton();
+
+    require_once ('CRM/Upgrade/Page/Upgrade.php');
+    $upgrade = new CRM_Upgrade_Page_Upgrade();
+
+    // new since CiviCRM 4.1
+    if (is_callable(array(
+      $upgrade, 'setPrint'))) {
+      $upgrade->setPrint(TRUE);
+    }
+
+    // to suppress html output /w source code.
+    ob_start();
+    $upgrade->run();
+    // capture the required message.
+    $result = $template->get_template_vars('message');
+    ob_end_clean();
+    drush_print("Upgrade outputs: " . "\"$result\"");
+  }
+}
 
     /**
      * Helper function to replicate functionality of drush_get_option
