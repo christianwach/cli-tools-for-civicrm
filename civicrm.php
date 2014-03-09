@@ -21,6 +21,7 @@ class CiviCRM_Command extends WP_CLI_Command {
         $command_router = array(
             'api'          => 'api',
             'enable-debug' => 'enableDebug',
+            'sql-conf'     => 'sqlConf',
             'upgrade-db'   => 'upgradeDB'
         );
 
@@ -62,7 +63,7 @@ class CiviCRM_Command extends WP_CLI_Command {
                 }
                 break;
 
-            # input params supplied via json
+            # input params supplied via json ..
             case 'json':
                 $json   = stream_get_contents(STDIN);
                 $params = (empty($json) ? $defaults : array_merge($defaults, json_decode($json, true)));
@@ -106,6 +107,19 @@ class CiviCRM_Command extends WP_CLI_Command {
         CRM_Admin_Form_Setting::commonProcess($params);
     
         WP_CLI::success('Debug setting enabled.');
+    }
+
+    /**
+     * Implementation of command 'sql-conf'
+     */
+    private function sqlConf() {
+        
+        civicrm_initialize();
+        if (!defined('CIVICRM_DSN'))
+            WP_CLI::error('CIVICRM_DSN is not defined.');            
+
+        WP_CLI::line(print_r(DB::parseDSN(CIVICRM_DSN), true));
+    
     }
 
     private function upgradeDB() {
@@ -203,7 +217,7 @@ class CiviCRM_Command extends WP_CLI_Command {
       require_once 'CRM/Core/Config.php';
       $config = CRM_Core_Config::singleton();
 
-      $init = TRUE;
+      $init = TRUE; 
       return $init;
     }
 
