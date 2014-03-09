@@ -13,28 +13,27 @@ class CiviCRM_Command extends WP_CLI_Command {
      */
     public function __invoke($args, $assoc_args) {
        
-        // check for existence of Civi
+        # check for existence of Civi
         if (!function_exists('civicrm_initialize')) 
             return WP_CLI::error("Unable to find CiviCRM install.");
 
-        // define command router
+        # define command router
         $command_router = array(
             'api'          => 'api',
             'enable-debug' => 'enableDebug'
         );
 
-        // get command
+        # get command
         $command = array_shift($args);
 
-        // check existence of router entry / handler method
+        # check existence of router entry / handler method
         if (!isset($command_router[$command]) or !method_exists($this, $command_router[$command]))
             return WP_CLI::error("Unrecognized command - '$command'");
 
         $this->args       = $args;
         $this->assoc_args = $assoc_args;
 
-        // initialize Civi and run command
-        //$this->_civicrm_init();
+        # run command
         return $this->{$command_router[$command]}($args, $assoc_args);
                    
     }
@@ -50,7 +49,7 @@ class CiviCRM_Command extends WP_CLI_Command {
 
       // Parse $params
 
-      switch (isset($this->assoc_args['in']) ? $this->assoc_args['in'] : 'args') {
+      switch ($this->getOption('in', 'args')) {
         case 'args':
           $params = $DEFAULTS;
           foreach ($this->args as $arg) {
@@ -77,7 +76,7 @@ class CiviCRM_Command extends WP_CLI_Command {
       civicrm_initialize();
       $result = civicrm_api($entity, $action, $params);
 
-      switch (isset($this->assoc_args['out']) ? $this->assoc_args['out'] : 'pretty') {
+      switch ($this->getOption('out', 'pretty')) {
         case 'pretty':
           print_r($result);
           break;
@@ -102,6 +101,15 @@ class CiviCRM_Command extends WP_CLI_Command {
         CRM_Admin_Form_Setting::commonProcess($params);
     
         WP_CLI::success('Debug setting enabled.');
+    }
+
+    /**
+     * Helper function to replicate functionality of drush_get_option
+     * @param  $name (string)
+     * @return mixed - value if found or $default
+     */
+    private function getOption($name, $default) {
+        return isset($this->assoc_args[$name]) ? $this->assoc_args[$name] : $default;
     }
 
     /**
