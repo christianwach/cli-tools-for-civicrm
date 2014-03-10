@@ -55,10 +55,6 @@ class CiviCRM_Command extends WP_CLI_Command {
 
     public function __invoke($args, $assoc_args) {
        
-        # check for existence of Civi
-        if (!function_exists('civicrm_initialize')) 
-            return WP_CLI::error("Unable to find CiviCRM install.");
-
         $this->args       = $args;
         $this->assoc_args = $assoc_args;
 
@@ -67,6 +63,7 @@ class CiviCRM_Command extends WP_CLI_Command {
             'api'                => 'api',
             'cache-clear'        => 'cacheClear',
             'enable-debug'       => 'enableDebug',
+            'install'            => 'install',
             'member-records'     => 'memberRecords',
             'process-mail-queue' => 'processMailQueue',
             'rest'               => 'rest',
@@ -81,6 +78,10 @@ class CiviCRM_Command extends WP_CLI_Command {
 
         # get command
         $command = array_shift($args);
+
+        # check for existence of Civi (except for command 'install')
+        if (!function_exists('civicrm_initialize') and $command != 'install') 
+            return WP_CLI::error("Unable to find CiviCRM install.");
 
         # check existence of router entry / handler method
         if (!isset($command_router[$command]) or !method_exists($this, $command_router[$command]))
@@ -204,8 +205,8 @@ class CiviCRM_Command extends WP_CLI_Command {
         if (!$dbname = $this->getOption('dbname', false))
             return WP_CLI::error('CiviCRM database name not specified.');
         
-        if (!$this->getOption('tarfile', false))
-            return WP_CLI::error('CiviCRM tarfile not specified.');
+        if (!$this->getOption('tarfile', false) and !$this->getOption('zipfile', false))
+            return WP_CLI::error('Must specify either --tarfile or --zipfile');
         
         if ($lang = $this->getOption('lang', false) and !$langtarfile = $this->getOption('langtarfile', FALSE)) 
             return WP_CLI::error('CiviCRM language tarfile not specified.');
@@ -214,13 +215,32 @@ class CiviCRM_Command extends WP_CLI_Command {
 
         # todo: test this routine - original has a bug which will prevent it from working
         # todo: may want to patch original
-        $extractTarFile = function($destinationPath, $option='tarfile') {
-            if ($tarfile = $this->getOption($option, false)) {
-                if ($this->exec("gzip -d " . $tarfile)) {
-                    $tarfile = substr($tarfile, 0, strlen($tarfile) - 3);
-                    $this->exec("tar -xf $tarfile -C \"$destinationPath\"");
-                }
+
+        $that = &$this;
+
+        $extractTarFile = function($destinationPath, $option='tarfile') use ($that) {
+            
+            if ($tarfile = $that->getOption($option, false)) {
+                $that->exec("gzip -d " . $tarfile);
+                $tarfile = substr($tarfile, 0, strlen($tarfile) - 3);
+                $that->exec("tar -xf $tarfile -C \"$destinationPath\"");
+                return true;
+            } else {
+                return false;
             }
+
+        };
+
+        $extractZipFile = function($destinationPath, $option='zipfile') use ($that) {
+            
+            if ($zipfile = $that->getOption($option, false)) {
+                WP_CLI::line('Extracting zip archive ...');
+                $that->exec("unzip -q " . $zipfile . " -d " . $destinationPath);
+                return true;
+            } else {
+                return false;
+            }
+
         };
 
         $wp_root = ABSPATH;
@@ -228,22 +248,137 @@ class CiviCRM_Command extends WP_CLI_Command {
         if ($pluginPath = $this->getOption('destination', FALSE))
             $pluginPath = $wp_root . $pluginPath;
         else
-            $pluginPath = $wp_root . '/wp-content/plugins';
+            $pluginPath = $wp_root . 'wp-content/plugins';
 
-        if (!is_dir($pluginPath . '/civicrm')) {
+        if (is_dir($pluginPath . '/civicrm'))
+            return WP_CLI::error("Existing CiviCRM found. No action taken.");
             
-            # extract the archive
-            $extractTarFile($pluginPath);
+        # extract the archive
+        if ($this->getOption('tarfile', false)) {
+            # should probably never get to here, as looks like Wordpress Civi comes
+            # in a zip file
+            if (!$extractTarFile($pluginPath)) 
+                return WP_CLI::error("Error extracting tarfile");
 
-            # include civicrm installer helper file
-            $civicrmInstallerHelper = "$pluginPath/civicrm/install/civicrm.php";
-            if (!file_exists($civicrmInstallerHelper)) 
-                return WP_CLI::error("Tarfile could not be unpacked OR CiviCRM installer helper file is missing.");
-    
-            WP_CLI::success("Tarfile unpacked.");
-
+        } elseif ($this->getOption('zipfile', false)) {
+            
+            if (!$extractZipFile($pluginPath)) 
+                return WP_CLI::error("Error extracting zipfile");
+        
+        } else {
+            return WP_CLI::error("No zipfile specified, use --zipfile<path/to/tarfile");
         }
 
+        # include civicrm installer helper file
+        global $crmPath;
+
+        $crmPath                = "$pluginPath/civicrm/civicrm";
+        $civicrmInstallerHelper = "$crmPath/install/civicrm.php";
+
+        if (!file_exists($civicrmInstallerHelper)) 
+            return WP_CLI::error("Archive could not be unpacked OR CiviCRM installer helper file is missing.");
+
+        WP_CLI::success("Archive unpacked.");
+
+        require_once $civicrmInstallerHelper;
+
+        if ($lang != '') 
+            if (!$extractTarFile($pluginPath, 'langtarfile')) 
+                return WP_CLI::error("No language tarfile specified, use --langtarfile<path/to/tarfile");
+
+        # create files dirs
+        civicrm_setup("$pluginPath/files");
+        $this->exec("chmod 0777 $pluginPath/files/civicrm -R");
+
+        # install db
+        $sqlPath = "$crmPath/sql";
+        /*
+        if (!$conn = @mysql_connect($dbhost, $dbuser, $dbpass))
+            return WP_CLI::error("Unable to connect to database. Please re-check credentials.");
+        
+        if (!@mysql_select_db($dbname) && !@mysql_query("CREATE DATABASE $dbname")) 
+            return WP_CLI::error('CiviCRM database was not found. Failed to create one.');
+        */
+
+        # setup database with civicrm structure and data
+        $dsn = "mysql://{$dbuser}:{$dbpass}@{$dbhost}/{$dbname}?new_link=true";
+        WP_CLI::line("Loading CiviCRM database structure ..");
+        civicrm_source($dsn, $sqlPath . '/civicrm.mysql');
+        WP_CLI::line("Loading CiviCRM database with required data ..");
+ 
+        # testing the translated sql files availability
+        $data_file = $sqlPath . '/civicrm_data.mysql';
+        $acl_file  = $sqlPath . '/civicrm_acl.mysql';
+        
+        if ($lang != '') {
+            
+            if (file_exists($sqlPath . '/civicrm_data.' . $lang . '.mysql')
+                and file_exists($sqlPath . '/civicrm_acl.' . $lang . '.mysql')
+                and $lang != ''
+            ) {
+                $data_file = $sqlPath . '/civicrm_data.' . $lang . '.mysql';
+                $acl_file = $sqlPath . '/civicrm_acl.' . $lang . '.mysql';
+            } else {
+                WP_CLI::warning("No sql files could be retrieved for '$lang' using default language.");
+            }
+        
+        }
+
+        civicrm_source($dsn, $data_file);
+        civicrm_source($dsn, $acl_file);
+
+        WP_CLI::success("CiviCRM database loaded successfully.");
+
+        # generate civicrm.settings.php file
+        $settingsTplFile = "$crmPath/templates/CRM/common/civicrm.settings.php.tpl";
+        if (!file_exists($settingsTplFile))
+            return WP_CLI::error("Could not find CiviCRM settings template and therefore could not create settings file.");
+  
+        WP_CLI::line("Generating civicrm settings file ..");
+        
+        if ($baseUrl = $this->getOption('site_url', false)) {
+            $ssl      = $this->getOption('ssl', false);
+            $protocol = ($ssl == 'on' ? 'https' : 'http');
+        }    
+        
+        $baseUrl = !$baseUrl ? get_bloginfo('url') : $protocol . '://' . $baseUrl;
+        if (substr($baseUrl, -1) != '/')
+            $baseUrl .= '/';
+
+        $params = array(
+            'crmRoot'            => $crmPath . '/',
+            'templateCompileDir' => "$pluginPath/files/civicrm/templates_c",
+            'frontEnd'           => 0,
+            'cms'                => 'WordPress',
+            'baseURL'            => $baseUrl,
+            'dbUser'             => $dbuser,
+            'dbPass'             => $dbpass,
+            'dbHost'             => $dbhost,
+            'dbName'             => $dbname,
+            'CMSdbUser'          => DB_USER,
+            'CMSdbPass'          => DB_PASSWORD,
+            'CMSdbHost'          => DB_HOST,
+            'CMSdbName'          => DB_NAME,
+            'siteKey'            => md5(uniqid('', TRUE) . $baseUrl),
+        );
+
+        $str = file_get_contents($settingsTplFile);
+        foreach ($params as $key => $value) 
+            $str = str_replace('%%' . $key . '%%', $value, $str);
+        
+        $str = trim($str);
+
+        $configFile = "$pluginPath/civicrm/civicrm.settings.php";
+        civicrm_write_file($configFile, $str);
+        $this->exec("chmod 0644 $configFile");
+        WP_CLI::success(sprintf("Settings file generated: %s", $configFile));
+
+        # activate plugin
+        require_once WP_CLI_ROOT . '/php/commands/plugin.php';
+        $plugin = new Plugin_Command();
+        @$plugin->activate(array('civicrm'), array());
+
+        WP_CLI::success("CiviCRM installed.");
 
     }
 
@@ -562,7 +697,7 @@ class CiviCRM_Command extends WP_CLI_Command {
      * @param $cmd (string) - the command to execute
      * @param $args (array) - an associative array of command line params
      */
-    private function exec($command) {
+    public function exec($command) {
         
         if (!$proc = proc_open(
             $command,
@@ -582,7 +717,7 @@ class CiviCRM_Command extends WP_CLI_Command {
      * @param  $name (string)
      * @return mixed - value if found or $default
      */
-    private function getOption($name, $default) {
+    public function getOption($name, $default) {
         return isset($this->assoc_args[$name]) ? $this->assoc_args[$name] : $default;
     }
 
