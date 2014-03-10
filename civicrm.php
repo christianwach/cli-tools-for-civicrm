@@ -186,6 +186,68 @@ class CiviCRM_Command extends WP_CLI_Command {
     }
 
     /**
+     * Implementation of command 'install'
+     */
+    private function install() {
+
+        # validate
+
+        if (!$dbuser = $this->getOption('dbuser', false)) 
+            return WP_CLI::error('CiviCRM database username not specified.');
+        
+        if (!$dbpass = $this->getOption('dbpass', false)) 
+            return WP_CLI::error('CiviCRM database password not specified.');
+        
+        if (!$dbhost = $this->getOption('dbhost', false))
+            return WP_CLI::error('CiviCRM database host not specified.');
+        
+        if (!$dbname = $this->getOption('dbname', false))
+            return WP_CLI::error('CiviCRM database name not specified.');
+        
+        if (!$this->getOption('tarfile', false))
+            return WP_CLI::error('CiviCRM tarfile not specified.');
+        
+        if ($lang = $this->getOption('lang', false) and !$langtarfile = $this->getOption('langtarfile', FALSE)) 
+            return WP_CLI::error('CiviCRM language tarfile not specified.');
+    
+        # begin install
+
+        # todo: test this routine - original has a bug which will prevent it from working
+        # todo: may want to patch original
+        $extractTarFile = function($destinationPath, $option='tarfile') {
+            if ($tarfile = $this->getOption($option, false)) {
+                if ($this->exec("gzip -d " . $tarfile)) {
+                    $tarfile = substr($tarfile, 0, strlen($tarfile) - 3);
+                    $this->exec("tar -xf $tarfile -C \"$destinationPath\"");
+                }
+            }
+        };
+
+        $wp_root = ABSPATH;
+
+        if ($pluginPath = $this->getOption('destination', FALSE))
+            $pluginPath = $wp_root . $pluginPath;
+        else
+            $pluginPath = $wp_root . '/wp-content/plugins';
+
+        if (!is_dir($pluginPath . '/civicrm')) {
+            
+            # extract the archive
+            $extractTarFile($pluginPath);
+
+            # include civicrm installer helper file
+            $civicrmInstallerHelper = "$pluginPath/civicrm/install/civicrm.php";
+            if (!file_exists($civicrmInstallerHelper)) 
+                return WP_CLI::error("Tarfile could not be unpacked OR CiviCRM installer helper file is missing.");
+    
+            WP_CLI::success("Tarfile unpacked.");
+
+        }
+
+
+    }
+
+    /**
      * Implementation of command 'member-records'
      */
     private function memberRecords() {
@@ -457,6 +519,7 @@ class CiviCRM_Command extends WP_CLI_Command {
     private function upgradeDB() {
 
         civicrm_initialize();
+
         if (class_exists('CRM_Upgrade_Headless')) {
             // Note: CRM_Upgrade_Headless introduced in 4.2 -- at the same time as class auto-loading
             try {
@@ -490,6 +553,27 @@ class CiviCRM_Command extends WP_CLI_Command {
             WP_CLI::line("Upgrade outputs: " . "\"$result\"");
         
         }
+    
+    }
+
+    /**
+     * Helper function to execute shell commands, as unable to find a direct 
+     * wp-cli equivalent of drush_shell_execute()
+     * @param $cmd (string) - the command to execute
+     * @param $args (array) - an associative array of command line params
+     */
+    private function exec($command) {
+        
+        if (!$proc = proc_open(
+            $command,
+            array(STDIN, STDOUT, STDERR),
+            $pipes, 
+            null, 
+            (array)$_ENV
+        ))
+            exit(1);
+
+        proc_close($proc);
     
     }
 
