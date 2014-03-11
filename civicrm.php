@@ -241,7 +241,7 @@ class CiviCRM_Command extends WP_CLI_Command {
                 return WP_CLI::error("Error extracting zipfile");
         
         } else {
-            return WP_CLI::error("No zipfile specified, use --zipfile<path/to/tarfile");
+            return WP_CLI::error("No zipfile specified, use --zipfile<path/to/zipfile");
         }
 
         # include civicrm installer helper file
@@ -666,6 +666,50 @@ class CiviCRM_Command extends WP_CLI_Command {
         if (!WP_CLI::confirm('Do you really want to continue?')) 
             return WP_CLI::line('Cancelled by user');
 
+        # begin upgrade
+        WP_CLI::launch("mkdir --mode=0777 $backup_dir");
+        $backup_dir .= '/modules';
+        WP_CLI::launch("mkdir --mode=0777 $backup_dir");
+        $backup_dir .= "/$date";
+        WP_CLI::launch("mkdir --mode=0777 $backup_dir");
+        $backup_target = $backup_dir . '/' . $backup_file;
+        
+        if (!rename($civicrm_root, $backup_target))
+            return WP_CLI::error(sprintf(
+                "Failed to backup CiviCRM project directory %s to %s",
+                $civicrm_root,
+                $backup_target
+            ));
+
+        WP_CLI::success("\n1. Code backed up.");
+
+        $this->assoc_args['result-file'] = $backup_target . '.sql';
+        $this->sqlDump();
+
+        WP_CLI::success('2. Database backed up.');      
+
+        # decompress
+        if ($this->getOption('tarfile', false)) {
+            # should probably never get to here, as looks like Wordpress Civi comes
+            # in a zip file
+            if (!$this->untar($pluginPath)) 
+                return WP_CLI::error("Error extracting tarfile");
+
+        } elseif ($this->getOption('zipfile', false)) {
+            
+            if (!$this->unzip($pluginPath)) 
+                return WP_CLI::error("Error extracting zipfile");
+        
+        } else {
+            return WP_CLI::error("No zipfile specified, use --zipfile<path/to/zipfile");
+        }
+
+        WP_CLI::success('3. Tarfile unpacked.');
+
+        WP_CLI::success("4. ");
+        $this->upgradeDB();
+
+        WP_CLI::success("\nProcess completed.");
 
     }
     
