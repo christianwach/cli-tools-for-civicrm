@@ -73,6 +73,7 @@ class CiviCRM_Command extends WP_CLI_Command {
             'sql-dump'           => 'sqlDump',
             'sql-query'          => 'sqlQuery',
             'update-cfg'         => 'updateConfig',
+            'upgrade'            => 'upgrade',
             'upgrade-db'         => 'upgradeDB'
         );
 
@@ -216,32 +217,6 @@ class CiviCRM_Command extends WP_CLI_Command {
         # todo: test this routine - original has a bug which will prevent it from working
         # todo: may want to patch original
 
-        $that = &$this;
-
-        $extractTarFile = function($destinationPath, $option='tarfile') use ($that) {
-            
-            if ($tarfile = $that->getOption($option, false)) {
-                $that->exec("gzip -d " . $tarfile);
-                $tarfile = substr($tarfile, 0, strlen($tarfile) - 3);
-                $that->exec("tar -xf $tarfile -C \"$destinationPath\"");
-                return true;
-            } else {
-                return false;
-            }
-
-        };
-
-        $extractZipFile = function($destinationPath, $option='zipfile') use ($that) {
-            
-            if ($zipfile = $that->getOption($option, false)) {
-                WP_CLI::line('Extracting zip archive ...');
-                $that->exec("unzip -q " . $zipfile . " -d " . $destinationPath);
-                return true;
-            } else {
-                return false;
-            }
-
-        };
 
         $wp_root = ABSPATH;
 
@@ -257,12 +232,12 @@ class CiviCRM_Command extends WP_CLI_Command {
         if ($this->getOption('tarfile', false)) {
             # should probably never get to here, as looks like Wordpress Civi comes
             # in a zip file
-            if (!$extractTarFile($pluginPath)) 
+            if (!$this->untar($pluginPath)) 
                 return WP_CLI::error("Error extracting tarfile");
 
         } elseif ($this->getOption('zipfile', false)) {
             
-            if (!$extractZipFile($pluginPath)) 
+            if (!$this->unzip($pluginPath)) 
                 return WP_CLI::error("Error extracting zipfile");
         
         } else {
@@ -283,7 +258,7 @@ class CiviCRM_Command extends WP_CLI_Command {
         require_once $civicrmInstallerHelper;
 
         if ($lang != '') 
-            if (!$extractTarFile($pluginPath, 'langtarfile')) 
+            if (!$this->untar($pluginPath, 'langtarfile')) 
                 return WP_CLI::error("No language tarfile specified, use --langtarfile<path/to/tarfile");
 
         # create files dirs
@@ -292,7 +267,13 @@ class CiviCRM_Command extends WP_CLI_Command {
 
         # install db
         $sqlPath = "$crmPath/sql";
-        /*
+        
+        /*  
+
+        todo: this needs fixing. screws up the database connection to wp db basically, then
+        we can't enable the plugin at the end of the process - try and instantiate PEAR::DB
+        is probably the best fix
+
         if (!$conn = @mysql_connect($dbhost, $dbuser, $dbpass))
             return WP_CLI::error("Unable to connect to database. Please re-check credentials.");
         
@@ -408,9 +389,6 @@ class CiviCRM_Command extends WP_CLI_Command {
                 2 => "-p" . $_REQUEST['pass'],
                 3 => "-s" . $this->getOption('uri', FALSE),
             );
-
-            # not really sure what this should be set to on WP .. maybe 
-            # I should just comment it out then pretend it wasn't me.
 
             # if (!defined('CIVICRM_CONFDIR')) {
             #     define('CIVICRM_CONFDIR', ABSPATH . '/wp-content/plugins/civicrm');
@@ -649,6 +627,13 @@ class CiviCRM_Command extends WP_CLI_Command {
     }
 
     /**
+     * Implementation of command 'upgrade'
+     */
+    private function upgrade() {
+
+    }
+
+    /**
      * Implementation of command 'upgrade-db'
      */
     private function upgradeDB() {
@@ -697,12 +682,12 @@ class CiviCRM_Command extends WP_CLI_Command {
      * @param $cmd (string) - the command to execute
      * @param $args (array) - an associative array of command line params
      */
-    public function exec($command) {
+    private function exec($command) {
         
         if (!$proc = proc_open(
             $command,
             array(STDIN, STDOUT, STDERR),
-            $pipes, 
+            null,
             null, 
             (array)$_ENV
         ))
@@ -717,9 +702,46 @@ class CiviCRM_Command extends WP_CLI_Command {
      * @param  $name (string)
      * @return mixed - value if found or $default
      */
-    public function getOption($name, $default) {
+    private function getOption($name, $default) {
         return isset($this->assoc_args[$name]) ? $this->assoc_args[$name] : $default;
     }
+
+    /**
+     * Extract a tar.gz archive
+     * @param  $destinationPath - the path to extract to
+     * @param  $option          - command line option to get input filename from, defaults to 'tarfile'
+     * @return bool
+     */
+    private function untar($destinationPath, $option='tarfile') {
+       
+        if ($tarfile = $this->getOption($option, false)) {
+            $this->exec("gzip -d " . $tarfile);
+            $tarfile = substr($tarfile, 0, strlen($tarfile) - 3);
+            $that->exec("tar -xf $tarfile -C \"$destinationPath\"");
+            return true;
+        } else {
+            return false;
+        }
+
+    };
+
+    /**
+     * Extract a zip archive
+     * @param  $destinationPath - the path to extract to
+     * @param  $option          - command line option to get zip filename from, defaults to 'zipfile'
+     * @return bool
+     */
+    private function unzip($destinationPath, $option='zipfile') {
+            
+        if ($zipfile = $this->getOption($option, false)) {
+            WP_CLI::line('Extracting zip archive ...');
+            $this->exec("unzip -q " . $zipfile . " -d " . $destinationPath);
+            return true;
+        } else {
+            return false;
+        }
+
+    };
 
     /**
      * Initializes the CiviCRM environment and configuration.
