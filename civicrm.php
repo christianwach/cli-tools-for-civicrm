@@ -263,7 +263,7 @@ class CiviCRM_Command extends WP_CLI_Command {
 
         # create files dirs
         civicrm_setup("$pluginPath/files");
-        $this->exec("chmod 0777 $pluginPath/files/civicrm -R");
+        WP_CLI::launch("chmod 0777 $pluginPath/files/civicrm -R");
 
         # install db
         $sqlPath = "$crmPath/sql";
@@ -351,14 +351,16 @@ class CiviCRM_Command extends WP_CLI_Command {
 
         $configFile = "$pluginPath/civicrm/civicrm.settings.php";
         civicrm_write_file($configFile, $str);
-        $this->exec("chmod 0644 $configFile");
+        WP_CLI::launch("chmod 0644 $configFile");
         WP_CLI::success(sprintf("Settings file generated: %s", $configFile));
 
         # activate plugin
-        require_once WP_CLI_ROOT . '/php/commands/plugin.php';
+        /*require_once WP_CLI_ROOT . '/php/commands/plugin.php';
         $plugin = new Plugin_Command();
         @$plugin->activate(array('civicrm'), array());
-
+        */
+        # try ..
+        WP_CLI::run_command(array('plugin', 'activate', 'civicrm'), array());
         WP_CLI::success("CiviCRM installed.");
 
     }
@@ -631,7 +633,42 @@ class CiviCRM_Command extends WP_CLI_Command {
      */
     private function upgrade() {
 
+        # todo: use wp-cli to download tarfile.
+        # todo: if tarfile is not specified, see if the code already exists and use that instead.
+        if (!$this->getOption('tarfile', false) and !$this->getOption('zipfile', false))
+            return WP_CLI::error('Must specify either --tarfile or --zipfile');
+
+        # fixme: throw error if tarfile is not in a valid format.
+        if (!defined('CIVICRM_UPGRADE_ACTIVE'))
+            define('CIVICRM_UPGRADE_ACTIVE', 1);
+
+        civicrm_intialize();
+
+        global $civicrm_root;
+
+        $date        = date('YmdHis');
+        $backup_file = "civicrm";
+
+        $basepath = explode('/', $civicrm_root);
+        array_pop($basepath);
+        $project_path = implode('/', $basepath) . '/';
+
+        $wp_root    = ABSPATH;
+        $backup_dir = $this->getOption('backup-dir', $wp_root . '../backup');
+        $backup_dir = rtrim($backup_dir, '/');
+
+        WP_CLI::line("\nThe upgrade process involves - ");
+        WP_CLI::line(sprintf("1. Backing up current CiviCRM code as => %s", "$backup_dir/modules/$date/$backup_file"));
+        WP_CLI::line(sprintf("2. Backing up database as => %s", "$backup_dir/modules/$date/$backup_file.sql"));
+        WP_CLI::line(sprintf("3. Unpacking tarfile to => %s", $project_path));
+        WP_CLI::line("4. Executing civicrm/upgrade?reset=1 just as a browser would.\n");
+        
+        if (!WP_CLI::confirm('Do you really want to continue?')) 
+            return WP_CLI::line('Cancelled by user');
+
+
     }
+    
 
     /**
      * Implementation of command 'upgrade-db'
@@ -677,27 +714,6 @@ class CiviCRM_Command extends WP_CLI_Command {
     }
 
     /**
-     * Helper function to execute shell commands, as unable to find a direct 
-     * wp-cli equivalent of drush_shell_execute()
-     * @param $cmd (string) - the command to execute
-     * @param $args (array) - an associative array of command line params
-     */
-    private function exec($command) {
-        
-        if (!$proc = proc_open(
-            $command,
-            array(STDIN, STDOUT, STDERR),
-            null,
-            null, 
-            (array)$_ENV
-        ))
-            exit(1);
-
-        proc_close($proc);
-    
-    }
-
-    /**
      * Helper function to replicate functionality of drush_get_option
      * @param  $name (string)
      * @return mixed - value if found or $default
@@ -715,7 +731,7 @@ class CiviCRM_Command extends WP_CLI_Command {
     private function untar($destinationPath, $option='tarfile') {
        
         if ($tarfile = $this->getOption($option, false)) {
-            $this->exec("gzip -d " . $tarfile);
+            WP_CLI::launch("gzip -d " . $tarfile);
             $tarfile = substr($tarfile, 0, strlen($tarfile) - 3);
             $that->exec("tar -xf $tarfile -C \"$destinationPath\"");
             return true;
@@ -723,7 +739,7 @@ class CiviCRM_Command extends WP_CLI_Command {
             return false;
         }
 
-    };
+    }
 
     /**
      * Extract a zip archive
@@ -735,13 +751,13 @@ class CiviCRM_Command extends WP_CLI_Command {
             
         if ($zipfile = $this->getOption($option, false)) {
             WP_CLI::line('Extracting zip archive ...');
-            $this->exec("unzip -q " . $zipfile . " -d " . $destinationPath);
+            WP_CLI::launch("unzip -q " . $zipfile . " -d " . $destinationPath);
             return true;
         } else {
             return false;
         }
 
-    };
+    }
 
     /**
      * Initializes the CiviCRM environment and configuration.
