@@ -216,10 +216,6 @@ class CiviCRM_Command extends WP_CLI_Command {
     
         # begin install
 
-        # todo: test this routine - original has a bug which will prevent it from working
-        # todo: may want to patch original
-
-
         $wp_root = ABSPATH;
 
         if ($pluginPath = $this->getOption('destination', FALSE))
@@ -232,8 +228,8 @@ class CiviCRM_Command extends WP_CLI_Command {
             
         # extract the archive
         if ($this->getOption('tarfile', false)) {
-            # should probably never get to here, as looks like Wordpress Civi comes
-            # in a zip file
+            # should probably never get to here as Wordpress Civi comes in a zip file, but
+            # just in case that ever changes ..
             if (!$this->untar($pluginPath)) 
                 return WP_CLI::error("Error extracting tarfile");
 
@@ -752,7 +748,6 @@ class CiviCRM_Command extends WP_CLI_Command {
         if (!defined('CIVICRM_UPGRADE_ACTIVE'))
             define('CIVICRM_UPGRADE_ACTIVE', 1);
 
-        //civicrm_initialize();
         $wp_root       = ABSPATH;
         $settings_path = ABSPATH . '/wp-content/plugins/civicrm/civicrm.settings.php';
         if (!file_exists($settings_path))
@@ -870,7 +865,6 @@ class CiviCRM_Command extends WP_CLI_Command {
 
     }
     
-
     /**
      * Implementation of command 'upgrade-db'
      */
@@ -917,6 +911,8 @@ class CiviCRM_Command extends WP_CLI_Command {
     /**
      * DSN parser - this has been stolen from PEAR DB since we don't always have a 
      * bootstrapped environment we can access this from, eg: when doing an upgrade
+     * @param  $dsn (string)
+     * @return array containing db connection details
      */
     private static function parseDSN($dsn) {
 
@@ -1081,58 +1077,6 @@ class CiviCRM_Command extends WP_CLI_Command {
             return false;
         }
 
-    }
-
-    /**
-     * Initializes the CiviCRM environment and configuration.
-     * TODO: document why we can't call civicrm_initialize() directly.
-     *
-     * @param  bool fail
-     *   If true, will halt drush. Otherwise, return false but do not interrupt.
-     *
-     * @return bool
-     *   Returns TRUE if CiviCRM was initialized.
-     */
-    private function _civicrm_init($fail = TRUE) {
-      
-      static $init = NULL;
-
-      // return if already initialized
-      if ($init) {
-        return $init;
-      }
-
-      global $cmsPath;
-      $cmsPath             = $wp_root = ABSPATH;
-      $civicrmSettingsFile = "$wp_root/wp-content/plugins/civicrm/civicrm.settings.php";
-
-      if (!file_exists($civicrmSettingsFile)) {
-        return WP_CLI::error('Could not locate civicrm settings file.');
-      }
-
-      // include settings file
-      define('CIVICRM_SETTINGS_PATH', $civicrmSettingsFile);
-      include_once $civicrmSettingsFile;
-      global $civicrm_root;
-      
-      if (!is_dir($civicrm_root)) 
-          return WP_CLI::error('Could not locate CiviCRM codebase. Make sure CiviCRM settings file has correct information.');
-
-      // Autoload was added in 4.2
-      require_once 'CRM/Utils/System.php';
-      $codeVer = CRM_Utils_System::version();
-
-      if (substr($codeVer, 0, 3) >= '4.2') {
-        require_once $civicrm_root . '/CRM/Core/ClassLoader.php';
-        CRM_Core_ClassLoader::singleton()->register();
-      }
-
-      // also initialize config object
-      require_once 'CRM/Core/Config.php';
-      $config = CRM_Core_Config::singleton();
-
-      $init = TRUE; 
-      return $init;
     }
 
 }
