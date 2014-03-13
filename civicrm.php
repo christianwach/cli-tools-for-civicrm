@@ -518,16 +518,6 @@ class CiviCRM_Command extends WP_CLI_Command {
         if (!mkdir($restore_backup_dir, 777, true))
             return WP_CLI::error('Failed creating directory: ' . $restore_backup_dir);
 
-        /*
-        WP_CLI::launch("mkdir --mode=0777 $restore_backup_dir");
-        $restore_backup_dir .= '/modules';
-        WP_CLI::launch("mkdir --mode=0777 $restore_backup_dir");
-        $restore_backup_dir .= '/restore';
-        WP_CLI::launch("mkdir --mode=0777 $restore_backup_dir");
-        $restore_backup_dir .= "/$date";
-        WP_CLI::launch("mkdir --mode=0777 $restore_backup_dir");
-        */
-
         # 1. backup and restore codebase
         WP_CLI::line('Restoring civicrm codebase ..');
         if (is_dir($civicrm_root) && !rename($civicrm_root, $restore_backup_dir . '/civicrm'))
@@ -625,11 +615,14 @@ class CiviCRM_Command extends WP_CLI_Command {
      */
     private function sqlDump() {
 
-        civicrm_initialize();
-        if (!defined('CIVICRM_DSN'))
-            WP_CLI::error('CIVICRM_DSN is not defined.');            
+        # bootstrap Civi when we're not being called as part of an upgrade
+        if (!defined('CIVICRM_UPGRADE_ACTIVE'))        
+            civicrm_initialize();
 
-        $dsn = DB::parseDSN(CIVICRM_DSN);
+        if (!defined('CIVICRM_DSN') and !defined('CIVICRM_OLD_DSN'))
+            WP_CLI::error('DSN is not defined.');            
+
+        $dsn = self::parseDSN(defined('CIVICRM_DSN') ? CIVICRM_DSN : CIVICRM_OLD_DSN);
     
         $assoc_args       = $this->assoc_args;
         $stdout           = !isset($assoc_args['result-file']);
@@ -759,9 +752,41 @@ class CiviCRM_Command extends WP_CLI_Command {
         if (!defined('CIVICRM_UPGRADE_ACTIVE'))
             define('CIVICRM_UPGRADE_ACTIVE', 1);
 
-        civicrm_initialize();
+        //civicrm_initialize();
+        $wp_root       = ABSPATH;
+        $settings_path = ABSPATH . '/wp-content/plugins/civicrm/civicrm.settings.php';
+        if (!file_exists($settings_path))
+            return WP_CLI::error('Unable to locate settings file at ' . $settings_path);
 
-        global $civicrm_root;
+        # nb: we don't want to require civicrm.settings.php here, because ..
+        #
+        # a) this is the old environment we're going to replace
+        # b) upgrade-db needs to bootstrap the new environment, so requiring the file 
+        #    now will create multiple inclusion problems later on
+        #
+        # however, all we're really after is $civicrm_root and CIVICRM_DSN, so we're going to 
+        # pull out the lines we need using a regex and run them - yes, it's pretty silly ..
+        # don't try this at home, kids.
+
+        $settings = file_get_contents($settings_path);
+        $settings = str_replace("\r", '', $settings);
+        $settings = explode("\n", $settings);
+        
+        if ($civicrm_root_code = reset(preg_grep('/^\s*\$civicrm_root\s*=.*$/', $settings))) {
+            eval($civicrm_root_code);
+        } else {
+            return WP_CLI::error('Unable to read $civicrm_root from civicrm.settings.php');
+        }
+
+        if ($civicrm_dsn_code = reset(preg_grep('/^\s*define.*CIVICRM_DSN.*$/', $settings))) {
+            $civicrm_dsn_code = str_replace('CIVICRM_DSN', 'CIVICRM_OLD_DSN', $civicrm_dsn_code);
+            eval($civicrm_dsn_code);
+        } else {
+            return WP_CLI::error('Unable to read CIVICRM_DSN from civicrm.settings.php');
+        }    
+
+        if (!defined('CIVICRM_OLD_DSN'))
+            return WP_CLI::error('Unable to set CIVICRM_OLD_DSN');       
 
         $date        = date('YmdHis');
         $backup_file = "civicrm";
@@ -770,12 +795,13 @@ class CiviCRM_Command extends WP_CLI_Command {
        
         if (!end($basepath))
             array_pop($basepath);
+
         array_pop($basepath);
         $project_path = implode('/', $basepath) . '/';
         array_pop($basepath);
         $plugin_path = implode('/', $basepath) . '/';
 
-        $wp_root    = ABSPATH;
+        
         $backup_dir = $this->getOption('backup-dir', $wp_root . '../backup');
         $backup_dir = rtrim($backup_dir, '/');
 
@@ -789,14 +815,6 @@ class CiviCRM_Command extends WP_CLI_Command {
 
         # begin upgrade
         
-        /*
-        WP_CLI::launch("mkdir --mode=0777 $backup_dir");
-        $backup_dir .= '/modules';
-        WP_CLI::launch("mkdir --mode=0777 $backup_dir");
-        $backup_dir .= "/$date";
-        WP_CLI::launch("mkdir --mode=0777 $backup_dir");
-        */
-
         $backup_dir .= '/modules/' . $date;
         if (!mkdir($backup_dir, 777, true))
             return WP_CLI::error('Failed creating directory: ' . $backup_dir);
@@ -839,7 +857,9 @@ class CiviCRM_Command extends WP_CLI_Command {
         WP_CLI::success('3. Archive unpacked.');
 
         WP_CLI::line('Copying civicrm.settings.php to ' . $project_path . '..');
-        if (!copy($backup_dir . '/civicrm/civicrm.settings.php', $project_path . 'civicrm.settings.php'))
+        define('CIVICRM_SETTINGS_PATH', $project_path . 'civicrm.settings.php');
+
+        if (!copy($backup_dir . '/civicrm/civicrm.settings.php', CIVICRM_SETTINGS_PATH))
             return WP_CLI::error('Failed to copy file');       
 
         WP_CLI::success("4. ");
@@ -855,7 +875,7 @@ class CiviCRM_Command extends WP_CLI_Command {
      * Implementation of command 'upgrade-db'
      */
     private function upgradeDB() {
-
+        
         civicrm_initialize();
 
         if (class_exists('CRM_Upgrade_Headless')) {
@@ -892,6 +912,129 @@ class CiviCRM_Command extends WP_CLI_Command {
         
         }
     
+    }
+
+    /**
+     * DSN parser - this has been stolen from PEAR DB since we don't always have a 
+     * bootstrapped environment we can access this from, eg: when doing an upgrade
+     */
+    private static function parseDSN($dsn) {
+
+        $parsed = array(
+            'phptype'  => false,
+            'dbsyntax' => false,
+            'username' => false,
+            'password' => false,
+            'protocol' => false,
+            'hostspec' => false,
+            'port'     => false,
+            'socket'   => false,
+            'database' => false,
+        );
+
+        if (is_array($dsn)) {
+            $dsn = array_merge($parsed, $dsn);
+            if (!$dsn['dbsyntax']) {
+                $dsn['dbsyntax'] = $dsn['phptype'];
+            }
+            return $dsn;
+        }
+
+        // Find phptype and dbsyntax
+        if (($pos = strpos($dsn, '://')) !== false) {
+            $str = substr($dsn, 0, $pos);
+            $dsn = substr($dsn, $pos + 3);
+        } else {
+            $str = $dsn;
+            $dsn = null;
+        }
+
+        // Get phptype and dbsyntax
+        // $str => phptype(dbsyntax)
+        if (preg_match('|^(.+?)\((.*?)\)$|', $str, $arr)) {
+            $parsed['phptype']  = $arr[1];
+            $parsed['dbsyntax'] = !$arr[2] ? $arr[1] : $arr[2];
+        } else {
+            $parsed['phptype']  = $str;
+            $parsed['dbsyntax'] = $str;
+        }
+
+        if (!count($dsn)) {
+            return $parsed;
+        }
+
+        // Get (if found): username and password
+        // $dsn => username:password@protocol+hostspec/database
+        if (($at = strrpos($dsn,'@')) !== false) {
+            $str = substr($dsn, 0, $at);
+            $dsn = substr($dsn, $at + 1);
+            if (($pos = strpos($str, ':')) !== false) {
+                $parsed['username'] = rawurldecode(substr($str, 0, $pos));
+                $parsed['password'] = rawurldecode(substr($str, $pos + 1));
+            } else {
+                $parsed['username'] = rawurldecode($str);
+            }
+        }
+
+        // Find protocol and hostspec
+
+        if (preg_match('|^([^(]+)\((.*?)\)/?(.*?)$|', $dsn, $match)) {
+            // $dsn => proto(proto_opts)/database
+            $proto       = $match[1];
+            $proto_opts  = $match[2] ? $match[2] : false;
+            $dsn         = $match[3];
+
+        } else {
+            // $dsn => protocol+hostspec/database (old format)
+            if (strpos($dsn, '+') !== false) {
+                list($proto, $dsn) = explode('+', $dsn, 2);
+            }
+            if (strpos($dsn, '/') !== false) {
+                list($proto_opts, $dsn) = explode('/', $dsn, 2);
+            } else {
+                $proto_opts = $dsn;
+                $dsn = null;
+            }
+        }
+
+        // process the different protocol options
+        $parsed['protocol'] = (!empty($proto)) ? $proto : 'tcp';
+        $proto_opts = rawurldecode($proto_opts);
+        if (strpos($proto_opts, ':') !== false) {
+            list($proto_opts, $parsed['port']) = explode(':', $proto_opts);
+        }
+        if ($parsed['protocol'] == 'tcp') {
+            $parsed['hostspec'] = $proto_opts;
+        } elseif ($parsed['protocol'] == 'unix') {
+            $parsed['socket'] = $proto_opts;
+        }
+
+        // Get dabase if any
+        // $dsn => database
+        if ($dsn) {
+            if (($pos = strpos($dsn, '?')) === false) {
+                // /database
+                $parsed['database'] = rawurldecode($dsn);
+            } else {
+                // /database?param1=value1&param2=value2
+                $parsed['database'] = rawurldecode(substr($dsn, 0, $pos));
+                $dsn = substr($dsn, $pos + 1);
+                if (strpos($dsn, '&') !== false) {
+                    $opts = explode('&', $dsn);
+                } else { // database?param1=value1
+                    $opts = array($dsn);
+                }
+                foreach ($opts as $opt) {
+                    list($key, $value) = explode('=', $opt);
+                    if (!isset($parsed[$key])) {
+                        // don't allow params overwrite
+                        $parsed[$key] = rawurldecode($value);
+                    }
+                }
+            }
+        }
+
+        return $parsed;
     }
 
     /**
