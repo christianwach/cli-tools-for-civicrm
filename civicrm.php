@@ -37,7 +37,8 @@ class CiviCRM_Command extends WP_CLI_Command {
      *
      * wp civicrm sql-query
      * ====================
-     * Usage: wp civicrm sql-query <query> <options>...\n<query> is a SQL statement, which can alternatively be passed via STDIN. Any additional arguments are passed to the mysql command directly.";
+     * Usage: wp civicrm sql-query <query> <options>...
+     * <query> is a SQL statement, which can alternatively be passed via STDIN. Any additional arguments are passed to the mysql command directly.";
      *  
      * wp civicrm update-cfg
      * =====================
@@ -67,6 +68,7 @@ class CiviCRM_Command extends WP_CLI_Command {
             'member-records'     => 'memberRecords',
             'process-mail-queue' => 'processMailQueue',
             'rest'               => 'rest',
+            'restore'            => 'restore',
             'sql-cli'            => 'sqlCLI',
             'sql-conf'           => 'sqlConf',
             'sql-connect'        => 'sqlConnect',
@@ -241,7 +243,7 @@ class CiviCRM_Command extends WP_CLI_Command {
                 return WP_CLI::error("Error extracting zipfile");
         
         } else {
-            return WP_CLI::error("No zipfile specified, use --zipfile<path/to/zipfile");
+            return WP_CLI::error("No zipfile specified, use --zipfile=path/to/zipfile");
         }
 
         # include civicrm installer helper file
@@ -254,12 +256,11 @@ class CiviCRM_Command extends WP_CLI_Command {
             return WP_CLI::error("Archive could not be unpacked OR CiviCRM installer helper file is missing.");
 
         WP_CLI::success("Archive unpacked.");
-
         require_once $civicrmInstallerHelper;
 
         if ($lang != '') 
             if (!$this->untar($pluginPath, 'langtarfile')) 
-                return WP_CLI::error("No language tarfile specified, use --langtarfile<path/to/tarfile");
+                return WP_CLI::error("No language tarfile specified, use --langtarfile=path/to/tarfile");
 
         # create files dirs
         civicrm_setup("$pluginPath/files");
@@ -354,13 +355,8 @@ class CiviCRM_Command extends WP_CLI_Command {
         WP_CLI::launch("chmod 0644 $configFile");
         WP_CLI::success(sprintf("Settings file generated: %s", $configFile));
 
-        # activate plugin
-        /*require_once WP_CLI_ROOT . '/php/commands/plugin.php';
-        $plugin = new Plugin_Command();
-        @$plugin->activate(array('civicrm'), array());
-        */
-        # try ..
-        WP_CLI::run_command(array('plugin', 'activate', 'civicrm'), array());
+        # activate plugin and we're done
+        @WP_CLI::run_command(array('plugin', 'activate', 'civicrm'), array());
         WP_CLI::success("CiviCRM installed.");
 
     }
@@ -465,6 +461,127 @@ class CiviCRM_Command extends WP_CLI_Command {
     }
 
     /**
+     * Implementation of command 'restore'
+     */
+    private function restore() {
+
+        # validate ..
+        $restore_dir = $this->getOption('restore-dir', false);
+        $restore_dir = rtrim($restore_dir, '/');
+        if (!$restore_dir)
+            return WP_CLI::error('Restore-dir not specified.');
+        
+        $sql_file = $restore_dir . '/civicrm.sql';
+        if (!file_exists($sql_file)) 
+            return WP_CLI::error('Could not locate civicrm.sql file in the restore directory.');
+        
+        $code_dir = $restore_dir . '/civicrm';
+        if (!is_dir($code_dir))
+            return WP_CLI::error('Could not locate civicrm directory inside restore-dir.');
+        elseif (!file_exists("$code_dir/civicrm-version.txt")) 
+            return WP_CLI::error('civicrm directory inside restore-dir, doesn\'t look to be a valid civicrm codebase.');
+
+
+        # prepare to restore ..
+        $date = date('YmdHis');
+        
+        civicrm_initialize();
+        global $civicrm_root;
+
+        $civicrm_root_base = explode('/', $civicrm_root);
+        array_pop($civicrm_root_base);
+        $civicrm_root_base = implode('/', $civicrm_root_base) . '/';
+
+        $wp_root = ABSPATH;
+        $restore_backup_dir = $this->getOption('backup-dir', $wp_root . '/../backup');
+        $restore_backup_dir = rtrim($restore_backup_dir, '/');
+
+        # get confirmation from user -
+
+        if (!defined('CIVICRM_DSN'))
+            WP_CLI::error('CIVICRM_DSN is not defined.');            
+
+        $db_spec = DB::parseDSN(CIVICRM_DSN);
+        WP_CLI::line('');
+        WP_CLI::line("Process involves :");
+        WP_CLI::line(sprintf("1. Restoring '\$restore-dir/civicrm' directory to '%s'.", $civicrm_root_base));
+        WP_CLI::line(sprintf("2. Dropping and creating '%s' database.", $db_spec['database']));
+        WP_CLI::line("3. Loading '\$restore-dir/civicrm.sql' file into the database.");
+        WP_CLI::line('');
+        WP_CLI::line(sprintf("Note: Before restoring a backup will be taken in '%s' directory.", "$restore_backup_dir/modules/restore"));
+        WP_CLI::line('');
+        
+        WP_CLI::confirm('Do you really want to continue?'); 
+
+        $restore_backup_dir .= '/modules/restore/' . $date;
+
+        if (!mkdir($restore_backup_dir, 777, true))
+            return WP_CLI::error('Failed creating directory: ' . $restore_backup_dir);
+
+        /*
+        WP_CLI::launch("mkdir --mode=0777 $restore_backup_dir");
+        $restore_backup_dir .= '/modules';
+        WP_CLI::launch("mkdir --mode=0777 $restore_backup_dir");
+        $restore_backup_dir .= '/restore';
+        WP_CLI::launch("mkdir --mode=0777 $restore_backup_dir");
+        $restore_backup_dir .= "/$date";
+        WP_CLI::launch("mkdir --mode=0777 $restore_backup_dir");
+        */
+
+        # 1. backup and restore codebase
+        WP_CLI::line('Restoring civicrm codebase ..');
+        if (is_dir($civicrm_root) && !rename($civicrm_root, $restore_backup_dir . '/civicrm'))
+            return WP_CLI::error(sprintf("Failed to take backup for '%s' directory", $civicrm_root));
+
+        if (!rename($code_dir, $civicrm_root))
+            return WP_CLI::error("Failed to restore civicrm directory '%s' to '%s'", $code_dir, $civicrm_root_base);
+
+        WP_CLI::success('Codebase restored.');
+
+        # 2. backup, drop and create database
+        WP_CLI::run_command(
+            array('civicrm', 'sql-dump'), 
+            array('result-file' => $restore_backup_dir . '/civicrm.sql')
+        );
+
+        WP_CLI::success('Database backed up.');
+
+        # prepare a mysql command-line string for issuing
+        # db drop / create commands
+        $command = sprintf(
+            "mysql --user=%s --password=%s",
+            $db_spec['username'],
+            $db_spec['password']
+        );
+
+        if (isset($db_spec['hostspec']))
+            $command .= ' --host=' . $db_spec['hostspec'];
+             
+        if (isset($dsn['port']) and !empty($dsn['port']))
+            $command .= ' --port=' . $db_spec['port'];
+
+        # attempt to drop old database
+        if (system($command . sprintf(' --execute="DROP DATABASE IF EXISTS %s"', $db_spec['database'])))
+            return WP_CLI::error('Could not drop database: ' . $db_spec['database']);
+
+        WP_CLI::success('Database dropped.');
+  
+        # attempt to create new database
+        if (system($command . sprintf(' --execute="CREATE DATABASE %s"', $db_spec['database'])))
+            WP_CLI::error('Could not create new database: ' . $db_spec['database']);
+
+        WP_CLI::success('Database created.');
+
+        # 3. restore database
+        WP_CLI::line('Loading civicrm.sql file from restore-dir ..');
+        system($command . ' ' . $db_spec['database'] . ' < ' . $sql_file);
+
+        WP_CLI::success('Database restored.');
+        WP_CLI::success('Restore process completed.');
+     
+    } 
+
+    /**
      * Implementation of command 'sql-conf'
      */
     private function sqlConf() {
@@ -484,11 +601,11 @@ class CiviCRM_Command extends WP_CLI_Command {
         
         civicrm_initialize();
         if (!defined('CIVICRM_DSN'))
-            WP_CLI::error('CIVICRM_DSN is not defined.');            
+            return WP_CLI::error('CIVICRM_DSN is not defined.');            
 
         $dsn = DB::parseDSN(CIVICRM_DSN);
         
-        $output = sprintf(
+        $command = sprintf(
             "mysql --database=%s --host=%s --user=%s --password=%s",
             $dsn['database'],
             $dsn['hostspec'],
@@ -497,9 +614,9 @@ class CiviCRM_Command extends WP_CLI_Command {
         );
 
         if (isset($dsn['port']) and !empty($dsn['port']))
-            $output .= ' --port=' . $dsn['port'];
-
-        WP_CLI::line($output);
+            $command .= ' --port=' . $dsn['port'];
+    
+        return WP_CLI::line($command);
     
     }
 
@@ -642,7 +759,7 @@ class CiviCRM_Command extends WP_CLI_Command {
         if (!defined('CIVICRM_UPGRADE_ACTIVE'))
             define('CIVICRM_UPGRADE_ACTIVE', 1);
 
-        civicrm_intialize();
+        civicrm_initialize();
 
         global $civicrm_root;
 
@@ -650,8 +767,13 @@ class CiviCRM_Command extends WP_CLI_Command {
         $backup_file = "civicrm";
 
         $basepath = explode('/', $civicrm_root);
+       
+        if (!end($basepath))
+            array_pop($basepath);
         array_pop($basepath);
         $project_path = implode('/', $basepath) . '/';
+        array_pop($basepath);
+        $plugin_path = implode('/', $basepath) . '/';
 
         $wp_root    = ABSPATH;
         $backup_dir = $this->getOption('backup-dir', $wp_root . '../backup');
@@ -660,31 +782,41 @@ class CiviCRM_Command extends WP_CLI_Command {
         WP_CLI::line("\nThe upgrade process involves - ");
         WP_CLI::line(sprintf("1. Backing up current CiviCRM code as => %s", "$backup_dir/modules/$date/$backup_file"));
         WP_CLI::line(sprintf("2. Backing up database as => %s", "$backup_dir/modules/$date/$backup_file.sql"));
-        WP_CLI::line(sprintf("3. Unpacking tarfile to => %s", $project_path));
+        WP_CLI::line(sprintf("3. Unpacking tarfile to => %s", $plugin_path));
         WP_CLI::line("4. Executing civicrm/upgrade?reset=1 just as a browser would.\n");
         
-        if (!WP_CLI::confirm('Do you really want to continue?')) 
-            return WP_CLI::line('Cancelled by user');
+        WP_CLI::confirm('Do you really want to continue?');
 
         # begin upgrade
+        
+        /*
         WP_CLI::launch("mkdir --mode=0777 $backup_dir");
         $backup_dir .= '/modules';
         WP_CLI::launch("mkdir --mode=0777 $backup_dir");
         $backup_dir .= "/$date";
         WP_CLI::launch("mkdir --mode=0777 $backup_dir");
-        $backup_target = $backup_dir . '/' . $backup_file;
+        */
+
+        $backup_dir .= '/modules/' . $date;
+        if (!mkdir($backup_dir, 777, true))
+            return WP_CLI::error('Failed creating directory: ' . $backup_dir);
         
-        if (!rename($civicrm_root, $backup_target))
+        $backup_target = $backup_dir . '/' . $backup_file;
+
+        if (!rename($project_path, $backup_target))
             return WP_CLI::error(sprintf(
                 "Failed to backup CiviCRM project directory %s to %s",
-                $civicrm_root,
+                $project_path,
                 $backup_target
             ));
 
-        WP_CLI::success("\n1. Code backed up.");
+        WP_CLI::line();
+        WP_CLI::success("1. Code backed up.");
 
-        $this->assoc_args['result-file'] = $backup_target . '.sql';
-        $this->sqlDump();
+        WP_CLI::run_command(
+            array('civicrm', 'sql-dump'), 
+            array('result-file' => $backup_target . '.sql')
+        );
 
         WP_CLI::success('2. Database backed up.');      
 
@@ -692,23 +824,28 @@ class CiviCRM_Command extends WP_CLI_Command {
         if ($this->getOption('tarfile', false)) {
             # should probably never get to here, as looks like Wordpress Civi comes
             # in a zip file
-            if (!$this->untar($pluginPath)) 
+            if (!$this->untar($plugin_path)) 
                 return WP_CLI::error("Error extracting tarfile");
 
         } elseif ($this->getOption('zipfile', false)) {
             
-            if (!$this->unzip($pluginPath)) 
+            if (!$this->unzip($plugin_path)) 
                 return WP_CLI::error("Error extracting zipfile");
         
         } else {
-            return WP_CLI::error("No zipfile specified, use --zipfile<path/to/zipfile");
+            return WP_CLI::error("No zipfile specified, use --zipfile=path/to/zipfile");
         }
 
-        WP_CLI::success('3. Tarfile unpacked.');
+        WP_CLI::success('3. Archive unpacked.');
+
+        WP_CLI::line('Copying civicrm.settings.php to ' . $project_path . '..');
+        if (!copy($backup_dir . '/civicrm/civicrm.settings.php', $project_path . 'civicrm.settings.php'))
+            return WP_CLI::error('Failed to copy file');       
 
         WP_CLI::success("4. ");
-        $this->upgradeDB();
 
+        WP_CLI::run_command(array('civicrm', 'upgrade-db'), array());
+        
         WP_CLI::success("\nProcess completed.");
 
     }
