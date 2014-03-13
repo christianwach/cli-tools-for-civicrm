@@ -474,7 +474,7 @@ class CiviCRM_Command extends WP_CLI_Command {
         $code_dir = $restore_dir . '/civicrm';
         if (!is_dir($code_dir))
             return WP_CLI::error('Could not locate civicrm directory inside restore-dir.');
-        elseif (!file_exists("$code_dir/civicrm-version.txt")) 
+        elseif (!file_exists("$code_dir/civicrm/civicrm-version.txt") and !file_exists("$code_dir/civicrm/civicrm-version.php")) 
             return WP_CLI::error('civicrm directory inside restore-dir, doesn\'t look to be a valid civicrm codebase.');
 
 
@@ -488,6 +488,14 @@ class CiviCRM_Command extends WP_CLI_Command {
         array_pop($civicrm_root_base);
         $civicrm_root_base = implode('/', $civicrm_root_base) . '/';
 
+        $basepath = explode('/', $civicrm_root);
+       
+        if (!end($basepath))
+            array_pop($basepath);
+
+        array_pop($basepath);
+        $project_path = implode('/', $basepath) . '/';
+
         $wp_root = ABSPATH;
         $restore_backup_dir = $this->getOption('backup-dir', $wp_root . '/../backup');
         $restore_backup_dir = rtrim($restore_backup_dir, '/');
@@ -499,7 +507,7 @@ class CiviCRM_Command extends WP_CLI_Command {
 
         $db_spec = DB::parseDSN(CIVICRM_DSN);
         WP_CLI::line('');
-        WP_CLI::line("Process involves :");
+        WP_CLI::line("Process involves:");
         WP_CLI::line(sprintf("1. Restoring '\$restore-dir/civicrm' directory to '%s'.", $civicrm_root_base));
         WP_CLI::line(sprintf("2. Dropping and creating '%s' database.", $db_spec['database']));
         WP_CLI::line("3. Loading '\$restore-dir/civicrm.sql' file into the database.");
@@ -516,11 +524,11 @@ class CiviCRM_Command extends WP_CLI_Command {
 
         # 1. backup and restore codebase
         WP_CLI::line('Restoring civicrm codebase ..');
-        if (is_dir($civicrm_root) && !rename($civicrm_root, $restore_backup_dir . '/civicrm'))
-            return WP_CLI::error(sprintf("Failed to take backup for '%s' directory", $civicrm_root));
+        if (is_dir($project_path) && !rename($project_path, $restore_backup_dir . '/civicrm'))
+            return WP_CLI::error(sprintf("Failed to take backup for '%s' directory", $project_path));
 
-        if (!rename($code_dir, $civicrm_root))
-            return WP_CLI::error("Failed to restore civicrm directory '%s' to '%s'", $code_dir, $civicrm_root_base);
+        if (!rename($code_dir, $project_path))
+            return WP_CLI::error("Failed to restore civicrm directory '%s' to '%s'", $code_dir, $project_path);
 
         WP_CLI::success('Codebase restored.');
 
@@ -563,6 +571,10 @@ class CiviCRM_Command extends WP_CLI_Command {
         system($command . ' ' . $db_spec['database'] . ' < ' . $sql_file);
 
         WP_CLI::success('Database restored.');
+        
+        WP_CLI::line('Clearing caches..');
+        WP_CLI::run_command(array('civicrm', 'cache-clear'));
+
         WP_CLI::success('Restore process completed.');
      
     } 
@@ -861,7 +873,7 @@ class CiviCRM_Command extends WP_CLI_Command {
 
         WP_CLI::run_command(array('civicrm', 'upgrade-db'), array());
         
-        WP_CLI::success("\nProcess completed.");
+        WP_CLI::success("Process completed.");
 
     }
     
@@ -873,7 +885,7 @@ class CiviCRM_Command extends WP_CLI_Command {
         civicrm_initialize();
 
         if (class_exists('CRM_Upgrade_Headless')) {
-            // Note: CRM_Upgrade_Headless introduced in 4.2 -- at the same time as class auto-loading
+            # Note: CRM_Upgrade_Headless introduced in 4.2 -- at the same time as class auto-loading
             try {
                 $upgradeHeadless = new CRM_Upgrade_Headless();
                 $result = $upgradeHeadless->run();
@@ -896,10 +908,10 @@ class CiviCRM_Command extends WP_CLI_Command {
                 $upgrade->setPrint(TRUE);
             }
 
-            // to suppress html output /w source code.
+            # to suppress html output /w source code.
             ob_start();
             $upgrade->run();
-            // capture the required message.
+            # capture the required message.
             $result = $template->get_template_vars('message');
             ob_end_clean();
             WP_CLI::line("Upgrade outputs: " . "\"$result\"");
