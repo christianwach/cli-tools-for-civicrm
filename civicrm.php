@@ -309,9 +309,12 @@ class CiviCRM_Command extends WP_CLI_Command {
 
         # generate civicrm.settings.php file
         $settingsTplFile = "$crmPath/templates/CRM/common/civicrm.settings.php.tpl";
-        if (!file_exists($settingsTplFile))
-            return WP_CLI::error("Could not find CiviCRM settings template and therefore could not create settings file.");
-  
+        if (!file_exists($settingsTplFile)) {
+            $settingsTplFile = "$crmPath/templates/CRM/common/civicrm.settings.php.template";
+            if (!file_exists($settingsTplFile))
+                return WP_CLI::error("Could not find CiviCRM settings template and therefore could not create settings file.");
+        }
+
         WP_CLI::line("Generating civicrm settings file ..");
         
         if ($baseUrl = $this->getOption('site_url', false)) {
