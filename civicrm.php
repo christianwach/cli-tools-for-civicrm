@@ -1068,7 +1068,7 @@ class CiviCRM_Command extends WP_CLI_Command {
         if ($tarfile = $this->getOption($option, false)) {
             WP_CLI::launch("gzip -d " . $tarfile);
             $tarfile = substr($tarfile, 0, strlen($tarfile) - 3);
-            $that->exec("tar -xf $tarfile -C \"$destinationPath\"");
+            $this->exec("tar -xf $tarfile -C \"$destinationPath\"");
             return true;
         } else {
             return false;
