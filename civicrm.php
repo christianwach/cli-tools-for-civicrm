@@ -179,13 +179,24 @@ class CiviCRM_Command extends WP_CLI_Command {
         
         civicrm_initialize();
 
-        $params['debug']     = 1;
-        $params['backtrace'] = 1;
+        $domain = new CRM_Core_DAO_Domain();
+        $domain->id = CRM_Core_Config::domainID();
+        $domain->find(TRUE);
+        
+        if ($domain->config_backend) {
+            
+            $config = unserialize($domain->config_backend);
+            $config['debug']     = 1;
+            $config['backtrace'] = 1;
 
-        require_once 'CRM/Admin/Form/Setting.php';
-        CRM_Admin_Form_Setting::commonProcess($params);
-    
-        WP_CLI::success('Debug setting enabled.');
+            require_once 'CRM/Core/BAO/ConfigSetting.php'; 
+            CRM_Core_BAO_ConfigSetting::add($config);
+
+            WP_CLI::success('Debug setting enabled.');
+
+        } else {
+            WP_CLI::error('Error retrieving current config_backend.');
+        }
     
     }
 
