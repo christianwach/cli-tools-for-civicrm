@@ -3,7 +3,11 @@
 /**
  * WP-CLI port of drush-civicrm integration
  * andyw@circle, 08/03/2014
+ *
+ * Distributed under the GNU Affero General Public License, version 3
+ * http://www.gnu.org/licenses/agpl-3.0.html 
  */
+
 class CiviCRM_Command extends WP_CLI_Command {
 
     private $args, $assoc_args;
@@ -273,24 +277,27 @@ class CiviCRM_Command extends WP_CLI_Command {
         civicrm_setup("$pluginPath/files");
         WP_CLI::launch("chmod 0777 $pluginPath/files/civicrm -R");
 
+        # now we've got some files in place, require PEAR DB and check db setup
+        $dsn = "mysql://{$dbuser}:{$dbpass}@{$dbhost}/{$dbname}?new_link=true";
+        $dsn_nodb = "mysql://{$dbuser}:{$dbpass}@{$dbhost}";
+
+        require_once ABSPATH . '/wp-content/plugins/civicrm/civicrm/packages/DB.php';
+
+        $db = DB::connect($dsn);
+        if (DB::iserror($db)) {
+            $db = DB::connect($dsn_nodb);
+            if (DB::iserror($db))
+                return WP_CLI::error("Unable to connect to database. Please re-check credentials.");
+            $db->query("CREATE DATABASE $dbname");
+            if (DB::iserror($db))   
+                return WP_CLI::error('CiviCRM database was not found. Failed to create one.');
+            $db->disconnect();
+        }
+
         # install db
         $sqlPath = "$crmPath/sql";
-        
-        /*  
-
-        todo: this needs fixing. screws up the database connection to wp db basically, then
-        we can't enable the plugin at the end of the process - try and instantiate PEAR::DB
-        is probably the best fix
-
-        if (!$conn = @mysql_connect($dbhost, $dbuser, $dbpass))
-            return WP_CLI::error("Unable to connect to database. Please re-check credentials.");
-        
-        if (!@mysql_select_db($dbname) && !@mysql_query("CREATE DATABASE $dbname")) 
-            return WP_CLI::error('CiviCRM database was not found. Failed to create one.');
-        */
 
         # setup database with civicrm structure and data
-        $dsn = "mysql://{$dbuser}:{$dbpass}@{$dbhost}/{$dbname}?new_link=true";
         WP_CLI::line("Loading CiviCRM database structure ..");
         civicrm_source($dsn, $sqlPath . '/civicrm.mysql');
         WP_CLI::line("Loading CiviCRM database with required data ..");
