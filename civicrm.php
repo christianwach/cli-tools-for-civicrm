@@ -748,12 +748,24 @@ class CiviCRM_Command extends WP_CLI_Command {
             }
         }
 
+        $webserver_user  = $this->getWebServerUser();
+        $webserver_group = $this->getWebServerGroup();
+
         require_once 'CRM/Core/I18n.php';
         require_once 'CRM/Core/BAO/ConfigSetting.php';
         $result = CRM_Core_BAO_ConfigSetting::doSiteMove($defaultValues);
 
         if ($result) {
+            
+            # attempt to preserve webserver ownership of templates_c, civicrm/upload 
+            if ($webserver_user and $webserver_group) {
+                $civicrm_files_dir = ABSPATH . '/wp-content/plugins/files/civicrm';
+                system(sprintf('chown -R %s:%s %s/templates_c', $webserver_user, $webserver_group, $civicrm_files_dir));
+                system(sprintf('chown -R %s:%s %s/upload', $webserver_user, $webserver_group, $civicrm_files_dir));
+            }
+            
             WP_CLI::success('Config successfully updated.');
+        
         } else {
             WP_CLI::error('Config update failed.');
         }
@@ -1066,6 +1078,39 @@ class CiviCRM_Command extends WP_CLI_Command {
      */
     private function getOption($name, $default) {
         return isset($this->assoc_args[$name]) ? $this->assoc_args[$name] : $default;
+    }
+
+    /**
+     * Get the user the web server runs as, used to preserve file permissions on templates_c, civicrm/upload
+     * etc when running as root. This is not a very good check, but is good enough for what we want to do,
+     * which is preserve file permissions
+     * @return string - the user which owns templates_c / empty string if not found
+     */
+    private function getWebServerUser() {
+
+        $tplPath = ABSPATH . '/wp-content/plugins/files/civicrm/templates_c';
+        if (is_dir($tplPath)) {
+            $owner = posix_getpwuid(fileowner($tplPath));
+            if (isset($owner['name']))
+                return $owner['name'];
+        }
+        return '';
+
+    }
+
+    /**
+     * Get the group the webserver runs as - as above, but for group
+     */
+    private function getWebServerGroup() {
+
+        $tplPath = ABSPATH . '/wp-content/plugins/files/civicrm/templates_c';
+        if (is_dir($tplPath)) {
+            $group = posix_getgrgid(filegroup($tplPath));
+            if (isset($group['name']))
+                return $group['name'];
+        }
+        return '';
+
     }
 
     /**
