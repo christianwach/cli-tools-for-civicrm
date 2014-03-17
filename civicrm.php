@@ -526,12 +526,12 @@ class CiviCRM_Command extends WP_CLI_Command {
         WP_CLI::line(sprintf("2. Dropping and creating '%s' database.", $db_spec['database']));
         WP_CLI::line("3. Loading '\$restore-dir/civicrm.sql' file into the database.");
         WP_CLI::line('');
-        WP_CLI::line(sprintf("Note: Before restoring a backup will be taken in '%s' directory.", "$restore_backup_dir/modules/restore"));
+        WP_CLI::line(sprintf("Note: Before restoring a backup will be taken in '%s' directory.", "$restore_backup_dir/plugins/restore"));
         WP_CLI::line('');
         
         WP_CLI::confirm('Do you really want to continue?'); 
 
-        $restore_backup_dir .= '/modules/restore/' . $date;
+        $restore_backup_dir .= '/plugins/restore/' . $date;
 
         if (!mkdir($restore_backup_dir, 777, true))
             return WP_CLI::error('Failed creating directory: ' . $restore_backup_dir);
@@ -827,8 +827,8 @@ class CiviCRM_Command extends WP_CLI_Command {
         $backup_dir = rtrim($backup_dir, '/');
 
         WP_CLI::line("\nThe upgrade process involves - ");
-        WP_CLI::line(sprintf("1. Backing up current CiviCRM code as => %s", "$backup_dir/modules/$date/$backup_file"));
-        WP_CLI::line(sprintf("2. Backing up database as => %s", "$backup_dir/modules/$date/$backup_file.sql"));
+        WP_CLI::line(sprintf("1. Backing up current CiviCRM code as => %s", "$backup_dir/plugins/$date/$backup_file"));
+        WP_CLI::line(sprintf("2. Backing up database as => %s", "$backup_dir/plugins/$date/$backup_file.sql"));
         WP_CLI::line(sprintf("3. Unpacking tarfile to => %s", $plugin_path));
         WP_CLI::line("4. Executing civicrm/upgrade?reset=1 just as a browser would.\n");
         
@@ -836,7 +836,7 @@ class CiviCRM_Command extends WP_CLI_Command {
 
         # begin upgrade
         
-        $backup_dir .= '/modules/' . $date;
+        $backup_dir .= '/plugins/' . $date;
         if (!mkdir($backup_dir, 777, true))
             return WP_CLI::error('Failed creating directory: ' . $backup_dir);
         
