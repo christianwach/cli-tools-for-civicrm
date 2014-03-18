@@ -655,7 +655,7 @@ class CiviCRM_Command extends WP_CLI_Command {
     
         $assoc_args       = $this->assoc_args;
         $stdout           = !isset($assoc_args['result-file']);
-        $command          = "mysqldump --no-defaults --host={$dsn['host']} --user={$dsn['username']} --password={$dsn['password']} %s";
+        $command          = "mysqldump --no-defaults --host={$dsn['hostspec']} --user={$dsn['username']} --password={$dsn['password']} %s";
         $command_esc_args = array($dsn['database']);
 
         if (isset($assoc_args['tables'])) {
