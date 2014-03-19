@@ -183,6 +183,8 @@ class CiviCRM_Command extends WP_CLI_Command {
         
         civicrm_initialize();
 
+        require_once 'CRM/Core/DAO/Domain.php';
+
         $domain = new CRM_Core_DAO_Domain();
         $domain->id = CRM_Core_Config::domainID();
         $domain->find(TRUE);
