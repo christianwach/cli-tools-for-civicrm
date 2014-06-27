@@ -105,9 +105,9 @@ class CiviCRM_Command extends WP_CLI_Command {
     private function api() {
         
         $defaults = array('version' => 3);
-
-        list($entity, $action) = explode('.', $this->args[0]);
+                
         array_shift($this->args);
+        list($entity, $action) = explode('.', $this->args[0]);
 
         # parse $params
 
