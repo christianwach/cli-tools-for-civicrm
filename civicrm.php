@@ -105,9 +105,9 @@ class CiviCRM_Command extends WP_CLI_Command {
     private function api() {
         
         $defaults = array('version' => 3);
-
-        list($entity, $action) = explode('.', $this->args[0]);
+                
         array_shift($this->args);
+        list($entity, $action) = explode('.', $this->args[0]);
 
         # parse $params
 
@@ -182,6 +182,8 @@ class CiviCRM_Command extends WP_CLI_Command {
     private function enableDebug() {
         
         civicrm_initialize();
+
+        require_once 'CRM/Core/DAO/Domain.php';
 
         $domain = new CRM_Core_DAO_Domain();
         $domain->id = CRM_Core_Config::domainID();
@@ -562,7 +564,7 @@ class CiviCRM_Command extends WP_CLI_Command {
         WP_CLI::success('Database backed up.');
 
         # prepare a mysql command-line string for issuing
-        # db drop / create commands
+        # db drop / create commands
         $command = sprintf(
             "mysql --user=%s --password=%s",
             $db_spec['username'],
