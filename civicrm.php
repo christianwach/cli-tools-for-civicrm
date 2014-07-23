@@ -564,7 +564,7 @@ class CiviCRM_Command extends WP_CLI_Command {
         WP_CLI::success('Database backed up.');
 
         # prepare a mysql command-line string for issuing
-        # db drop / create commands
+        # db drop / create commands
         $command = sprintf(
             "mysql --user=%s --password=%s",
             $db_spec['username'],
@@ -657,7 +657,7 @@ class CiviCRM_Command extends WP_CLI_Command {
     
         $assoc_args       = $this->assoc_args;
         $stdout           = !isset($assoc_args['result-file']);
-        $command          = "mysqldump --no-defaults --host={$dsn['hostspec']} --user={$dsn['username']} --password={$dsn['password']} %s";
+        $command          = "mysqldump --no-defaults --host={$dsn['hostspec']} --user={$dsn['username']} --password='{$dsn['password']}' %s";
         $command_esc_args = array($dsn['database']);
 
         if (isset($assoc_args['tables'])) {
