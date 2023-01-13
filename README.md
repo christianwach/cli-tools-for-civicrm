@@ -1,13 +1,12 @@
 # Command Line Tools for CiviCRM
 
 **Contributors:** [See full Contributor List](https://github.com/christianwach/cli-tools-for-civicrm)<br/>
-**Donate link:** https://www.paypal.me/interactivist<br/>
 **Tags:** civicrm, command-line, utility, wp-cli<br/>
 **Requires at least:** 4.9<br/>
 **Tested up to:** 6.1<br/>
 **Stable tag:** 1.0.0a<br/>
-**License:** GPLv2 or later<br/>
-**License URI:** https://www.gnu.org/licenses/gpl-2.0.html
+**License:** GNU Affero General Public License v3.0<br/>
+**License URI:** https://github.com/christianwach/cli-tools-for-civicrm/blob/master/LICENSE
 
 Manage CiviCRM through the command line.
 
