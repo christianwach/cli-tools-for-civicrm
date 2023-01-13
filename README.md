@@ -39,3 +39,16 @@ If you have downloaded *Command Line Tools for CiviCRM* as a ZIP file from the G
 ### git clone
 
 If you have cloned the code from GitHub, it is assumed that you know what you're doing.
+
+## Development
+
+If you would like to help migrate the Command Line Tools to a more compatible structure, then add the Add the following code to your `wp-config.php` file (or create a "Must Use" plugin that contains the code):
+
+```php
+/**
+ * Enable the latest Command Line Tools for CiviCRM.
+ */
+define( 'COMMAND_LINE_CIVICRM_LATEST', 1 );
+```
+
+This will enable the multi-class structure that WP-CLI expects.
