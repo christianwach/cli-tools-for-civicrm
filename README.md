@@ -1,6 +1,6 @@
 # Command Line Tools for CiviCRM
 
-**Contributors:** [See full Contributor List]https://github.com/christianwach/wp-cli-civicrm/graphs/contributors)<br/>
+**Contributors:** [See full Contributor List](https://github.com/christianwach/cli-tools-for-civicrm)<br/>
 **Donate link:** https://www.paypal.me/interactivist<br/>
 **Tags:** civicrm, command-line, utility, wp-cli<br/>
 **Requires at least:** 4.9<br/>
