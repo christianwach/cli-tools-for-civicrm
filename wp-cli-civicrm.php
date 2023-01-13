@@ -121,10 +121,14 @@ class CiviCRM_Command extends WP_CLI_Command {
    * wp civicrm version-db
    * =====================
    * Prints the database version.
+   * Options:
+   * --raw               Print just the version.
    *
    * wp civicrm version-code
    * =======================
    * Prints the code version.
+   * Options:
+   * --raw               Print just the version.
    */
   public function __invoke($args, $assoc_args) {
 
