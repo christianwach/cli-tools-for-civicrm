@@ -32,7 +32,7 @@ There are two ways to install from GitHub:
 
 If you have downloaded *Command Line Tools for CiviCRM* as a ZIP file from the GitHub repository, do the following to install and activate the plugin:
 
-1. Unzip the .zip file and, if needed, rename the enclosing folder so that the plugin's files are located directly inside `/wp-content/plugins/wp-cli-civicrm`
+1. Unzip the .zip file and, if needed, rename the enclosing folder so that the plugin's files are located directly inside `/wp-content/plugins/cli-tools-for-civicrm`
 2. Ensure CiviCRM does not load its wp-cli tools using the code above.
 3. Activate the plugin.
 4. You are done.
