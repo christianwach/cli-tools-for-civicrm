@@ -61,10 +61,10 @@ class CLI_Tools_CiviCRM_Command_Version extends CLI_Tools_CiviCRM_Command {
     $raw = \WP_CLI\Utils\get_flag_value($assoc_args, 'raw', FALSE);
 
     if ($raw) {
-      WP_CLI::line($db_version);
+      WP_CLI::log($db_version);
     }
     else {
-      WP_CLI::line(sprintf('Found CiviCRM database version: %s', $db_version));
+      WP_CLI::log(sprintf('Found CiviCRM database version: %s', $db_version));
     }
 
   }
@@ -98,10 +98,10 @@ class CLI_Tools_CiviCRM_Command_Version extends CLI_Tools_CiviCRM_Command {
     $raw = \WP_CLI\Utils\get_flag_value($assoc_args, 'raw', FALSE);
 
     if ($raw) {
-      WP_CLI::line($code_version);
+      WP_CLI::log($code_version);
     }
     else {
-      WP_CLI::line(sprintf('Found CiviCRM code version: %s', $code_version));
+      WP_CLI::log(sprintf('Found CiviCRM code version: %s', $code_version));
     }
 
   }

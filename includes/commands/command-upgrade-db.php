@@ -79,9 +79,9 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
 
     // Check whether an upgrade is necessary.
     $code_version = CRM_Utils_System::version();
-    WP_CLI::line(sprintf('Found CiviCRM code version: %s', $code_version));
+    WP_CLI::log(sprintf('Found CiviCRM code version: %s', $code_version));
     $db_version = CRM_Core_BAO_Domain::version();
-    WP_CLI::line(sprintf('Found CiviCRM database version: %s', $db_version));
+    WP_CLI::log(sprintf('Found CiviCRM database version: %s', $db_version));
     if (version_compare($code_version, $db_version) == 0) {
       WP_CLI::success(sprintf('You are already upgraded to CiviCRM %s', $code_version));
       WP_CLI::halt(0);
@@ -108,21 +108,21 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
 
     // Check pre-upgrade messages.
     if ($first_try) {
-      WP_CLI::line('Checking pre-upgrade messages.');
+      WP_CLI::log('Checking pre-upgrade messages.');
       $pre_upgrade_message = NULL;
       $upgrade->setPreUpgradeMessage($pre_upgrade_message, $db_version, $code_version);
       if ($pre_upgrade_message) {
-        WP_CLI::line(CRM_Utils_String::htmlToText($pre_upgrade_message));
+        WP_CLI::log(CRM_Utils_String::htmlToText($pre_upgrade_message));
         WP_CLI::confirm('Do you want to continue?', $this->assoc_args);
       }
       else {
-        WP_CLI::line('(No messages)');
+        WP_CLI::log('(No messages)');
       }
     }
 
     // Why is dropTriggers() hard-coded? Can't we just enqueue this as part of buildQueue()?
     if ($first_try) {
-      WP_CLI::line('Dropping SQL triggers.');
+      WP_CLI::log('Dropping SQL triggers.');
       if (empty($dry_run)) {
         CRM_Core_DAO::dropTriggers();
       }
@@ -130,11 +130,11 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
 
     // Let's create a file for storing upgrade messages.
     $post_upgrade_message_file = CRM_Utils_File::tempnam('civicrm-post-upgrade');
-    //WP_CLI::line(sprintf('Created upgrade message file: %s', $post_upgrade_message_file));
+    //WP_CLI::log(sprintf('Created upgrade message file: %s', $post_upgrade_message_file));
 
     // Build the queue.
     if ($first_try) {
-      WP_CLI::line('Preparing upgrade.');
+      WP_CLI::log('Preparing upgrade.');
       $queue = CRM_Upgrade_Form::buildQueue($db_version, $code_version, $post_upgrade_message_file);
       // Sanity check - only SQL queues can be resumed.
       if (!($queue instanceof CRM_Queue_Queue_Sql)) {
@@ -142,7 +142,7 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
       }
     }
     else {
-      WP_CLI::line('Resuming upgrade.');
+      WP_CLI::log('Resuming upgrade.');
       $queue = CRM_Queue_Service::singleton()->load([
         'name' => CRM_Upgrade_Form::QUEUE_NAME,
         'type' => 'Sql',
@@ -150,14 +150,14 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
       if ($skip) {
         $item = $queue->stealItem();
         if (!empty($item->data->title)) {
-          WP_CLI::line(sprintf('Skip task: %s', $item->data->title));
+          WP_CLI::log(sprintf('Skip task: %s', $item->data->title));
           $queue->deleteItem($item);
         }
       }
     }
 
     // Start the upgrade.
-    WP_CLI::line('Executing upgrade.');
+    WP_CLI::log('Executing upgrade.');
     set_time_limit(0);
 
     // Mimic what "Console Queue Runner" does.
@@ -170,7 +170,7 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
       $task = $item->data;
 
       // Feedback.
-      WP_CLI::line($task->title);
+      WP_CLI::log($task->title);
 
       // Get action.
       $action = 'y';
@@ -202,34 +202,34 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
 
     }
 
-    WP_CLI::line('Finishing upgrade.');
+    WP_CLI::log('Finishing upgrade.');
     if (empty($dry_run)) {
       CRM_Upgrade_Form::doFinish();
     }
 
-    WP_CLI::line(sprintf('Upgrade to %s completed.', $code_version));
+    WP_CLI::log(sprintf('Upgrade to %s completed.', $code_version));
 
     if (version_compare($code_version, '5.26.alpha', '<')) {
       // Work-around for bugs like dev/core#1713.
-      WP_CLI::line('Detected CiviCRM 5.25 or earlier. Force flush.');
+      WP_CLI::log('Detected CiviCRM 5.25 or earlier. Force flush.');
       if (empty($dry_run)) {
         \Civi\Cv\Util\Cv::passthru('flush');
       }
     }
 
-    WP_CLI::line('Checking post-upgrade messages.');
+    WP_CLI::log('Checking post-upgrade messages.');
     $message = file_get_contents($post_upgrade_message_file);
     if ($message) {
-      WP_CLI::line(CRM_Utils_String::htmlToText($message));
+      WP_CLI::log(CRM_Utils_String::htmlToText($message));
     }
     else {
-      WP_CLI::line('(No messages)');
+      WP_CLI::log('(No messages)');
     }
 
     // Remove file for storing upgrade messages.
     unlink($post_upgrade_message_file);
 
-    WP_CLI::line('Have a nice day.');
+    WP_CLI::log('Have a nice day.');
 
   }
 
