@@ -13,8 +13,8 @@
  *
  * ## EXAMPLES
  *
- *   $ wp civicrm pipe
- *   {"Civi::pipe":{"v":"5.47.alpha1","t":"trusted","l":["nologin"]}}
+ *     $ wp civicrm pipe
+ *     {"Civi::pipe":{"v":"5.47.alpha1","t":"trusted","l":["nologin"]}}
  *
  * @since 1.0.0
  */
@@ -48,11 +48,11 @@ class CLI_Tools_CiviCRM_Command_Pipe extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
-   *   $ wp civicrm pipe
-   *   {"Civi::pipe":{"v":"5.47.alpha1","t":"trusted","l":["nologin"]}}
+   *     $ wp civicrm pipe
+   *     {"Civi::pipe":{"v":"5.47.alpha1","t":"trusted","l":["nologin"]}}
    *
-   *   $ wp civicrm pipe vu
-   *   {"Civi::pipe":{"v":"5.57.1","u":"untrusted"}}
+   *     $ wp civicrm pipe vu
+   *     {"Civi::pipe":{"v":"5.57.1","u":"untrusted"}}
    *
    * @since 1.0.0
    *

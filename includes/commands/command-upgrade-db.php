@@ -4,8 +4,8 @@
  *
  * ## EXAMPLES
  *
- *   $ wp civicrm upgrade-db
- *   $ wp civicrm upgrade-db --dry-run
+ *     $ wp civicrm upgrade-db
+ *     $ wp civicrm upgrade-db --dry-run
  *
  * @since 1.0.0
  */
@@ -42,27 +42,27 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
-   *   $ wp civicrm upgrade-db --dry-run
-   *   Found CiviCRM code version: 5.57.1
-   *   Found CiviCRM database version: 5.57.0
-   *   Checking pre-upgrade messages.
-   *   (No messages)
-   *   Dropping SQL triggers.
-   *   Preparing upgrade.
-   *   Executing upgrade.
-   *   Cleanup old files
-   *   Cleanup old upgrade snapshots
-   *   Checking extensions
-   *   Finish Upgrade DB to 5.57.1
-   *   Update all reserved message templates
-   *   Finish core DB updates 5.57.1
-   *   Assess extension upgrades
-   *   Generate final messages
-   *   Finishing upgrade.
-   *   Upgrade to 5.57.1 completed.
-   *   Checking post-upgrade messages.
-   *   (No messages)
-   *   Have a nice day.
+   *     $ wp civicrm upgrade-db --dry-run
+   *     Found CiviCRM code version: 5.57.1
+   *     Found CiviCRM database version: 5.57.0
+   *     Checking pre-upgrade messages.
+   *     (No messages)
+   *     Dropping SQL triggers.
+   *     Preparing upgrade.
+   *     Executing upgrade.
+   *     Cleanup old files
+   *     Cleanup old upgrade snapshots
+   *     Checking extensions
+   *     Finish Upgrade DB to 5.57.1
+   *     Update all reserved message templates
+   *     Finish core DB updates 5.57.1
+   *     Assess extension upgrades
+   *     Generate final messages
+   *     Finishing upgrade.
+   *     Upgrade to 5.57.1 completed.
+   *     Checking post-upgrade messages.
+   *     (No messages)
+   *     Have a nice day.
    *
    * @since 1.0.0
    *

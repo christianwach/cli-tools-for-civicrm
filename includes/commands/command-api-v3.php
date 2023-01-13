@@ -4,8 +4,8 @@
  *
  * ## EXAMPLES
  *
- *   $ wp civicrm api contact.get id=10
- *   Output here.
+ *     $ wp civicrm api contact.get id=10
+ *     Output here.
  *
  * @since 1.0.0
  */
@@ -61,10 +61,10 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
-   *   $ wp civicrm api contact.get id=10
-   *   $ wp civicrm api contact.get id=10 --out=json
-   *   $ wp civicrm api group.get id=1 --out=table
-   *   $ echo '{"id":10, "api.Email.get": 1}' | wp cv api contact.get --in=json
+   *     $ wp civicrm api contact.get id=10
+   *     $ wp civicrm api contact.get id=10 --out=json
+   *     $ wp civicrm api group.get id=1 --out=table
+   *     $ echo '{"id":10, "api.Email.get": 1}' | wp cv api contact.get --in=json
    *
    * @since 1.0.0
    *

@@ -13,11 +13,11 @@ defined('ABSPATH') || exit;
  *
  * ## EXAMPLES
  *
- *   $ wp civicrm version db
- *   Found CiviCRM database version: 5.47.1
+ *     $ wp civicrm version db
+ *     Found CiviCRM database version: 5.47.1
  *
- *   $ wp civicrm version db --raw
- *   5.47.1
+ *     $ wp civicrm version db --raw
+ *     5.47.1
  *
  * @since 1.0.0
  */

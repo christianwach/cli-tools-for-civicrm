@@ -4,17 +4,17 @@
  *
  * ## EXAMPLES
  *
- *   $ wp civicrm version db
- *   Found CiviCRM database version: 5.47.1
+ *     $ wp civicrm version db
+ *     Found CiviCRM database version: 5.47.1
  *
- *   $ wp civicrm version db --raw
- *   5.47.1
+ *     $ wp civicrm version db --raw
+ *     5.47.1
  *
- *   $ wp civicrm version code
- *   Found CiviCRM code version: 5.47.0
+ *     $ wp civicrm version code
+ *     Found CiviCRM code version: 5.47.0
  *
- *   $ wp civicrm version code --raw
- *   5.47.0
+ *     $ wp civicrm version code --raw
+ *     5.47.0
  *
  * @since 1.0.0
  */
@@ -42,11 +42,11 @@ class CLI_Tools_CiviCRM_Command_Version extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
-   *   $ wp civicrm version db
-   *   Found CiviCRM database version: 5.47.1
+   *     $ wp civicrm version db
+   *     Found CiviCRM database version: 5.47.1
    *
-   *   $ wp civicrm version db --raw
-   *   5.47.1
+   *     $ wp civicrm version db --raw
+   *     5.47.1
    *
    * @since 1.0.0
    *
@@ -79,11 +79,11 @@ class CLI_Tools_CiviCRM_Command_Version extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
-   *   $ wp civicrm version code
-   *   Found CiviCRM code version: 5.47.0
+   *     $ wp civicrm version code
+   *     Found CiviCRM code version: 5.47.0
    *
-   *   $ wp civicrm version code --raw
-   *   5.47.0
+   *     $ wp civicrm version code --raw
+   *     5.47.0
    *
    * @since 1.0.0
    *

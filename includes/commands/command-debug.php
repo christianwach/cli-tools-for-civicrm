@@ -4,11 +4,11 @@
  *
  * ## EXAMPLES
  *
- *   $ wp civicrm debug enable
- *   Success: Debug setting enabled.
+ *     $ wp civicrm debug enable
+ *     Success: Debug setting enabled.
  *
- *   $ wp civicrm debug disable
- *   Success: Debug setting disabled.
+ *     $ wp civicrm debug disable
+ *     Success: Debug setting disabled.
  *
  * @since 1.0.0
  */
@@ -31,8 +31,8 @@ class CLI_Tools_CiviCRM_Command_Debug extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
-   *   $ wp civicrm debug enable
-   *   Success: Debug setting enabled.
+   *     $ wp civicrm debug enable
+   *     Success: Debug setting enabled.
    *
    * @since 1.0.0
    *
@@ -57,8 +57,8 @@ class CLI_Tools_CiviCRM_Command_Debug extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
-   *   $ wp civicrm debug disable
-   *   Success: Debug setting disabled.
+   *     $ wp civicrm debug disable
+   *     Success: Debug setting disabled.
    *
    * @since 1.0.0
    *

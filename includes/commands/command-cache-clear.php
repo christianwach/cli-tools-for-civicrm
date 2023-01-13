@@ -4,7 +4,7 @@
  *
  * ## EXAMPLES
  *
- *   $ wp civicrm cache-clear
+ *     $ wp civicrm cache-clear
  *
  * @since 1.0.0
  */
@@ -27,7 +27,7 @@ class CLI_Tools_CiviCRM_Command_Cache_Clear extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
-   *   $ wp civicrm cache-clear
+   *     $ wp civicrm cache-clear
    *
    * @since 1.0.0
    *
