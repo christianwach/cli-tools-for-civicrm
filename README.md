@@ -13,7 +13,7 @@ Manage CiviCRM through the command line.
 
 ## Description
 
-*Command Line Tools for CiviCRM* is a WordPress plugin whose primary purpose is for the development of the `wp civicrm` commmand provided by CiviCRM.
+*Command Line Tools for CiviCRM* is a WordPress "Feature Plugin" whose primary purpose is for the development of the `wp civicrm` command provided by CiviCRM.
 
 ## Installation
 
