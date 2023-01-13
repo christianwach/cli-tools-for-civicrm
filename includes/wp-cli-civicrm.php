@@ -22,6 +22,7 @@ WP_CLI::add_hook('before_wp_load', function() {
   require_once __DIR__ . '/commands/command-api-v3.php';
   require_once __DIR__ . '/commands/command-cache-clear.php';
   require_once __DIR__ . '/commands/command-debug.php';
+  require_once __DIR__ . '/commands/command-pipe.php';
   require_once __DIR__ . '/commands/command-upgrade-db.php';
   require_once __DIR__ . '/commands/command-version.php';
 
@@ -44,6 +45,10 @@ WP_CLI::add_hook('before_wp_load', function() {
   // Add Debug command.
   WP_CLI::add_command('civicrm debug', 'CLI_Tools_CiviCRM_Command_Debug', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Debug::check_dependencies']);
   WP_CLI::add_command('cv debug', 'CLI_Tools_CiviCRM_Command_Debug', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Debug::check_dependencies']);
+
+  // Add Pipe command.
+  WP_CLI::add_command('civicrm pipe', 'CLI_Tools_CiviCRM_Command_Pipe', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Pipe::check_dependencies']);
+  WP_CLI::add_command('cv pipe', 'CLI_Tools_CiviCRM_Command_Pipe', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Pipe::check_dependencies']);
 
   // Add database upgrade command.
   WP_CLI::add_command('civicrm upgrade-db', 'CLI_Tools_CiviCRM_Command_Upgrade_DB', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Upgrade_DB::check_dependencies']);
