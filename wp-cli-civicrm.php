@@ -169,12 +169,12 @@ class CiviCRM_Command extends WP_CLI_Command {
 
     // Check for existence of CiviCRM (except for command 'install').
     if (!function_exists('civicrm_initialize') && 'install' != $command) {
-      return WP_CLI::error('Unable to find CiviCRM install.');
+      WP_CLI::error('Unable to find CiviCRM install.');
     }
 
     // Check existence of router entry / handler method.
     if (!isset($command_router[$command]) || !method_exists($this, $command_router[$command])) {
-      return WP_CLI::error(sprintf('Unrecognized command: %s', $command));
+      WP_CLI::error(sprintf('Unrecognized command: %s', $command));
     }
 
     // Run command.
@@ -285,7 +285,7 @@ class CiviCRM_Command extends WP_CLI_Command {
         break;
 
       default:
-        return WP_CLI::error(sprintf('Unknown format: %s', $format));
+        WP_CLI::error(sprintf('Unknown format: %s', $format));
 
     }
 
@@ -371,22 +371,22 @@ class CiviCRM_Command extends WP_CLI_Command {
 
     // Validate install parameters.
     if (!$dbuser = $this->getOption('dbuser', FALSE)) {
-      return WP_CLI::error('CiviCRM database username not specified.');
+      WP_CLI::error('CiviCRM database username not specified.');
     }
     if (!$dbpass = $this->getOption('dbpass', FALSE)) {
-      return WP_CLI::error('CiviCRM database password not specified.');
+      WP_CLI::error('CiviCRM database password not specified.');
     }
     if (!$dbhost = $this->getOption('dbhost', FALSE)) {
-      return WP_CLI::error('CiviCRM database host not specified.');
+      WP_CLI::error('CiviCRM database host not specified.');
     }
     if (!$dbname = $this->getOption('dbname', FALSE)) {
-      return WP_CLI::error('CiviCRM database name not specified.');
+      WP_CLI::error('CiviCRM database name not specified.');
     }
     if ($lang = $this->getOption('lang', FALSE)) {
       $moPath = "$crmPath/l10n/$lang/LC_MESSAGES/civicrm.mo";
 
       if (!($langtarfile = $this->getOption('langtarfile', FALSE)) && !file_exists($moPath)) {
-        return WP_CLI::error("Failed to find data for language ($lang). Please download valid language data with --langtarfile=<path/to/tarfile>.");
+        WP_CLI::error("Failed to find data for language ($lang). Please download valid language data with --langtarfile=<path/to/tarfile>.");
       }
     }
 
@@ -395,20 +395,20 @@ class CiviCRM_Command extends WP_CLI_Command {
       // Should probably never get to here as WordPress CiviCRM comes in a zip file.
       // Check anyway just in case that ever changes.
       if ($crm_files_present) {
-        return WP_CLI::error('Existing CiviCRM found. No action taken.');
+        WP_CLI::error('Existing CiviCRM found. No action taken.');
       }
 
       if (!$this->untar(dirname($plugin_path))) {
-        return WP_CLI::error('Error extracting tarfile.');
+        WP_CLI::error('Error extracting tarfile.');
       }
     }
     elseif ($this->getOption('zipfile', FALSE)) {
       if ($crm_files_present) {
-        return WP_CLI::error('Existing CiviCRM found. No action taken.');
+        WP_CLI::error('Existing CiviCRM found. No action taken.');
       }
 
       if (!$this->unzip(dirname($plugin_path))) {
-        return WP_CLI::error('Error extracting zipfile.');
+        WP_CLI::error('Error extracting zipfile.');
       }
     }
     elseif ($crm_files_present) {
@@ -416,14 +416,14 @@ class CiviCRM_Command extends WP_CLI_Command {
       // We just need to run the installer.
     }
     else {
-      return WP_CLI::error('No zipfile specified. Use "--zipfile=path/to/zipfile" or extract file ahead of time.');
+      WP_CLI::error('No zipfile specified. Use "--zipfile=path/to/zipfile" or extract file ahead of time.');
     }
 
     // Include CiviCRM classloader - so that we can run `Civi\Setup`.
     $classLoaderPath = "$crmPath/CRM/Core/ClassLoader.php";
 
     if (!file_exists($classLoaderPath)) {
-      return WP_CLI::error('Archive could not be unpacked or CiviCRM installer helper file is missing.');
+      WP_CLI::error('Archive could not be unpacked or CiviCRM installer helper file is missing.');
     }
 
     if ($crm_files_present) {
@@ -437,12 +437,12 @@ class CiviCRM_Command extends WP_CLI_Command {
 
     if ($this->getOption('langtarfile', FALSE)) {
       if (!$this->untar($plugin_path, 'langtarfile')) {
-        return WP_CLI::error('Error downloading langtarfile.');
+        WP_CLI::error('Error downloading langtarfile.');
       }
     }
 
     if (!empty($lang) && !file_exists($moPath)) {
-      return WP_CLI::error("Failed to find data for language ($lang). Please download valid language data with \"--langtarfile=<path/to/tarfile>\".");
+      WP_CLI::error("Failed to find data for language ($lang). Please download valid language data with \"--langtarfile=<path/to/tarfile>\".");
     }
 
     // Initialize civicrm-setup.
@@ -555,7 +555,7 @@ class CiviCRM_Command extends WP_CLI_Command {
     civicrm_initialize();
 
     if (!is_callable(['Civi', 'pipe'])) {
-      return WP_CLI::error('This version of CiviCRM does not include Civi::pipe() support.');
+      WP_CLI::error('This version of CiviCRM does not include Civi::pipe() support.');
     }
 
     if (!empty($this->args[1])) {
@@ -605,7 +605,7 @@ class CiviCRM_Command extends WP_CLI_Command {
     civicrm_initialize();
 
     if (!$query = $this->getOption('query', FALSE)) {
-      return WP_CLI::error('query not specified.');
+      WP_CLI::error('query not specified.');
     }
 
     $query     = explode('&', $query);
@@ -650,20 +650,20 @@ class CiviCRM_Command extends WP_CLI_Command {
     $restore_dir = $this->getOption('restore-dir', FALSE);
     $restore_dir = rtrim($restore_dir, '/');
     if (!$restore_dir) {
-      return WP_CLI::error('"restore-dir" not specified.');
+      WP_CLI::error('"restore-dir" not specified.');
     }
 
     $sql_file = $restore_dir . '/civicrm.sql';
     if (!file_exists($sql_file)) {
-      return WP_CLI::error('Could not locate "civicrm.sql" file in the restore directory.');
+      WP_CLI::error('Could not locate "civicrm.sql" file in the restore directory.');
     }
 
     $code_dir = $restore_dir . '/civicrm';
     if (!is_dir($code_dir)) {
-      return WP_CLI::error('Could not locate the CiviCRM directory inside "restore-dir".');
+      WP_CLI::error('Could not locate the CiviCRM directory inside "restore-dir".');
     }
     elseif (!file_exists("$code_dir/civicrm/civicrm-version.txt") && !file_exists("$code_dir/civicrm/civicrm-version.php")) {
-      return WP_CLI::error('The CiviCRM directory inside "restore-dir" does not seem to be a valid CiviCRM codebase.');
+      WP_CLI::error('The CiviCRM directory inside "restore-dir" does not seem to be a valid CiviCRM codebase.');
     }
 
     // Prepare to restore.
@@ -709,17 +709,17 @@ class CiviCRM_Command extends WP_CLI_Command {
     $restore_backup_dir .= '/plugins/restore/' . $date;
 
     if (!mkdir($restore_backup_dir, 0755, TRUE)) {
-      return WP_CLI::error(sprintf('Failed to create directory: %s', $restore_backup_dir));
+      WP_CLI::error(sprintf('Failed to create directory: %s', $restore_backup_dir));
     }
 
     // 1. Backup and restore codebase.
     WP_CLI::line('Restoring CiviCRM codebase...');
     if (is_dir($project_path) && !rename($project_path, $restore_backup_dir . '/civicrm')) {
-      return WP_CLI::error(sprintf("Failed to take backup for '%s' directory", $project_path));
+      WP_CLI::error(sprintf("Failed to take backup for '%s' directory", $project_path));
     }
 
     if (!rename($code_dir, $project_path)) {
-      return WP_CLI::error(sprintf("Failed to restore CiviCRM directory '%s' to '%s'", $code_dir, $project_path));
+      WP_CLI::error(sprintf("Failed to restore CiviCRM directory '%s' to '%s'", $code_dir, $project_path));
     }
 
     WP_CLI::success('Codebase restored.');
@@ -749,7 +749,7 @@ class CiviCRM_Command extends WP_CLI_Command {
 
     // Attempt to drop old database.
     if (system($command . sprintf(' --execute="DROP DATABASE IF EXISTS %s"', $db_spec['database']))) {
-      return WP_CLI::error(sprintf('Could not drop database: %s', $db_spec['database']));
+      WP_CLI::error(sprintf('Could not drop database: %s', $db_spec['database']));
     }
 
     WP_CLI::success('Database dropped.');
@@ -801,7 +801,7 @@ class CiviCRM_Command extends WP_CLI_Command {
 
     civicrm_initialize();
     if (!defined('CIVICRM_DSN')) {
-      return WP_CLI::error('CIVICRM_DSN is not defined.');
+      WP_CLI::error('CIVICRM_DSN is not defined.');
     }
 
     $dsn = DB::parseDSN(CIVICRM_DSN);
@@ -818,7 +818,7 @@ class CiviCRM_Command extends WP_CLI_Command {
       $command .= ' --port=' . $dsn['port'];
     }
 
-    return WP_CLI::line($command);
+    WP_CLI::line($command);
 
   }
 
@@ -992,7 +992,7 @@ class CiviCRM_Command extends WP_CLI_Command {
     // TODO: Use wp-cli to download tarfile.
     // TODO: If tarfile is not specified, see if the code already exists and use that instead.
     if (!$this->getOption('tarfile', FALSE) && !$this->getOption('zipfile', FALSE)) {
-      return WP_CLI::error('Must specify either --tarfile or --zipfile');
+      WP_CLI::error('Must specify either --tarfile or --zipfile');
     }
 
     // FIXME: Throw error if tarfile is not in a valid format.
@@ -1010,7 +1010,7 @@ class CiviCRM_Command extends WP_CLI_Command {
     $upload_dir = wp_upload_dir();
     $settings_file = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'civicrm' . DIRECTORY_SEPARATOR . 'civicrm.settings.php';
     if (!file_exists($legacy_settings_file) && !file_exists($settings_file)) {
-      return WP_CLI::error(sprintf('Unable to locate settings file at "%s" or at "%s"', $legacy_settings_file, $settings_file));
+      WP_CLI::error(sprintf('Unable to locate settings file at "%s" or at "%s"', $legacy_settings_file, $settings_file));
     }
 
     /*
@@ -1033,7 +1033,7 @@ class CiviCRM_Command extends WP_CLI_Command {
       $settings = file_get_contents($settings_file);
     }
     if (empty($settings)) {
-      return WP_CLI::error('Unable to read settings from civicrm.settings.php');
+      WP_CLI::error('Unable to read settings from civicrm.settings.php');
     }
 
     // Parse the content of the settings file.
@@ -1047,10 +1047,10 @@ class CiviCRM_Command extends WP_CLI_Command {
       // phpcs:enable
     }
     else {
-      return WP_CLI::error('Unable to read $civicrm_root from civicrm.settings.php');
+      WP_CLI::error('Unable to read $civicrm_root from civicrm.settings.php');
     }
     if (empty($civicrm_root)) {
-      return WP_CLI::error('Unable to set $civicrm_root.');
+      WP_CLI::error('Unable to set $civicrm_root.');
     }
 
     // Try and retrieve CIVICRM_DSN.
@@ -1061,10 +1061,10 @@ class CiviCRM_Command extends WP_CLI_Command {
       // phpcs:enable
     }
     else {
-      return WP_CLI::error('Unable to read CIVICRM_DSN from civicrm.settings.php');
+      WP_CLI::error('Unable to read CIVICRM_DSN from civicrm.settings.php');
     }
     if (!defined('CIVICRM_OLD_DSN')) {
-      return WP_CLI::error('Unable to set CIVICRM_OLD_DSN.');
+      WP_CLI::error('Unable to set CIVICRM_OLD_DSN.');
     }
 
     $date = date('YmdHis');
@@ -1105,13 +1105,13 @@ class CiviCRM_Command extends WP_CLI_Command {
     // Begin upgrade.
     $backup_dir .= '/plugins/' . $date;
     if (!mkdir($backup_dir, 0755, TRUE)) {
-      return WP_CLI::error(sprintf('Failed to create directory: %s', $backup_dir));
+      WP_CLI::error(sprintf('Failed to create directory: %s', $backup_dir));
     }
 
     // Move current plugin directory to backup.
     $backup_target = $backup_dir . '/' . $backup_file;
     if (!rename($project_path, $backup_target)) {
-      return WP_CLI::error(sprintf('Failed to backup CiviCRM project directory %s to %s', $project_path, $backup_target));
+      WP_CLI::error(sprintf('Failed to backup CiviCRM project directory %s to %s', $project_path, $backup_target));
     }
 
     WP_CLI::line();
@@ -1129,16 +1129,16 @@ class CiviCRM_Command extends WP_CLI_Command {
     if ($this->getOption('tarfile', FALSE)) {
       // Should probably never get to here, because WordPress CiviCRM comes in a zip file.
       if (!$this->untar($plugin_path)) {
-        return WP_CLI::error('Error extracting tarfile');
+        WP_CLI::error('Error extracting tarfile');
       }
     }
     elseif ($this->getOption('zipfile', FALSE)) {
       if (!$this->unzip($plugin_path)) {
-        return WP_CLI::error('Error extracting zipfile');
+        WP_CLI::error('Error extracting zipfile');
       }
     }
     else {
-      return WP_CLI::error('No zipfile specified, use --zipfile=path/to/zipfile');
+      WP_CLI::error('No zipfile specified, use --zipfile=path/to/zipfile');
     }
 
     WP_CLI::success('3. Archive unpacked.');
@@ -1156,7 +1156,7 @@ class CiviCRM_Command extends WP_CLI_Command {
      * not yet exist, however.
      */
     if (!copy($backup_dir . '/civicrm/civicrm.settings.php', CIVICRM_SETTINGS_PATH)) {
-      return WP_CLI::error('Failed to copy file.');
+      WP_CLI::error('Failed to copy file.');
     }
 
     WP_CLI::success('4. Settings file copied.');
@@ -1187,7 +1187,8 @@ class CiviCRM_Command extends WP_CLI_Command {
     $db_version = CRM_Core_BAO_Domain::version();
     WP_CLI::line(sprintf('Found CiviCRM database version: %s', $db_version));
     if (version_compare($code_version, $db_version) == 0) {
-      return WP_CLI::success(sprintf('You are already upgraded to CiviCRM %s', $code_version));
+      WP_CLI::success(sprintf('You are already upgraded to CiviCRM %s', $code_version));
+      WP_CLI::halt(0);
     }
 
     // Get options.
@@ -1199,14 +1200,14 @@ class CiviCRM_Command extends WP_CLI_Command {
 
     // Bail if incomplete upgrade.
     if ($first_try && FALSE !== stripos($db_version, 'upgrade')) {
-      return WP_CLI::error('Cannot begin upgrade: The database indicates that an incomplete upgrade is pending. If you would like to resume, use --retry or --skip.');
+      WP_CLI::error('Cannot begin upgrade: The database indicates that an incomplete upgrade is pending. If you would like to resume, use --retry or --skip.');
     }
 
     // Bootstrap upgrader.
     $upgrade = new CRM_Upgrade_Form();
     $error = $upgrade->checkUpgradeableVersion($db_version, $code_version);
     if (!empty($error)) {
-      return WP_CLI::error($error);
+      WP_CLI::error($error);
     }
 
     if ($first_try) {
@@ -1240,7 +1241,7 @@ class CiviCRM_Command extends WP_CLI_Command {
       $queue = CRM_Upgrade_Form::buildQueue($db_version, $code_version, $post_upgrade_message_file);
       // Sanity check - only SQL queues can be resumed.
       if (!($queue instanceof CRM_Queue_Queue_Sql)) {
-        return WP_CLI::error('The "upgrade-db" command only supports SQL-based queues.');
+        WP_CLI::error('The "upgrade-db" command only supports SQL-based queues.');
       }
     }
     else {
@@ -1291,12 +1292,12 @@ class CiviCRM_Command extends WP_CLI_Command {
         try {
           $success = $task->run($task_context);
           if (!$success) {
-            return WP_CLI::error('Task returned false');
+            WP_CLI::error('Task returned false');
           }
         }
         catch (\Exception $e) {
           // WISHLIST: For interactive mode, perhaps allow retry/skip?
-          return WP_CLI::error(sprintf('Error executing task "%s"', $task->title));
+          WP_CLI::error(sprintf('Error executing task "%s"', $task->title));
         }
       }
 
