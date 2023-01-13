@@ -50,7 +50,7 @@ class CLI_Tools_CiviCRM_Command_Cache_Clear extends CLI_Tools_CiviCRM_Command {
     $session = CRM_Core_Session::singleton();
     $session->reset(1);
 
-    WP_CLI::line('CiviCRM cache cleared.');
+    WP_CLI::success('CiviCRM cache cleared.');
 
   }
 
