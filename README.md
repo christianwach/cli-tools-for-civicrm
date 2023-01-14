@@ -59,10 +59,9 @@ This will enable the multi-class structure that WP-CLI expects.
 | --- | --- |
 | `wp civicrm disable-debug` | `wp civicrm debug disable` |
 | `wp civicrm enable-debug` | `wp civicrm debug enable` |
-| `wp civicrm member-records` | `wp civicrm job member-records` |
-| `wp civicrm process-mail-queue` | `wp civicrm job process-mail-queue` |
-| `wp civicrm sql-conf` | `wp civicrm sql config` |
-| `wp civicrm sql-connect` | `wp civicrm sql connect` |
+| `wp civicrm member-records` | `wp civicrm job member-records` or `wp civicrm job membership` |
+| `wp civicrm process-mail-queue` | `wp civicrm job process-mail-queue` or `wp civicrm job mailing` |
+| `wp civicrm sql-conf` | `wp civicrm sql config` or `wp civicrm sql conf` |
 | `wp civicrm sql-connect` | `wp civicrm sql connect` |
 | `wp civicrm sql-cli` | `wp civicrm sql cli` |
 | `wp civicrm sql-dump` | `wp civicrm sql dump` |
