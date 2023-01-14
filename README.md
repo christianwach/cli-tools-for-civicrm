@@ -52,3 +52,31 @@ define( 'COMMAND_LINE_CIVICRM_LATEST', 1 );
 ```
 
 This will enable the multi-class structure that WP-CLI expects.
+
+### Commands that have changed
+
+| Old Command | New Command |
+| --- | --- |
+| `wp civicrm disable-debug` | `wp civicrm debug disable` |
+| `wp civicrm enable-debug` | `wp civicrm debug enable` |
+| `wp civicrm member-records` | `wp civicrm job member-records` |
+| `wp civicrm process-mail-queue` | `wp civicrm job process-mail-queue` |
+| `wp civicrm sql-conf` | `wp civicrm sql config` |
+| `wp civicrm sql-connect` | `wp civicrm sql connect` |
+| `wp civicrm sql-connect` | `wp civicrm sql connect` |
+| `wp civicrm sql-cli` | `wp civicrm sql cli` |
+| `wp civicrm sql-dump` | `wp civicrm sql dump` |
+| `wp civicrm sql-query` | `wp civicrm sql query` |
+| `wp civicrm version-code` | `wp civicrm version code` |
+| `wp civicrm version-db` | `wp civicrm version db` |
+
+### Commands that have been dropped
+
+* `wp civicrm rest`: use [CiviCRM's WordPress REST API](https://github.com/civicrm/civicrm-wordpress/tree/master/wp-rest) instead.
+
+### Commands still to migrate
+
+* `wp civicrm install`
+* `wp civicrm restore`
+* `wp civicrm upgrade`
+* `wp civicrm update-cfg`
