@@ -116,6 +116,8 @@ class CLI_Tools_CiviCRM_Command_SQL extends CLI_Tools_CiviCRM_Command {
    *     | new_link | true           |
    *     +----------+----------------+
    *
+   * @alias conf
+   *
    * @since 1.0.0
    *
    * @param array $args The WP-CLI positional arguments.
