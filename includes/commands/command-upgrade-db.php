@@ -113,7 +113,7 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
       $upgrade->setPreUpgradeMessage($pre_upgrade_message, $db_version, $code_version);
       if ($pre_upgrade_message) {
         WP_CLI::log(CRM_Utils_String::htmlToText($pre_upgrade_message));
-        WP_CLI::confirm('Do you want to continue?', $this->assoc_args);
+        WP_CLI::confirm('Do you want to continue?', $assoc_args);
       }
       else {
         WP_CLI::log('(No messages)');
