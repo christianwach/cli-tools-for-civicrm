@@ -163,6 +163,8 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
     // Mimic what "Console Queue Runner" does.
     $task_context = new CRM_Queue_TaskContext();
     $task_context->queue = $queue;
+    $task_context->log = \Log::singleton('display');
+
     while ($queue->numberOfItems()) {
 
       // In case we're retrying a failed job.
