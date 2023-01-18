@@ -40,9 +40,15 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
    * [--step]
    * : Run the upgrade queue in steps, pausing before each step.
    *
+   * [--v]
+   * : Run the upgrade queue with verbose output.
+   *
+   * [--vv]
+   * : Run the upgrade queue with extra verbose output.
+   *
    * ## EXAMPLES
    *
-   *     $ wp civicrm upgrade-db --dry-run
+   *     $ wp civicrm upgrade-db --dry-run --v
    *     Found CiviCRM code version: 5.57.1
    *     Found CiviCRM database version: 5.57.0
    *     Checking pre-upgrade messages.
@@ -79,9 +85,9 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
 
     // Check whether an upgrade is necessary.
     $code_version = CRM_Utils_System::version();
-    WP_CLI::log(sprintf('Found CiviCRM code version: %s', $code_version));
+    WP_CLI::log(sprintf(WP_CLI::colorize('%GFound CiviCRM code version:%n %Y%s%n'), $code_version));
     $db_version = CRM_Core_BAO_Domain::version();
-    WP_CLI::log(sprintf('Found CiviCRM database version: %s', $db_version));
+    WP_CLI::log(sprintf(WP_CLI::colorize('%GFound CiviCRM database version:%n %Y%s%n'), $db_version));
     if (version_compare($code_version, $db_version) == 0) {
       WP_CLI::success(sprintf('You are already upgraded to CiviCRM %s', $code_version));
       WP_CLI::halt(0);
@@ -93,6 +99,17 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
     $skip = \WP_CLI\Utils\get_flag_value($assoc_args, 'skip', FALSE);
     $step = \WP_CLI\Utils\get_flag_value($assoc_args, 'step', FALSE);
     $first_try = (empty($retry) && empty($skip)) ? TRUE : FALSE;
+
+    // Get verbosity.
+    $verbose = \WP_CLI\Utils\get_flag_value($assoc_args, 'v', FALSE);
+    $verbose_extra = \WP_CLI\Utils\get_flag_value($assoc_args, 'vv', FALSE);
+
+    // When stepping, we need at least "verbose".
+    if (!empty($step)) {
+      if (empty($verbose_extra) && empty($verbose)) {
+        $verbose = TRUE;
+      }
+    }
 
     // Bail if incomplete upgrade.
     if ($first_try && FALSE !== stripos($db_version, 'upgrade')) {
@@ -108,12 +125,12 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
 
     // Check pre-upgrade messages.
     if ($first_try) {
-      WP_CLI::log('Checking pre-upgrade messages.');
+    WP_CLI::log(WP_CLI::colorize('%gChecking pre-upgrade messages.%n'));
       $preUpgradeMessage = NULL;
       $upgrade->setPreUpgradeMessage($preUpgradeMessage, $db_version, $code_version);
       if ($preUpgradeMessage) {
         WP_CLI::log(CRM_Utils_String::htmlToText($preUpgradeMessage));
-        WP_CLI::confirm('Do you want to continue?', $assoc_args);
+        WP_CLI::confirm(WP_CLI::colorize('%GDo you want to continue?%n'), $assoc_args);
       }
       else {
         WP_CLI::log('(No messages)');
@@ -122,7 +139,7 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
 
     // Why is dropTriggers() hard-coded? Can't we just enqueue this as part of buildQueue()?
     if ($first_try) {
-      WP_CLI::log('Dropping SQL triggers.');
+      WP_CLI::log(WP_CLI::colorize('%gDropping SQL triggers.%n'));
       if (empty($dry_run)) {
         CRM_Core_DAO::dropTriggers();
       }
@@ -134,7 +151,7 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
 
     // Build the queue.
     if ($first_try) {
-      WP_CLI::log('Preparing upgrade.');
+      WP_CLI::log(WP_CLI::colorize('%gPreparing upgrade.%n'));
       $queue = CRM_Upgrade_Form::buildQueue($db_version, $code_version, $post_upgrade_message_file);
       // Sanity check - only SQL queues can be resumed.
       if (!($queue instanceof CRM_Queue_Queue_Sql)) {
@@ -142,7 +159,7 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
       }
     }
     else {
-      WP_CLI::log('Resuming upgrade.');
+      WP_CLI::log(WP_CLI::colorize('%Resuming upgrade.%n'));
       $queue = CRM_Queue_Service::singleton()->load([
         'name' => CRM_Upgrade_Form::QUEUE_NAME,
         'type' => 'Sql',
@@ -157,13 +174,21 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
     }
 
     // Start the upgrade.
-    WP_CLI::log('Executing upgrade.');
+    WP_CLI::log(WP_CLI::colorize('%gExecuting upgrade.%n'));
     set_time_limit(0);
 
     // Mimic what "Console Queue Runner" does.
     $task_context = new CRM_Queue_TaskContext();
     $task_context->queue = $queue;
-    $task_context->log = \Log::singleton('display');
+
+    // Maybe suppress Task Context logger output.
+    if (empty($verbose_extra) && empty($verbose)) {
+      $task_context->log = new class {
+        public function info($param) {}
+      };
+    } else {
+      $task_context->log = \Log::singleton('display');
+    }
 
     while ($queue->numberOfItems()) {
 
@@ -172,7 +197,14 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
       $task = $item->data;
 
       // Feedback.
-      WP_CLI::log($task->title);
+      if (!empty($verbose_extra)) {
+        $feedback = self::format_task_callback($task);
+        WP_CLI::log(WP_CLI::colorize('%g' . $task->title . '%n') . ' ' . WP_CLI::colorize($feedback));
+      } elseif (!empty($verbose)) {
+        WP_CLI::log(WP_CLI::colorize('%g' . $task->title . '%n'));
+      } else {
+        echo '.';
+      }
 
       // Get action.
       $action = 'y';
@@ -204,22 +236,27 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
 
     }
 
-    WP_CLI::log('Finishing upgrade.');
+    // End feedback.
+    if (empty($verbose_extra) && empty($verbose)) {
+      echo "\n";
+    }
+
+    WP_CLI::log(WP_CLI::colorize('%gFinishing upgrade.%n'));
     if (empty($dry_run)) {
       CRM_Upgrade_Form::doFinish();
     }
 
-    WP_CLI::log(sprintf('Upgrade to %s completed.', $code_version));
+    WP_CLI::log(sprintf(WP_CLI::colorize('%GUpgrade to%n %Y%s%n %Gcompleted.%n'), $code_version));
 
     if (version_compare($code_version, '5.26.alpha', '<')) {
       // Work-around for bugs like dev/core#1713.
-      WP_CLI::log('Detected CiviCRM 5.25 or earlier. Force flush.');
+      WP_CLI::log(WP_CLI::colorize('%GDetected CiviCRM 5.25 or earlier. Force flush.%n'));
       if (empty($dry_run)) {
         \Civi\Cv\Util\Cv::passthru('flush');
       }
     }
 
-    WP_CLI::log('Checking post-upgrade messages.');
+    WP_CLI::log(WP_CLI::colorize('%GChecking post-upgrade messages.%n'));
     $message = file_get_contents($post_upgrade_message_file);
     if ($message) {
       WP_CLI::log(CRM_Utils_String::htmlToText($message));
@@ -231,7 +268,68 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
     // Remove file for storing upgrade messages.
     unlink($post_upgrade_message_file);
 
-    WP_CLI::log('Have a nice day.');
+    WP_CLI::log(WP_CLI::colorize('%GHave a nice day.%n'));
+
+  }
+
+  /**
+   * Format the task for when run with extra verbosity.
+   *
+   * This method re-builds the task arguments because some of them may themselves be arrays.
+   *
+   * @since 1.0.0
+   *
+   * @param CRM_Queue_Task $task The CiviCRM task object.
+   * @return string $task The CiviCRM task object.
+   */
+  private static function format_task_callback($task) {
+
+    $callback_info = implode('::', (array) $task->callback);
+    $args_info = self::implode_recursive((array) $task->arguments);
+
+    // Build string with colorization tokens.
+    $feedback = '%y' . $callback_info . '(' . $args_info . '%n)';
+
+    return $feedback;
+
+  }
+
+  /**
+   * Recursively implode an array.
+   *
+   * @since 1.0.0
+   *
+   * @param array $value The array to implode.
+   * @param integer $level The current level.
+   * @return string
+   */
+  private static function implode_recursive($value, $level=0) {
+
+    // Maybe recurse.
+    $array = [];
+    if (is_array($value)) {
+      foreach($value as $val) {
+        if (is_array($val)) {
+          $array[] = self::implode_recursive($val, $level+1);
+        }
+        else {
+          $array[] = $val;
+        }
+      }
+    }
+    else {
+      $array[] = $value;
+    }
+
+    // Wrap sub-arrays but leave top level alone.
+		if ($level > 0) {
+		  $string = '[' . implode(',', $array) . ']';
+		}
+		else {
+		  $string = implode(',', $array);
+		}
+
+    return $string;
 
   }
 
