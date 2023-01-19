@@ -5,9 +5,6 @@
  * @package Command_Line_Tools_for_CiviCRM
  */
 
-// Exit if accessed directly.
-defined('ABSPATH') || exit;
-
 // Bail if WP-CLI is not present.
 if (!class_exists('WP_CLI')) {
   return;
