@@ -42,16 +42,14 @@ If you have cloned the code from GitHub, it is assumed that you know what you're
 
 ## Development
 
-If you would like to help migrate the Command Line Tools to a more compatible structure, then add the Add the following code to your `wp-config.php` file (or create a "Must Use" plugin that contains the code):
+By default, this plugin will load the Command Line Tools in a multi-class structure that WP-CLI expects and which enables proper documentation of the `civicrm` command and all its sub-commands. It is not, however, complete yet. If you need one of the following commands:
 
-```php
-/**
- * Enable the latest Command Line Tools for CiviCRM.
- */
-define( 'COMMAND_LINE_CIVICRM_LATEST', 1 );
-```
+* `wp civicrm install`
+* `wp civicrm restore`
+* `wp civicrm upgrade`
+* `wp civicrm update-cfg`
 
-This will enable the multi-class structure that WP-CLI expects.
+Then simply comment out your `CIVICRM_WPCLI_LOADED` define and then you can use those commands as supplied by CiviCRM.
 
 ### Commands that have changed
 
@@ -71,11 +69,4 @@ This will enable the multi-class structure that WP-CLI expects.
 
 ### Commands that have been dropped
 
-* `wp civicrm rest`: use [CiviCRM's WordPress REST API](https://github.com/civicrm/civicrm-wordpress/tree/master/wp-rest) instead.
-
-### Commands still to migrate
-
-* `wp civicrm install`
-* `wp civicrm restore`
-* `wp civicrm upgrade`
-* `wp civicrm update-cfg`
+* `wp civicrm rest`: use [CiviCRM's WordPress REST API](https://github.com/civicrm/civicrm-wordpress/tree/master/wp-rest) or `wp civicrm api` instead.

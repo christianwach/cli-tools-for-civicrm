@@ -77,11 +77,11 @@ class Command_Line_Tools_for_CiviCRM {
     }
 
     // Load our wp-cli tools.
-    if (defined('COMMAND_LINE_CIVICRM_LATEST')) {
-      require COMMAND_LINE_CIVICRM_PATH . 'includes/wp-cli-civicrm.php';
+    if (defined('COMMAND_LINE_CIVICRM_LEGACY')) {
+      require COMMAND_LINE_CIVICRM_PATH . 'includes/wp-cli-civicrm-legacy.php';
     }
     else {
-      require COMMAND_LINE_CIVICRM_PATH . 'includes/wp-cli-civicrm-legacy.php';
+      require COMMAND_LINE_CIVICRM_PATH . 'includes/wp-cli-civicrm.php';
     }
 
   }
