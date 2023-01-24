@@ -4,7 +4,7 @@
  *
  * ## EXAMPLES
  *
- *     $ wp civicrm install --zipfile=~/civicrm-5.57.1-wordpress.zip
+ *     $ wp civicrm install --zipfile=~/civicrm-5.57.1-wordpress.zip --ssl=on
  *
  * @since 1.0.0
  */
@@ -47,7 +47,25 @@ class CLI_Tools_CiviCRM_Command_Install extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
-   *     $ wp civicrm install --zipfile=~/civicrm-5.57.1-wordpress.zip
+   *     $ wp civicrm install --zipfile=~/civicrm-5.57.1-wordpress.zip --ssl=on
+   *     CiviCRM database credentials:
+   *     +----------+-----------------------+
+   *     | Field    | Value                 |
+   *     +----------+-----------------------+
+   *     | Database | civicrm_database_name |
+   *     | Username | foo                   |
+   *     | Password | dbpassword            |
+   *     | Host     | localhost             |
+   *     +----------+-----------------------+
+   *     CiviCRM install configuration:
+   *     +----------------+------------------------------------------+
+   *     | Field          | Value                                    |
+   *     +----------------+------------------------------------------+
+   *     | SSL            | On                                       |
+   *     | Plugin path    | /www/httpdocs/wp-content/plugins/civicrm |
+   *     | Plugin archive | ~/civicrm-5.57.1-wordpress.zip           |
+   *     +----------------+------------------------------------------+
+   *     Do you want to continue? [y/n]
    *
    * @since 1.0.0
    *
