@@ -19,6 +19,7 @@ WP_CLI::add_hook('before_wp_load', function() {
   require_once __DIR__ . '/commands/command-api-v3.php';
   require_once __DIR__ . '/commands/command-cache-clear.php';
   require_once __DIR__ . '/commands/command-debug.php';
+  require_once __DIR__ . '/commands/command-install.php';
   require_once __DIR__ . '/commands/command-job.php';
   require_once __DIR__ . '/commands/command-pipe.php';
   require_once __DIR__ . '/commands/command-sql.php';
@@ -44,6 +45,10 @@ WP_CLI::add_hook('before_wp_load', function() {
   // Add Debug command.
   WP_CLI::add_command('civicrm debug', 'CLI_Tools_CiviCRM_Command_Debug', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Debug::check_dependencies']);
   WP_CLI::add_command('cv debug', 'CLI_Tools_CiviCRM_Command_Debug', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Debug::check_dependencies']);
+
+  // Add Install command.
+  WP_CLI::add_command('civicrm install', 'CLI_Tools_CiviCRM_Command_Install');
+  WP_CLI::add_command('cv install', 'CLI_Tools_CiviCRM_Command_Install');
 
   // Add Job command.
   WP_CLI::add_command('civicrm job', 'CLI_Tools_CiviCRM_Command_Job', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Job::check_dependencies']);

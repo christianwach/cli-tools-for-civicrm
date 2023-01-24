@@ -90,4 +90,148 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
     return \WP_CLI\Utils\get_flag_value($assoc_args, $name, $default);
   }
 
+  /**
+   * Extracts a tar.gz archive.
+   *
+   * @since 1.0.0
+   *
+   * @param string $destination The path to extract to.
+   * @param array $assoc_args The WP-CLI associative arguments.
+   * @param string $option The command line option to get input filename from, defaults to 'tarfile'.
+   * @return bool True if successful, false otherwise.
+   */
+  public function untar($destination, $assoc_args, $option = 'tarfile') {
+
+    // Grab path to tarfile.
+    $tarfile = \WP_CLI\Utils\get_flag_value($assoc_args, $option, FALSE);
+    if (empty($tarfile)) {
+      return FALSE;
+    }
+
+    // Let's handle errors here.
+    $exit_on_error = false;
+    $return_detailed = true;
+
+    WP_CLI::log(WP_CLI::colorize('%GExtracting tar.gz archive.%n'));
+
+    // First unzip the gz archive.
+    $cmd = "gzip -d $tarfile";
+    $process_run = WP_CLI::launch($cmd, $exit_on_error, $return_detailed);
+    //WP_CLI::log(print_r($process_run, TRUE));
+    if (0 !== $process_run->return_code) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to extract gz archive: %y%s.%n'), $this->tar_error_msg($process_run)));
+    }
+
+    // Next untar the tarball.
+    $tarfile = substr($tarfile, 0, strlen($tarfile) - 3);
+    $cmd = "tar -xf $tarfile -C \"$destination\"";
+    $process_run = WP_CLI::launch($cmd, $exit_on_error, $return_detailed);
+    //WP_CLI::log(print_r($process_run, TRUE));
+    if (0 !== $process_run->return_code) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to extract tarball: %y%s.%n'), $this->tar_error_msg($process_run)));
+    }
+
+    return TRUE;
+
+  }
+
+  /**
+   * Extracts a zip archive.
+   *
+   * Note: if no extension is supplied, `unzip` will check for "filename.zip" and "filename.ZIP"
+   * in the same location.
+   *
+   * @since 1.0.0
+   *
+   * @param string $destination The path to extract to.
+   * @param array $assoc_args The WP-CLI associative arguments.
+   * @param string $option The command line option to get zip filename from, defaults to 'zipfile'.
+   * @return bool True if successful, false otherwise.
+   */
+  public function unzip($destination, $assoc_args, $option = 'zipfile') {
+
+    // Grab path to zipfile.
+    $zipfile = \WP_CLI\Utils\get_flag_value($assoc_args, $option, FALSE);
+    if (empty($zipfile)) {
+      return FALSE;
+    }
+
+    WP_CLI::log(WP_CLI::colorize('%GExtracting zip archive.%n'));
+
+    // Let's handle errors here.
+    $exit_on_error = false;
+    $return_detailed = true;
+
+    // Run the command.
+    $cmd = "unzip -q $zipfile -d $destination";
+    $process_run = WP_CLI::launch($cmd, $exit_on_error, $return_detailed);
+    //WP_CLI::log(print_r($process_run, TRUE));
+    if (0 !== $process_run->return_code) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to extract zip archive: %y%s.%n'), $this->zip_error_msg($process_run->return_code)));
+    }
+
+    return TRUE;
+
+  }
+
+  /**
+   * Returns a formatted error message from a ProcessRun command.
+   *
+   * @since 1.0.0
+   *
+   * @param object $process_run The ProcessRun object.
+   * @return string|int The error message of the process if available, otherwise the return code.
+   */
+  private function tar_error_msg($process_run) {
+    $stderr = trim($process_run->stderr);
+    $nl_pos = strpos($stderr, "\n");
+    if (FALSE !== $nl_pos) {
+      $stderr = trim(substr($stderr, 0, $nl_pos));
+    }
+    if ($stderr) {
+      return sprintf('%s (%d)', $stderr, $process_run->return_code);
+    }
+
+    return $process_run->return_code;
+
+  }
+
+  /**
+   * Returns a formatted `unzip` error message for a given error code.
+   *
+   * @since 1.0.0
+   *
+   * @param int $error_code The error code.
+   * @return string $error_code The formatted error code.
+   */
+  private function zip_error_msg($error_code) {
+
+    $zip_err_msgs = [
+      0 => 'No errors or warnings detected.',
+      1 => 'One or more warning errors were encountered, but processing completed successfully anyway. This includes zipfiles where one or more files was skipped due to unsupported compression method or encryption with an unknown password.',
+      2 => 'A generic error in the zipfile format was detected. Processing may have completed successfully anyway; some broken zipfiles created by other archivers have simple work-arounds.',
+      3 => 'A severe error in the zipfile format was detected. Processing probably failed immediately.',
+      4 => 'unzip was unable to allocate memory for one or more buffers during program initialization.',
+      5 => 'unzip was unable to allocate memory or unable to obtain a tty to read the decryption password(s).',
+      6 => 'unzip was unable to allocate memory during decompression to disk.',
+      7 => 'unzip was unable to allocate memory during in-memory decompression.',
+      8 => '[currently not used]',
+      9 => 'The specified zipfiles were not found.',
+      10 => 'Invalid options were specified on the command line.',
+      11 => 'No matching files were found.',
+      50 => 'The disk is (or was) full during extraction.',
+      51 => 'The end of the ZIP archive was encountered prematurely.',
+      80 => 'The user aborted unzip prematurely with control-C (or similar)',
+      81 => 'Testing or extraction of one or more files failed due to unsupported compression methods or unsupported decryption.',
+      82 => 'No files were found due to bad decryption password(s). (If even one file is successfully processed, however, the exit status is 1.)',
+    ];
+
+    if (isset($zip_err_msgs[$error_code])) {
+      return sprintf('%s (%d)', $zip_err_msgs[$error_code], $error_code);
+    }
+
+    return $error_code;
+
+  }
+
 }
