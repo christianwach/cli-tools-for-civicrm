@@ -19,17 +19,17 @@ defined('ABSPATH') || exit;
 define('COMMAND_LINE_CIVICRM_VERSION', '1.0.0a');
 
 // Store reference to this file.
-if (!defined( 'COMMAND_LINE_CIVICRM_FILE')) {
+if (!defined('COMMAND_LINE_CIVICRM_FILE')) {
   define('COMMAND_LINE_CIVICRM_FILE', __FILE__);
 }
 
 // Store URL to this plugin's directory.
-if (!defined( 'COMMAND_LINE_CIVICRM_URL')) {
+if (!defined('COMMAND_LINE_CIVICRM_URL')) {
   define('COMMAND_LINE_CIVICRM_URL', plugin_dir_url(COMMAND_LINE_CIVICRM_FILE));
 }
 
 // Store PATH to this plugin's directory.
-if (!defined( 'COMMAND_LINE_CIVICRM_PATH')) {
+if (!defined('COMMAND_LINE_CIVICRM_PATH')) {
   define('COMMAND_LINE_CIVICRM_PATH', plugin_dir_path(COMMAND_LINE_CIVICRM_FILE));
 }
 

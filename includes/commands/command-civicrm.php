@@ -31,7 +31,7 @@ class CLI_Tools_CiviCRM_Command extends CLI_Tools_CiviCRM_Command_Base {
    * @param object $command The command.
    * @return array $info The array of information about the command.
    */
-  private function command_to_array( $command ) {
+  private function command_to_array($command) {
 
     $info = [
       'name' => $command->get_name(),
@@ -40,7 +40,7 @@ class CLI_Tools_CiviCRM_Command extends CLI_Tools_CiviCRM_Command_Base {
     ];
 
     foreach ($command->get_subcommands() as $subcommand) {
-      $info['subcommands'][] = $this->command_to_array( $subcommand );
+      $info['subcommands'][] = $this->command_to_array($subcommand);
     }
 
     if (empty($info['subcommands'])) {

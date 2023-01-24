@@ -142,7 +142,7 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
       // Display output as table.
       case 'table':
         $assoc_args['format'] = $out_format;
-        if (count( $result['values'] ) === 1) {
+        if (count($result['values']) === 1) {
           $item = array_pop($result['values']);
           $assoc_args['fields'] = array_keys($item);
           $formatter = $this->get_formatter($assoc_args);
@@ -152,6 +152,8 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
 
           // Give up and log usual output.
           WP_CLI::log(print_r($result, TRUE));
+
+          // phpcs:disable
 
           /*
           // Testing whether we can do this. It's hard, but kinda works.
@@ -182,6 +184,8 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
 
           $formatter->display_items($result['values']);
           */
+
+          // phpcs:enable
 
         }
         break;

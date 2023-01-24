@@ -49,9 +49,11 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
     // Get user depending on type of param.
     if (is_numeric($identifier)) {
       $user = get_user_by('id', $identifier);
-    } elseif (is_email($identifier)) {
+    }
+    elseif (is_email($identifier)) {
       $user = get_user_by('email', $identifier);
-    } else {
+    }
+    else {
       $user = get_user_by('login', $identifier);
     }
 

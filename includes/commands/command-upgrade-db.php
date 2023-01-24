@@ -125,7 +125,7 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
 
     // Check pre-upgrade messages.
     if ($first_try) {
-    WP_CLI::log(WP_CLI::colorize('%gChecking pre-upgrade messages.%n'));
+      WP_CLI::log(WP_CLI::colorize('%gChecking pre-upgrade messages.%n'));
       $preUpgradeMessage = NULL;
       $upgrade->setPreUpgradeMessage($preUpgradeMessage, $db_version, $code_version);
       if ($preUpgradeMessage) {
@@ -184,9 +184,12 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
     // Maybe suppress Task Context logger output.
     if (empty($verbose_extra) && empty($verbose)) {
       $task_context->log = new class {
+
         public function info($param) {}
+
       };
-    } else {
+    }
+    else {
       $task_context->log = \Log::singleton('display');
     }
 
@@ -200,9 +203,11 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
       if (!empty($verbose_extra)) {
         $feedback = self::format_task_callback($task);
         WP_CLI::log(WP_CLI::colorize('%g' . $task->title . '%n') . ' ' . WP_CLI::colorize($feedback));
-      } elseif (!empty($verbose)) {
+      }
+      elseif (!empty($verbose)) {
         WP_CLI::log(WP_CLI::colorize('%g' . $task->title . '%n'));
-      } else {
+      }
+      else {
         echo '.';
       }
 
@@ -303,14 +308,14 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
    * @param integer $level The current level.
    * @return string
    */
-  private static function implode_recursive($value, $level=0) {
+  private static function implode_recursive($value, $level = 0) {
 
     // Maybe recurse.
     $array = [];
     if (is_array($value)) {
-      foreach($value as $val) {
+      foreach ($value as $val) {
         if (is_array($val)) {
-          $array[] = self::implode_recursive($val, $level+1);
+          $array[] = self::implode_recursive($val, $level + 1);
         }
         else {
           $array[] = $val;
@@ -322,12 +327,12 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
     }
 
     // Wrap sub-arrays but leave top level alone.
-		if ($level > 0) {
-		  $string = '[' . implode(',', $array) . ']';
-		}
-		else {
-		  $string = implode(',', $array);
-		}
+    if ($level > 0) {
+      $string = '[' . implode(',', $array) . ']';
+    }
+    else {
+      $string = implode(',', $array);
+    }
 
     return $string;
 
