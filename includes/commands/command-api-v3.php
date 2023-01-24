@@ -42,7 +42,7 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
    *
    * [--in=<in>]
    * : Specify the input in a particular format.
-   *  ---
+   * ---
    * default: args
    * options:
    *   - args
@@ -51,7 +51,7 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
    *
    * [--out=<out>]
    * : Render output in a particular format. The "table" format can only be used when retrieving a single item.
-   *  ---
+   * ---
    * default: pretty
    * options:
    *   - pretty
