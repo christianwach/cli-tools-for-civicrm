@@ -11,22 +11,6 @@
 class CLI_Tools_CiviCRM_Command_Install extends CLI_Tools_CiviCRM_Command {
 
   /**
-   * @var array
-   * The WP-CLI positional arguments.
-   * @since 1.0.0
-   * @access private
-   */
-  private $args;
-
-  /**
-   * @var array
-   * The WP-CLI associative arguments.
-   * @since 1.0.0
-   * @access private
-   */
-  private $assoc_args;
-
-  /**
    * Install the CiviCRM plugin files and database.
    *
    * ## OPTIONS
