@@ -100,7 +100,7 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
    * @param string $option The command line option to get input filename from, defaults to 'tarfile'.
    * @return bool True if successful, false otherwise.
    */
-  public function untar($destination, $assoc_args, $option = 'tarfile') {
+  protected function untar($destination, $assoc_args, $option = 'tarfile') {
 
     // Grab path to tarfile.
     $tarfile = \WP_CLI\Utils\get_flag_value($assoc_args, $option, FALSE);
@@ -148,7 +148,7 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
    * @param string $option The command line option to get zip filename from, defaults to 'zipfile'.
    * @return bool True if successful, false otherwise.
    */
-  public function unzip($destination, $assoc_args, $option = 'zipfile') {
+  protected function unzip($destination, $assoc_args, $option = 'zipfile') {
 
     // Grab path to zipfile.
     $zipfile = \WP_CLI\Utils\get_flag_value($assoc_args, $option, FALSE);
