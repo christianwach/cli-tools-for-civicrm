@@ -1,6 +1,6 @@
 <?php
 /**
- * Install the CiviCRM pluginfiles and database.
+ * Install the CiviCRM plugin files and database.
  *
  * ## EXAMPLES
  *
