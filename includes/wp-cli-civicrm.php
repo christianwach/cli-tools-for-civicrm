@@ -22,8 +22,12 @@ WP_CLI::add_hook('before_wp_load', function() {
   require_once __DIR__ . '/commands/command-install.php';
   require_once __DIR__ . '/commands/command-job.php';
   require_once __DIR__ . '/commands/command-pipe.php';
+  require_once __DIR__ . '/commands/command-restore.php';
   require_once __DIR__ . '/commands/command-sql.php';
+  require_once __DIR__ . '/commands/command-update-cfg.php';
+  require_once __DIR__ . '/commands/command-upgrade.php';
   require_once __DIR__ . '/commands/command-upgrade-db.php';
+  require_once __DIR__ . '/commands/command-upgrade-get.php';
   require_once __DIR__ . '/commands/command-version.php';
 
   // Add top-level commands.
@@ -58,15 +62,31 @@ WP_CLI::add_hook('before_wp_load', function() {
   WP_CLI::add_command('civicrm pipe', 'CLI_Tools_CiviCRM_Command_Pipe', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Pipe::check_dependencies']);
   WP_CLI::add_command('cv pipe', 'CLI_Tools_CiviCRM_Command_Pipe', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Pipe::check_dependencies']);
 
+  // Add Restore command.
+  WP_CLI::add_command('civicrm restore', 'CLI_Tools_CiviCRM_Command_Restore', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Restore::check_dependencies']);
+  WP_CLI::add_command('cv restore', 'CLI_Tools_CiviCRM_Command_Restore', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Restore::check_dependencies']);
+
   // Add SQL command.
   WP_CLI::add_command('civicrm sql', 'CLI_Tools_CiviCRM_Command_SQL', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_SQL::check_dependencies']);
   WP_CLI::add_command('cv sql', 'CLI_Tools_CiviCRM_Command_SQL', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_SQL::check_dependencies']);
 
-  // Add database upgrade command.
+  // Add Update Config command.
+  WP_CLI::add_command('civicrm update-cfg', 'CLI_Tools_CiviCRM_Command_Update_Config', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Update_Config::check_dependencies']);
+  WP_CLI::add_command('cv update-cfg', 'CLI_Tools_CiviCRM_Command_Update_Config', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Update_Config::check_dependencies']);
+
+  // Add Upgrade command.
+  WP_CLI::add_command('civicrm upgrade', 'CLI_Tools_CiviCRM_Command_Upgrade', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Upgrade::check_dependencies']);
+  WP_CLI::add_command('cv upgrade', 'CLI_Tools_CiviCRM_Command_Upgrade', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Upgrade::check_dependencies']);
+
+  // Add Upgrade Database command.
   WP_CLI::add_command('civicrm upgrade-db', 'CLI_Tools_CiviCRM_Command_Upgrade_DB', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Upgrade_DB::check_dependencies']);
   WP_CLI::add_command('cv upgrade-db', 'CLI_Tools_CiviCRM_Command_Upgrade_DB', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Upgrade_DB::check_dependencies']);
 
-  // Add version command.
+  // Add Upgrade Get command.
+  WP_CLI::add_command('civicrm upgrade-get', 'CLI_Tools_CiviCRM_Command_Upgrade_Get', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Upgrade_Get::check_dependencies']);
+  WP_CLI::add_command('cv upgrade-get', 'CLI_Tools_CiviCRM_Command_Upgrade_Get', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Upgrade_Get::check_dependencies']);
+
+  // Add Version command.
   WP_CLI::add_command('civicrm version', 'CLI_Tools_CiviCRM_Command_Version', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Version::check_dependencies']);
   WP_CLI::add_command('cv version', 'CLI_Tools_CiviCRM_Command_Version', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Version::check_dependencies']);
 
