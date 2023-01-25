@@ -28,8 +28,8 @@ class CLI_Tools_CiviCRM_Command_Upgrade_Download extends CLI_Tools_CiviCRM_Comma
    * [--destination=<destination>]
    * : Specify the location to put the temporary tarball.
    *
-	 * [--insecure]
-	 * : Retry without certificate validation if TLS handshake fails. Note: This makes the request vulnerable to a MITM attack.
+   * [--insecure]
+   * : Retry without certificate validation if TLS handshake fails. Note: This makes the request vulnerable to a MITM attack.
    *
    * ## EXAMPLES
    *
@@ -67,7 +67,8 @@ class CLI_Tools_CiviCRM_Command_Upgrade_Download extends CLI_Tools_CiviCRM_Comma
 
     $headers = [];
     $options = [
-      'timeout'  => 600,  // 10 minutes ought to be enough for everybody.
+      // 10 minutes ought to be enough for everybody.
+      'timeout'  => 600,
       'filename' => $filepath,
       'insecure' => (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'insecure', FALSE),
     ];
@@ -80,6 +81,6 @@ class CLI_Tools_CiviCRM_Command_Upgrade_Download extends CLI_Tools_CiviCRM_Comma
 
     WP_CLI::log($filepath);
 
-   }
+  }
 
 }

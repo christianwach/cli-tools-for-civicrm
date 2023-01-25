@@ -112,8 +112,8 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
     }
 
     // Let's handle errors here.
-    $exit_on_error = false;
-    $return_detailed = true;
+    $exit_on_error = FALSE;
+    $return_detailed = TRUE;
 
     WP_CLI::log(WP_CLI::colorize('%GExtracting tar.gz archive.%n'));
 
@@ -165,8 +165,8 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
     WP_CLI::log(WP_CLI::colorize('%GExtracting zip archive.%n'));
 
     // Let's handle errors here.
-    $exit_on_error = false;
-    $return_detailed = true;
+    $exit_on_error = FALSE;
+    $return_detailed = TRUE;
 
     // Run the command.
     $cmd = "unzip -q $zipfile -d $destination";
