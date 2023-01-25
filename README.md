@@ -42,13 +42,33 @@ If you have cloned the code from GitHub, it is assumed that you know what you're
 
 ## Development
 
-By default, this plugin will load the Command Line Tools in a multi-class structure that WP-CLI expects and which enables proper documentation of the `civicrm` command and all its sub-commands. It is not, however, complete yet. If you need one of the following commands:
+By default, this plugin will load the Command Line Tools in a multi-class structure that WP-CLI expects and which enables proper documentation of the `civicrm` command and all its sub-commands. It is not, however, complete yet.
+
+### Commands that have not been updated
+
+The following commands exist in this repo, but their code has simply been copied across from CiviCRM:
 
 * `wp civicrm restore`
-* `wp civicrm upgrade`
 * `wp civicrm update-cfg`
 
-Then simply comment out your `CIVICRM_WPCLI_LOADED` define and then you can use those commands as supplied by CiviCRM.
+PRs would be welcome if you want to start improving (or fixing) them.
+
+### Commands that are being updated
+
+The following commands exist in this repo, but are not currently functional:
+
+* `wp civicrm upgrade`
+
+PRs would be welcome if you want to help improve them.
+
+If you need the old `wp civicrm upgrade` command then simply comment out your `CIVICRM_WPCLI_LOADED` define and then you can use it as supplied by CiviCRM. Please bear in mind that it [seems to be broken](https://lab.civicrm.org/dev/wordpress/-/issues/123) at the moment.
+
+### New Commands
+
+* `wp civicrm upgrade-get`: Find out what file you should use to upgrade CiviCRM.
+* `wp civicrm upgrade-dl`: Download CiviCRM code and put it in place for an upgrade.
+
+Use `wp help civicrm upgrade-get` or `wp help civicrm upgrade-dl` for further details.
 
 ### Commands that have changed
 
@@ -68,4 +88,4 @@ Then simply comment out your `CIVICRM_WPCLI_LOADED` define and then you can use 
 
 ### Commands that have been dropped
 
-* `wp civicrm rest`: use [CiviCRM's WordPress REST API](https://github.com/civicrm/civicrm-wordpress/tree/master/wp-rest) or `wp civicrm api` instead.
+* `wp civicrm rest`: Use [CiviCRM's WordPress REST API](https://github.com/civicrm/civicrm-wordpress/tree/master/wp-rest) or `wp civicrm api` instead.
