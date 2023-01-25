@@ -11,14 +11,6 @@
 class CLI_Tools_CiviCRM_Command_Upgrade_Download extends CLI_Tools_CiviCRM_Command {
 
   /**
-   * @var array
-   * The URL to check for CiviCRM.
-   * @since 1.0.0
-   * @access private
-   */
-  private $check_url = 'https://upgrade.civicrm.org/check';
-
-  /**
    * Download CiviCRM code and put it in place for an upgrade.
    *
    * ## OPTIONS
