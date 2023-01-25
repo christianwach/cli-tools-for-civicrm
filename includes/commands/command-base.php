@@ -95,16 +95,19 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
    *
    * @since 1.0.0
    *
+   * @param string $tarfile The path to the tarfile.
    * @param string $destination The path to extract to.
-   * @param array $assoc_args The WP-CLI associative arguments.
-   * @param string $option The command line option to get input filename from, defaults to 'tarfile'.
    * @return bool True if successful, false otherwise.
    */
-  protected function untar($destination, $assoc_args, $option = 'tarfile') {
+  protected function untar($tarfile, $destination) {
 
-    // Grab path to tarfile.
-    $tarfile = \WP_CLI\Utils\get_flag_value($assoc_args, $option, FALSE);
+    // Sanity check tarfile.
     if (empty($tarfile)) {
+      return FALSE;
+    }
+
+    // Sanity check destination.
+    if (empty($destination)) {
       return FALSE;
     }
 
@@ -143,16 +146,19 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
    *
    * @since 1.0.0
    *
+   * @param string $zipfile The path to the zipfile.
    * @param string $destination The path to extract to.
-   * @param array $assoc_args The WP-CLI associative arguments.
-   * @param string $option The command line option to get zip filename from, defaults to 'zipfile'.
    * @return bool True if successful, false otherwise.
    */
-  protected function unzip($destination, $assoc_args, $option = 'zipfile') {
+  protected function unzip($zipfile, $destination) {
 
-    // Grab path to zipfile.
-    $zipfile = \WP_CLI\Utils\get_flag_value($assoc_args, $option, FALSE);
+    // Sanity check zipfile.
     if (empty($zipfile)) {
+      return FALSE;
+    }
+
+    // Sanity check destination.
+    if (empty($destination)) {
       return FALSE;
     }
 
