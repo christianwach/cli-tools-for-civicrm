@@ -189,15 +189,20 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
    * @return string|int The error message of the process if available, otherwise the return code.
    */
   private function tar_error_msg($process_run) {
+
+    // Grab error string.
     $stderr = trim($process_run->stderr);
     $nl_pos = strpos($stderr, "\n");
     if (FALSE !== $nl_pos) {
       $stderr = trim(substr($stderr, 0, $nl_pos));
     }
+
+    // Return formatted string if possible.
     if ($stderr) {
       return sprintf('%s (%d)', $stderr, $process_run->return_code);
     }
 
+    // Fall back to raw error code.
     return $process_run->return_code;
 
   }
