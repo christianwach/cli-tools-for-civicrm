@@ -11,7 +11,7 @@
 class CLI_Tools_CiviCRM_Command_Upgrade_Get extends CLI_Tools_CiviCRM_Command {
 
   /**
-   * @var array
+   * @var string
    * The URL to check for CiviCRM upgrades.
    * @since 1.0.0
    * @access private
