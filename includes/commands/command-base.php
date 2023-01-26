@@ -245,4 +245,109 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
 
   }
 
+  /**
+   * Performs a remote GET request that requires JSON data in response.
+   *
+   * @since 1.0.0
+   *
+   * @param string $url The URL to execute the GET request on.
+   * @param array $headers Optional. Associative array of headers.
+   * @param array $options Optional. Associative array of options.
+   * @return mixed|false False on failure. Decoded JSON on success.
+   */
+  protected function json_get_request($url, $headers = [], $options = []) {
+
+    $headers = array_merge(
+      ['Accept' => 'application/json'],
+      $headers
+    );
+
+    $response = $this->json_get_response($url, $headers, $options);
+    if (FALSE === $response) {
+      return $response;
+    }
+
+    $data = json_decode($response, TRUE);
+    if (JSON_ERROR_NONE !== json_last_error()) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to decode JSON: %y%s.%n'), json_last_error_msg()));
+    }
+
+    return $data;
+
+  }
+
+  /**
+   * Performs a remote GET request.
+   *
+   * @since 1.0.0
+   *
+   * @param string $url The URL to execute the GET request on.
+   * @param array $headers Optional. Associative array of headers.
+   * @param array $options Optional. Associative array of options.
+   * @return object $response The response object.
+   */
+  protected function json_get_response($url, $headers = [], $options = []) {
+
+    $options = array_merge(
+      ['halt_on_error' => FALSE],
+      $options
+    );
+
+    $response = \WP_CLI\Utils\http_request('GET', $url, NULL, $headers, $options);
+    if (!$response->success || 200 > (int) $response->status_code || 300 <= $response->status_code) {
+      WP_CLI::error(sprintf(WP_CLI::colorize("Couldn't fetch response from %y%s%n (HTTP code %y%s%n)."), $url, $response->status_code));
+    }
+
+    return trim($response->body);
+
+  }
+
+  /**
+   * Downloads a remote file with a GET request.
+   *
+   * @since 1.0.0
+   *
+   * @param string $url The URL to execute the GET request on.
+   * @param string $destination Optional. The path to the download directory. Default is local temp dir.
+   * @param array $headers Optional. Associative array of headers.
+   * @param array $options Optional. Associative array of options.
+   * @return object $response The response object.
+   */
+  protected function file_download($url, $destination = '', $headers = [], $options = []) {
+
+    // Set default destination.
+    if (empty($destination)) {
+      $destination = \WP_CLI\Utils\get_temp_dir();
+    }
+
+    // Extract filename, stripping query variables if present.
+    $filename = basename($url);
+    if (FALSE !== strpos($filename, '?')) {
+      $arr = explode('?', $filename);
+      $filename = $arr[0];
+    }
+
+    // Build final path to file.
+    $filepath = trailingslashit($destination) . $filename;
+
+    // Build request options.
+    $options = array_merge(
+      [
+        'timeout'  => 600,
+        'filename' => $filepath,
+        'insecure' => FALSE,
+      ],
+      $options
+    );
+
+    // Okay, do the download.
+    $response = \WP_CLI\Utils\http_request('GET', $url, NULL, $headers, $options);
+    if (!$response->success || 200 !== (int) $response->status_code) {
+      WP_CLI::error(sprintf(WP_CLI::colorize("Couldn't fetch response from %y%s%n (HTTP code %y%s%n)."), $url, $response->status_code));
+    }
+
+    return $response;
+
+  }
+
 }
