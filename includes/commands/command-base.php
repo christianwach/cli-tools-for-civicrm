@@ -311,7 +311,7 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
    * @param string $destination Optional. The path to the download directory. Default is local temp dir.
    * @param array $headers Optional. Associative array of headers.
    * @param array $options Optional. Associative array of options.
-   * @return object $response The response object.
+   * @return string $filepath The path to the downloaded file.
    */
   protected function file_download($url, $destination = '', $headers = [], $options = []) {
 
@@ -346,7 +346,7 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
       WP_CLI::error(sprintf(WP_CLI::colorize("Couldn't fetch response from %y%s%n (HTTP code %y%s%n)."), $url, $response->status_code));
     }
 
-    return $response;
+    return $filepath;
 
   }
 

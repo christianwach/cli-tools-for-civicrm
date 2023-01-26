@@ -4,6 +4,7 @@
  *
  * ## EXAMPLES
  *
+ *     $ wp civicrm upgrade-get --raw
  *     $ wp civicrm upgrade-get --stability=rc
  *
  * @since 1.0.0
@@ -34,11 +35,21 @@ class CLI_Tools_CiviCRM_Command_Upgrade_Get extends CLI_Tools_CiviCRM_Command {
    * ---
    *
    * [--raw]
-   * : Print just the URL of the upgrade file instead of the full JSON data.
+   * : Print just the URL of the file instead of the full JSON data.
+   *
+   * [--lang]
+   * : Get the localization file for the specified upgrade. Only applies when `--raw` is specified.
    *
    * ## EXAMPLES
    *
+   *     $ wp civicrm upgrade-get --raw
+   *     https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-wordpress.zip
+   *
+   *     $ wp civicrm upgrade-get --raw --lang
+   *     https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-l10n.tar.gz
+   *
    *     $ wp civicrm upgrade-get --stability=rc
+   *     {"version":"5.58.beta1","rev":"5.58.beta1-202301260741" [...] "pretty":"Thu, 26 Jan 2023 07:41:00 +0000"}}
    *
    * @since 1.0.0
    *
@@ -49,6 +60,7 @@ class CLI_Tools_CiviCRM_Command_Upgrade_Get extends CLI_Tools_CiviCRM_Command {
 
     // Grab incoming params.
     $stability = \WP_CLI\Utils\get_flag_value($assoc_args, 'stability', 'stable');
+    $lang = \WP_CLI\Utils\get_flag_value($assoc_args, 'lang', FALSE);
     $raw = \WP_CLI\Utils\get_flag_value($assoc_args, 'raw', FALSE);
 
     // Look up the data.
@@ -70,7 +82,12 @@ class CLI_Tools_CiviCRM_Command_Upgrade_Get extends CLI_Tools_CiviCRM_Command {
     }
 
     if ($raw) {
-      WP_CLI::log($lookup['tar']['WordPress']);
+      if ($lang) {
+        WP_CLI::log($lookup['tar']['L10n']);
+      }
+      else {
+        WP_CLI::log($lookup['tar']['WordPress']);
+      }
     }
     else {
       WP_CLI::log($response);
