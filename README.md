@@ -65,10 +65,12 @@ If you need the old `wp civicrm upgrade` command then simply comment out your `C
 
 ### New Commands
 
-* `wp civicrm upgrade-get`: Find out what file you should use to upgrade CiviCRM.
-* `wp civicrm upgrade-dl`: Download CiviCRM code and put it in place for an upgrade.
-* `wp civicrm version-get`: Get the URL for a CiviCRM stable release or matching language archive.
-* `wp civicrm version-dl`: Download a CiviCRM stable release archive or language archive.
+| Command | Description |
+| --- | --- |
+| `wp civicrm upgrade-get` | Find out what file you should use to upgrade CiviCRM. |
+| `wp civicrm upgrade-dl` | Download CiviCRM code and put it in place for an upgrade. |
+| `wp civicrm version-get` | Get the URL for a CiviCRM stable release or matching language archive. |
+| `wp civicrm version-dl` | Download a CiviCRM stable release archive or language archive. |
 
 Use `wp help civicrm command-name` for further details.
 
