@@ -54,12 +54,14 @@ class CLI_Tools_CiviCRM_Command_Upgrade_Get extends CLI_Tools_CiviCRM_Command {
     // Look up the data.
     $url = $this->check_url . '?stability=' . $stability;
     $response = $this->json_get_response($url);
-    $lookup = json_decode($response, TRUE);
 
-    // Sanity checks.
+    // Try and decode response.
+    $lookup = json_decode($response, TRUE);
     if (JSON_ERROR_NONE !== json_last_error()) {
       WP_CLI::error(sprintf(WP_CLI::colorize('Failed to decode JSON: %y%s.%n'), json_last_error_msg()));
     }
+
+    // Sanity checks.
     if (empty($lookup)) {
       WP_CLI::error(sprintf(WP_CLI::colorize('Version not found at: %y%s%n'), $url));
     }
