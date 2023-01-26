@@ -83,14 +83,14 @@ class CLI_Tools_CiviCRM_Command_Upgrade_Get extends CLI_Tools_CiviCRM_Command {
 
     if ($raw) {
       if ($lang) {
-        WP_CLI::log($lookup['tar']['L10n']);
+        echo $lookup['tar']['L10n'] . "\n";
       }
       else {
-        WP_CLI::log($lookup['tar']['WordPress']);
+        echo $lookup['tar']['WordPress'] . "\n";
       }
     }
     else {
-      WP_CLI::log($response);
+      echo $response . "\n";
     }
 
   }
