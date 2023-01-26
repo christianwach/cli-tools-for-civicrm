@@ -68,11 +68,12 @@ class CLI_Tools_CiviCRM_Command_Version_Get extends CLI_Tools_CiviCRM_Command {
     $release = \WP_CLI\Utils\get_flag_value($assoc_args, 'release', 'latest');
     $lang = \WP_CLI\Utils\get_flag_value($assoc_args, 'lang', FALSE);
 
-    // Pass to "upgrade-get" for latest CiviCRM stable release.
-    if (empty($lang) && 'latest' === $release) {
+    // Pass to "upgrade-get" for latest CiviCRM stable release or language archive.
+    if ('latest' === $release) {
       $options = ['launch' => FALSE, 'return' => TRUE];
-      $url = WP_CLI::runcommand('civicrm upgrade-get --stability=stable --raw', $options);
-      WP_CLI::log($url);
+      $command = 'civicrm upgrade-get --stability=stable --raw' . (empty($lang) ? '' : ' --lang');
+      $url = WP_CLI::runcommand($command, $options);
+      echo $url . "\n";
       return;
     }
 
@@ -86,10 +87,10 @@ class CLI_Tools_CiviCRM_Command_Version_Get extends CLI_Tools_CiviCRM_Command {
     $data = $this->release_data_get($release);
 
     if ($lang) {
-      WP_CLI::log($this->download_url . $data['l10n']);
+      echo $this->download_url . $data['L10n'] . "\n";
     }
     else {
-      WP_CLI::log($this->download_url . $data['wordpress']);
+      echo $this->download_url . $data['WordPress'] . "\n";
     }
 
   }
@@ -141,10 +142,10 @@ class CLI_Tools_CiviCRM_Command_Version_Get extends CLI_Tools_CiviCRM_Command {
     foreach ($result['items'] as $item ) {
       if (!empty($item['name'])) {
         if (FALSE !== strpos($item['name'], 'wordpress.zip')) {
-          $data['wordpress'] = $item['name'];
+          $data['WordPress'] = $item['name'];
         }
         if (FALSE !== strpos($item['name'], 'l10n.tar.gz')) {
-          $data['l10n'] = $item['name'];
+          $data['L10n'] = $item['name'];
         }
       }
     }
