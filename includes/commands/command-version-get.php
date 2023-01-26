@@ -1,6 +1,6 @@
 <?php
 /**
- * Get the URL for a CiviCRM stable release archive.
+ * Get the URL for a CiviCRM stable release or matching language archive.
  *
  * ## EXAMPLES
  *
@@ -39,7 +39,7 @@ class CLI_Tools_CiviCRM_Command_Version_Get extends CLI_Tools_CiviCRM_Command {
   private $download_url = 'https://storage.googleapis.com/civicrm/';
 
   /**
-   * Get the URL for the archive of a CiviCRM stable release.
+   * Get the URL for a CiviCRM stable release or matching language archive.
    *
    * ## OPTIONS
    *
