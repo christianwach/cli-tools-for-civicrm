@@ -98,6 +98,18 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   /**
    * Show the CiviCRM database connection details.
    *
+   * ## OPTIONS
+   *
+   * [--format=<format>]
+   * : Render output in a particular format.
+   * ---
+   * default: table
+   * options:
+   *   - table
+   *   - json
+   *   - pretty
+   * ---
+   *
    * ## EXAMPLES
    *
    *     $ wp civicrm db config --format=table
@@ -133,26 +145,26 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
 
     $dsn = DB::parseDSN(CIVICRM_DSN);
 
-    $format = \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'pretty');
+    $format = \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'table');
     switch ($format) {
+
+      // Pretty-print output.
+      case 'pretty':
+        WP_CLI::log(print_r($dsn, TRUE));
+        break;
 
       // Display output as json.
       case 'json':
         WP_CLI::log(json_encode($dsn));
         break;
 
-      // Display output as table.
+      // Display output as table (default).
       case 'table':
+      default:
         $assoc_args['format'] = $format;
         $assoc_args['fields'] = array_keys($dsn);
         $formatter = $this->get_formatter($assoc_args);
         $formatter->display_item($dsn);
-        break;
-
-      // Pretty-print output (default).
-      case 'pretty':
-      default:
-        WP_CLI::log(print_r($dsn, TRUE));
 
     }
 
