@@ -47,21 +47,28 @@ class CLI_Tools_CiviCRM_Command_Upgrade_Get extends CLI_Tools_CiviCRM_Command {
    */
   public function __invoke($args, $assoc_args) {
 
-    // Let's look up the data.
+    // Grab incoming params.
     $stability = \WP_CLI\Utils\get_flag_value($assoc_args, 'stability', 'stable');
+    $raw = \WP_CLI\Utils\get_flag_value($assoc_args, 'raw', FALSE);
+
+    // Look up the data.
     $url = $this->check_url . "?stability=" . urlencode($stability);
     $result = file_get_contents($url);
-    $lookup = json_decode($result, TRUE);
 
-    // Error checking.
+    // Try and decode response.
+    $lookup = json_decode($result, TRUE);
+    if (JSON_ERROR_NONE !== json_last_error()) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to decode JSON: %y%s.%n'), json_last_error_msg()));
+    }
+
+    // Sanity checks.
     if (empty($lookup)) {
-      WP_CLI::error(sprintf('Version not found at %s'), $url);
+      WP_CLI::error(sprintf(WP_CLI::colorize('Version not found at: %y%s%n'), $url));
     }
     if (empty($lookup['tar']['WordPress'])) {
-      WP_CLI::error(sprintf('No WordPress version found at %s'), $url);
+      WP_CLI::error(sprintf(WP_CLI::colorize('No WordPress version found at: %y%s%n'), $url));
     }
 
-    $raw = \WP_CLI\Utils\get_flag_value($assoc_args, 'raw', FALSE);
     if ($raw) {
       WP_CLI::log($lookup['tar']['WordPress']);
     }
