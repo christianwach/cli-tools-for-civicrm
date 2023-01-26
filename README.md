@@ -82,11 +82,11 @@ Use `wp help civicrm command-name` for further details.
 | `wp civicrm enable-debug` | `wp civicrm debug enable` |
 | `wp civicrm member-records` | `wp civicrm job member-records` or `wp civicrm job membership` |
 | `wp civicrm process-mail-queue` | `wp civicrm job process-mail-queue` or `wp civicrm job mailing` |
-| `wp civicrm sql-conf` | `wp civicrm sql config` or `wp civicrm sql conf` |
-| `wp civicrm sql-connect` | `wp civicrm sql connect` |
-| `wp civicrm sql-cli` | `wp civicrm sql cli` |
-| `wp civicrm sql-dump` | `wp civicrm sql dump` |
-| `wp civicrm sql-query` | `wp civicrm sql query` |
+| `wp civicrm sql-conf` | `wp civicrm db config` or `wp civicrm db conf` |
+| `wp civicrm sql-connect` | `wp civicrm db connect` |
+| `wp civicrm sql-cli` | `wp civicrm db cli` |
+| `wp civicrm sql-dump` | `wp civicrm db dump` |
+| `wp civicrm sql-query` | `wp civicrm db query` |
 | `wp civicrm version-code` | `wp civicrm version code` |
 | `wp civicrm version-db` | `wp civicrm version db` |
 

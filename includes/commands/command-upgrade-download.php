@@ -4,7 +4,7 @@
  *
  * ## EXAMPLES
  *
- *     $ wp civicrm upgrade-dl --lang
+ *     $ wp civicrm upgrade-dl --l10n
  *     $ wp civicrm upgrade-dl --stability=rc
  *     $ wp civicrm upgrade-dl --stability=rc --destination=/some/path
  *
@@ -33,18 +33,18 @@ class CLI_Tools_CiviCRM_Command_Upgrade_Download extends CLI_Tools_CiviCRM_Comma
    * [--insecure]
    * : Retry without certificate validation if TLS handshake fails. Note: This makes the request vulnerable to a MITM attack.
    *
-   * [--lang]
+   * [--l10n]
    * : Get the localization file for the specified upgrade. Only applies when `--raw` is specified.
    *
    * ## EXAMPLES
    *
-   *     $ wp civicrm upgrade-dl --lang
+   *     $ wp civicrm upgrade-dl --l10n
    *     /tmp/civicrm-5.57.2-l10n.tar.gz
    *
    *     $ wp civicrm upgrade-dl --stability=rc
    *     /tmp/civicrm-5.58.beta1-wordpress-202301260741.zip
    *
-   *     $ wp civicrm upgrade-dl --stability=rc --lang --destination=/some/path
+   *     $ wp civicrm upgrade-dl --stability=rc --l10n --destination=/some/path
    *     /some/path/civicrm-5.58.beta1-l10n-202301260741.tar.gz
    *
    * @since 1.0.0
@@ -57,7 +57,7 @@ class CLI_Tools_CiviCRM_Command_Upgrade_Download extends CLI_Tools_CiviCRM_Comma
     // Grab incoming data.
     $stability = \WP_CLI\Utils\get_flag_value($assoc_args, 'stability', 'stable');
     $destination = \WP_CLI\Utils\get_flag_value($assoc_args, 'destination', \WP_CLI\Utils\get_temp_dir());
-    $lang = \WP_CLI\Utils\get_flag_value($assoc_args, 'lang', FALSE);
+    $l10n = \WP_CLI\Utils\get_flag_value($assoc_args, 'l10n', FALSE);
     $insecure = \WP_CLI\Utils\get_flag_value($assoc_args, 'insecure', FALSE);
 
     // Use "wp civicrm upgrade-get" to find out which file to download.
@@ -71,7 +71,7 @@ class CLI_Tools_CiviCRM_Command_Upgrade_Download extends CLI_Tools_CiviCRM_Comma
     }
 
     // Grab either release or language archive URL.
-    if ($lang) {
+    if ($l10n) {
       $url = $lookup['tar']['L10n'];
     }
     else {

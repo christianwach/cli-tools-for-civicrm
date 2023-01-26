@@ -4,7 +4,7 @@
  *
  * ## EXAMPLES
  *
- *     $ wp civicrm sql cli
+ *     $ wp civicrm db cli
  *
  *     Welcome to the MySQL monitor.  Commands end with ; or \g.
  *     Your MySQL connection id is 180
@@ -12,7 +12,7 @@
  *
  *     mysql>
  *
- *     $ wp civicrm sql config --out=table
+ *     $ wp civicrm db config --format=table
  *     +----------+----------------+
  *     | Field    | Value          |
  *     +----------+----------------+
@@ -28,7 +28,7 @@
  *     | new_link | true           |
  *     +----------+----------------+
  *
- *     $ wp civicrm sql query 'select id,name from civicrm_group;'
+ *     $ wp civicrm db query 'select id,name from civicrm_group;'
  *     +----+---------------------------+
  *     | id | name                      |
  *     +----+---------------------------+
@@ -40,7 +40,7 @@
  *
  * @since 1.0.0
  */
-class CLI_Tools_CiviCRM_Command_SQL extends CLI_Tools_CiviCRM_Command {
+class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
 
   /**
    * Dependency check.
@@ -61,7 +61,7 @@ class CLI_Tools_CiviCRM_Command_SQL extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
-   *     $ wp civicrm sql cli
+   *     $ wp civicrm db cli
    *
    *     Welcome to the MySQL monitor.  Commands end with ; or \g.
    *     Your MySQL connection id is 180
@@ -100,7 +100,7 @@ class CLI_Tools_CiviCRM_Command_SQL extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
-   *     $ wp civicrm sql config --out=table
+   *     $ wp civicrm db config --format=table
    *     +----------+----------------+
    *     | Field    | Value          |
    *     +----------+----------------+
@@ -133,8 +133,8 @@ class CLI_Tools_CiviCRM_Command_SQL extends CLI_Tools_CiviCRM_Command {
 
     $dsn = DB::parseDSN(CIVICRM_DSN);
 
-    $out_format = \WP_CLI\Utils\get_flag_value($assoc_args, 'out', 'pretty');
-    switch ($out_format) {
+    $format = \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'pretty');
+    switch ($format) {
 
       // Display output as json.
       case 'json':
@@ -143,7 +143,7 @@ class CLI_Tools_CiviCRM_Command_SQL extends CLI_Tools_CiviCRM_Command {
 
       // Display output as table.
       case 'table':
-        $assoc_args['format'] = $out_format;
+        $assoc_args['format'] = $format;
         $assoc_args['fields'] = array_keys($dsn);
         $formatter = $this->get_formatter($assoc_args);
         $formatter->display_item($dsn);
@@ -163,7 +163,7 @@ class CLI_Tools_CiviCRM_Command_SQL extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
-   *     $ wp civicrm sql connect
+   *     $ wp civicrm db connect
    *     mysql --database=civicrm_db_name --host=db_host --user=db_username --password=db_password
    *
    * @since 1.0.0
@@ -207,9 +207,9 @@ class CLI_Tools_CiviCRM_Command_SQL extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
-   *     $ wp civicrm sql dump
+   *     $ wp civicrm db dump
    *
-   *     $ wp civicrm sql dump --result-file=/tmp/civi-db.sql
+   *     $ wp civicrm db dump --result-file=/tmp/civi-db.sql
    *     Success: Exported to /tmp/civi-db.sql
    *
    * @since 1.0.0
@@ -272,7 +272,7 @@ class CLI_Tools_CiviCRM_Command_SQL extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
-   *     $ wp civicrm sql query 'select id,name from civicrm_group;'
+   *     $ wp civicrm db query 'select id,name from civicrm_group;'
    *     +----+---------------------------+
    *     | id | name                      |
    *     +----+---------------------------+

@@ -37,7 +37,7 @@ class CLI_Tools_CiviCRM_Command_Upgrade_Get extends CLI_Tools_CiviCRM_Command {
    * [--raw]
    * : Print just the URL of the file instead of the full JSON data.
    *
-   * [--lang]
+   * [--l10n]
    * : Get the localization file for the specified upgrade. Only applies when `--raw` is specified.
    *
    * ## EXAMPLES
@@ -45,7 +45,7 @@ class CLI_Tools_CiviCRM_Command_Upgrade_Get extends CLI_Tools_CiviCRM_Command {
    *     $ wp civicrm upgrade-get --raw
    *     https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-wordpress.zip
    *
-   *     $ wp civicrm upgrade-get --raw --lang
+   *     $ wp civicrm upgrade-get --raw --l10n
    *     https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-l10n.tar.gz
    *
    *     $ wp civicrm upgrade-get --stability=rc
@@ -60,7 +60,7 @@ class CLI_Tools_CiviCRM_Command_Upgrade_Get extends CLI_Tools_CiviCRM_Command {
 
     // Grab incoming params.
     $stability = \WP_CLI\Utils\get_flag_value($assoc_args, 'stability', 'stable');
-    $lang = \WP_CLI\Utils\get_flag_value($assoc_args, 'lang', FALSE);
+    $l10n = \WP_CLI\Utils\get_flag_value($assoc_args, 'l10n', FALSE);
     $raw = \WP_CLI\Utils\get_flag_value($assoc_args, 'raw', FALSE);
 
     // Look up the data.
@@ -82,7 +82,7 @@ class CLI_Tools_CiviCRM_Command_Upgrade_Get extends CLI_Tools_CiviCRM_Command {
     }
 
     if ($raw) {
-      if ($lang) {
+      if ($l10n) {
         echo $lookup['tar']['L10n'] . "\n";
       }
       else {

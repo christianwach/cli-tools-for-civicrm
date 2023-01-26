@@ -27,10 +27,10 @@ class CLI_Tools_CiviCRM_Command_Install extends CLI_Tools_CiviCRM_Command {
    * [--dbuser=<dbuser>]
    * : MySQL username for your CiviCRM database. Defaults to the WordPress MySQL database username.
    *
-   * [--lang=<lang>]
-   * : Language to use for installation. Defaults to "en_US".
+   * [--locale=<locale>]
+   * : Locale to use for installation. Defaults to "en_US".
    *
-   * [--langtarfile=<langtarfile>]
+   * [--l10n-tarfile=<l10n-tarfile>]
    * : Path to your l10n tar.gz file.
    *
    * [--ssl=<ssl>]
@@ -163,12 +163,12 @@ class CLI_Tools_CiviCRM_Command_Install extends CLI_Tools_CiviCRM_Command {
     $crm_files_present = is_dir($crmPath);
 
     // Validate localization parameters before extracting CiviCRM.
-    $lang = \WP_CLI\Utils\get_flag_value($assoc_args, 'lang', '');
-    $langtarfile = \WP_CLI\Utils\get_flag_value($assoc_args, 'langtarfile', FALSE);
-    $mo_path = "$crmPath/l10n/$lang/LC_MESSAGES/civicrm.mo";
-    if (!empty($lang)) {
-      if (empty($langtarfile) && !file_exists($mo_path)) {
-        WP_CLI::error(sprintf('Failed to find data for language "%s". Please specify a valid language data archive with --langtarfile=<langtarfile>.', $lang));
+    $locale = \WP_CLI\Utils\get_flag_value($assoc_args, 'locale', '');
+    $l10n_tarfile = \WP_CLI\Utils\get_flag_value($assoc_args, 'l10n-tarfile', FALSE);
+    $mo_path = "$crmPath/l10n/$locale/LC_MESSAGES/civicrm.mo";
+    if (!empty($locale)) {
+      if (empty($l10n_tarfile) && !file_exists($mo_path)) {
+        WP_CLI::error(sprintf('Failed to find data for language "%s". Please specify a valid language data archive with `--l10n-tarfile`.', $locale));
       }
     }
 
@@ -205,10 +205,10 @@ class CLI_Tools_CiviCRM_Command_Install extends CLI_Tools_CiviCRM_Command {
       }
       $feedback['Requested archive'] = $archive;
     }
-    if (!empty($lang)) {
-      $feedback['Language'] = $lang;
-      if (!empty($langtarfile)) {
-        $feedback['Language data archive'] = $langtarfile;
+    if (!empty($locale)) {
+      $feedback['Language'] = $locale;
+      if (!empty($l10n_tarfile)) {
+        $feedback['Language data archive'] = $l10n_tarfile;
       }
     }
     $assoc_args['fields'] = array_keys($feedback);
@@ -305,17 +305,17 @@ class CLI_Tools_CiviCRM_Command_Install extends CLI_Tools_CiviCRM_Command {
     }
 
     // Maybe extract l10n files into the common CiviCRM directory.
-    if (!empty($langtarfile)) {
+    if (!empty($l10n_tarfile)) {
       WP_CLI::log(sprintf(WP_CLI::colorize('%GUnpacking language archive to:%n %y%s%n'), $crmPath));
-      if (!$this->untar($langtarfile, $plugin_path)) {
+      if (!$this->untar($l10n_tarfile, $plugin_path)) {
         WP_CLI::error('Could not extract language data archive.');
       }
     }
 
     // Check if l10n extraction went okay.
-    if (!empty($lang) && !file_exists($mo_path)) {
+    if (!empty($locale) && !file_exists($mo_path)) {
       WP_CLI::log(sprintf(WP_CLI::colorize('%RNo .mo file found:%n %s'), $mo_path));
-      WP_CLI::error(sprintf('Failed to find data for language "%s". Please specify a valid language data archive with --langtarfile=<path/to/tarfile>.', $lang));
+      WP_CLI::error(sprintf('Failed to find data for language "%s". Please specify a valid language data archive with --l10n-tarfile.', $locale));
     }
 
     // ----------------------------------------------------------------------------
@@ -332,7 +332,7 @@ class CLI_Tools_CiviCRM_Command_Install extends CLI_Tools_CiviCRM_Command {
     \Civi\Setup::init(['cms' => 'WordPress', 'srcPath' => $crmPath]);
     $setup = \Civi\Setup::instance();
     $setup->getModel()->db = ['server' => $dbhost, 'username' => $dbuser, 'password' => $dbpass, 'database' => $dbname];
-    $setup->getModel()->lang = (empty($lang) ? 'en_US' : $lang);
+    $setup->getModel()->lang = (empty($locale) ? 'en_US' : $locale);
 
     /*
      * The "base URL" should already be known, either by:

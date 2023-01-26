@@ -7,7 +7,7 @@
  *     $ wp civicrm version-get --release=5.57.2
  *     https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-wordpress.zip
  *
- *     $ wp civicrm version-get --release=5.57.2 --lang
+ *     $ wp civicrm version-get --release=5.57.2 --l10n
  *     https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-l10n.tar.gz
  *
  * @since 1.0.0
@@ -46,7 +46,7 @@ class CLI_Tools_CiviCRM_Command_Version_Get extends CLI_Tools_CiviCRM_Command {
    * [--release=<release>]
    * : Specify the CiviCRM stable version to get. Defaults to latest stable version.
    *
-   * [--lang]
+   * [--l10n]
    * : Get the localization file for the specified version.
    *
    * ## EXAMPLES
@@ -54,7 +54,7 @@ class CLI_Tools_CiviCRM_Command_Version_Get extends CLI_Tools_CiviCRM_Command {
    *     $ wp civicrm version-get --release=5.57.2
    *     https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-wordpress.zip
    *
-   *     $ wp civicrm version-get --release=5.57.2 --lang
+   *     $ wp civicrm version-get --release=5.57.2 --l10n
    *     https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-l10n.tar.gz
    *
    * @since 1.0.0
@@ -66,12 +66,12 @@ class CLI_Tools_CiviCRM_Command_Version_Get extends CLI_Tools_CiviCRM_Command {
 
     // Grab incoming data.
     $release = \WP_CLI\Utils\get_flag_value($assoc_args, 'release', 'latest');
-    $lang = \WP_CLI\Utils\get_flag_value($assoc_args, 'lang', FALSE);
+    $l10n = \WP_CLI\Utils\get_flag_value($assoc_args, 'l10n', FALSE);
 
     // Pass to "upgrade-get" for latest CiviCRM stable release or language archive.
     if ('latest' === $release) {
       $options = ['launch' => FALSE, 'return' => TRUE];
-      $command = 'civicrm upgrade-get --stability=stable --raw' . (empty($lang) ? '' : ' --lang');
+      $command = 'civicrm upgrade-get --stability=stable --raw' . (empty($l10n) ? '' : ' --l10n');
       $url = WP_CLI::runcommand($command, $options);
       echo $url . "\n";
       return;
@@ -86,7 +86,7 @@ class CLI_Tools_CiviCRM_Command_Version_Get extends CLI_Tools_CiviCRM_Command {
     // Get the release data.
     $data = $this->release_data_get($release);
 
-    if ($lang) {
+    if ($l10n) {
       echo $this->download_url . $data['L10n'] . "\n";
     }
     else {

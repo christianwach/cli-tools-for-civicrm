@@ -40,7 +40,7 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
    * <args>...
    * : The API query passed as arguments.
    *
-   * [--in=<in>]
+   * [--input=<input>]
    * : Specify the input in a particular format.
    * ---
    * default: args
@@ -49,7 +49,7 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
    *   - json
    * ---
    *
-   * [--out=<out>]
+   * [--format=<format>]
    * : Render output in a particular format. The "table" format can only be used when retrieving a single item.
    * ---
    * default: pretty
@@ -62,9 +62,9 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
    * ## EXAMPLES
    *
    *     $ wp civicrm api contact.get id=10
-   *     $ wp civicrm api contact.get id=10 --out=json
-   *     $ wp civicrm api group.get id=1 --out=table
-   *     $ echo '{"id":10, "api.Email.get": 1}' | wp cv api contact.get --in=json
+   *     $ wp civicrm api contact.get id=10 --format=json
+   *     $ wp civicrm api group.get id=1 --format=table
+   *     $ echo '{"id":10, "api.Email.get": 1}' | wp cv api contact.get --input=json
    *
    * @since 1.0.0
    *
@@ -80,8 +80,8 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
     array_shift($args);
 
     // Parse params.
-    $in_format = \WP_CLI\Utils\get_flag_value($assoc_args, 'in', 'args');
-    switch ($in_format) {
+    $input_format = \WP_CLI\Utils\get_flag_value($assoc_args, 'input', 'args');
+    switch ($input_format) {
 
       // Input params supplied via args.
       case 'args':
@@ -104,7 +104,7 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
         break;
 
       default:
-        WP_CLI::error(sprintf('Unknown format: %s', $in_format));
+        WP_CLI::error(sprintf('Unknown format: %s', $input_format));
         break;
 
     }
@@ -126,8 +126,8 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
       date_default_timezone_set($wp_base_timezone);
     }
 
-    $out_format = \WP_CLI\Utils\get_flag_value($assoc_args, 'out', 'pretty');
-    switch ($out_format) {
+    $format = \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'pretty');
+    switch ($format) {
 
       // Pretty-print output (default).
       case 'pretty':
@@ -141,7 +141,7 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
 
       // Display output as table.
       case 'table':
-        $assoc_args['format'] = $out_format;
+        $assoc_args['format'] = $format;
         if (count($result['values']) === 1) {
           $item = array_pop($result['values']);
           $assoc_args['fields'] = array_keys($item);
