@@ -46,7 +46,7 @@ class CLI_Tools_CiviCRM_Command_Upgrade_Download extends CLI_Tools_CiviCRM_Comma
     $stability = \WP_CLI\Utils\get_flag_value($assoc_args, 'stability', 'stable');
     $destination = \WP_CLI\Utils\get_flag_value($assoc_args, 'destination', \WP_CLI\Utils\get_temp_dir());
 
-    // Use "wp civicrm update-get" to find out which file to download.
+    // Use "wp civicrm upgrade-get" to find out which file to download.
     $options = ['launch' => FALSE, 'return' => TRUE];
     $data = WP_CLI::runcommand('civicrm upgrade-get --stability=' . $stability, $options);
 
