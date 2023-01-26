@@ -139,7 +139,7 @@ class CLI_Tools_CiviCRM_Command_Version_Get extends CLI_Tools_CiviCRM_Command {
 
     // Strip out all but the WordPress and l10n data.
     $data = [];
-    foreach ($result['items'] as $item ) {
+    foreach ($result['items'] as $item) {
       if (!empty($item['name'])) {
         if (FALSE !== strpos($item['name'], 'wordpress.zip')) {
           $data['WordPress'] = $item['name'];
