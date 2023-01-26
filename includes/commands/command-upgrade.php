@@ -135,13 +135,16 @@ class CLI_Tools_CiviCRM_Command_Upgrade extends CLI_Tools_CiviCRM_Command {
     // Start upgrade.
     // ----------------------------------------------------------------------------
 
-    // Maybe use "wp civicrm update-dl" to get the CiviCRM archive.
+    // Unpack the archive into the WordPress plugins directory.
     if (!empty($stability) && empty($zipfile)) {
+      // Use "wp civicrm update-dl" to get the CiviCRM archive.
+      WP_CLI::log(WP_CLI::colorize('%GDownloading archive.%n'));
       $options = ['launch' => FALSE, 'return' => TRUE];
       $archive = WP_CLI::runcommand('civicrm upgrade-dl --stability=' . $stability, $options);
-      if (!$this->unzip($zipfile, $plugins_dir)) {
+      if (!$this->unzip($archive, $plugins_dir)) {
         WP_CLI::error('Could not extract zipfile.');
       }
+      unlink($archive);
     }
     elseif (!empty($tarfile)) {
       if (!$this->untar($tarfile, $plugins_dir)) {
@@ -152,6 +155,9 @@ class CLI_Tools_CiviCRM_Command_Upgrade extends CLI_Tools_CiviCRM_Command {
       if (!$this->unzip($zipfile, $plugins_dir)) {
         WP_CLI::error('Could not extract zipfile.');
       }
+    }
+    else {
+      WP_CLI::error('No archive specified.');
     }
 
   }
