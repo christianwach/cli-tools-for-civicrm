@@ -4,7 +4,9 @@
  *
  * ## EXAMPLES
  *
+ *     $ wp civicrm upgrade-dl --lang
  *     $ wp civicrm upgrade-dl --stability=rc
+ *     $ wp civicrm upgrade-dl --stability=rc --destination=/some/path
  *
  * @since 1.0.0
  */
@@ -26,14 +28,24 @@ class CLI_Tools_CiviCRM_Command_Upgrade_Download extends CLI_Tools_CiviCRM_Comma
    * ---
    *
    * [--destination=<destination>]
-   * : Specify the location to put the temporary tarball.
+   * : Specify the absolute path to put the archive file. Defaults to local temp dir.
    *
    * [--insecure]
    * : Retry without certificate validation if TLS handshake fails. Note: This makes the request vulnerable to a MITM attack.
    *
+   * [--lang]
+   * : Get the localization file for the specified upgrade. Only applies when `--raw` is specified.
+   *
    * ## EXAMPLES
    *
-   *     $ wp civicrm upgrade-get --stability=rc
+   *     $ wp civicrm upgrade-dl --lang
+   *     /tmp/civicrm-5.57.2-l10n.tar.gz
+   *
+   *     $ wp civicrm upgrade-dl --stability=rc
+   *     /tmp/civicrm-5.58.beta1-wordpress-202301260741.zip
+   *
+   *     $ wp civicrm upgrade-dl --stability=rc --lang --destination=/some/path
+   *     /some/path/civicrm-5.58.beta1-l10n-202301260741.tar.gz
    *
    * @since 1.0.0
    *
@@ -42,44 +54,39 @@ class CLI_Tools_CiviCRM_Command_Upgrade_Download extends CLI_Tools_CiviCRM_Comma
    */
   public function __invoke($args, $assoc_args) {
 
-    // Let's get the incoming data.
+    // Grab incoming data.
     $stability = \WP_CLI\Utils\get_flag_value($assoc_args, 'stability', 'stable');
     $destination = \WP_CLI\Utils\get_flag_value($assoc_args, 'destination', \WP_CLI\Utils\get_temp_dir());
+    $lang = \WP_CLI\Utils\get_flag_value($assoc_args, 'lang', FALSE);
+    $insecure = \WP_CLI\Utils\get_flag_value($assoc_args, 'insecure', FALSE);
 
     // Use "wp civicrm upgrade-get" to find out which file to download.
     $options = ['launch' => FALSE, 'return' => TRUE];
     $data = WP_CLI::runcommand('civicrm upgrade-get --stability=' . $stability, $options);
 
-    // Get the raw data and the archive URL.
+    // Get the raw data.
     $lookup = json_decode($data, TRUE);
-    $download_url = $lookup['tar']['WordPress'];
-
-    // Define filename to save.
-    $filename = basename($download_url);
-
-    // Maybe strip all the Google authentication stuff if present.
-    if (FALSE !== strpos($filename, '?')) {
-      $arr = explode('?', $filename);
-      $filename = $arr[0];
+    if (JSON_ERROR_NONE !== json_last_error()) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to decode JSON: %y%s.%n'), json_last_error_msg()));
     }
 
-    $filepath = trailingslashit($destination) . $filename;
+    // Grab either release or language archive URL.
+    if ($lang) {
+      $url = $lookup['tar']['L10n'];
+    }
+    else {
+      $url = $lookup['tar']['WordPress'];
+    }
 
+    // Configure the download.
     $headers = [];
     $options = [
-      // 10 minutes ought to be enough for everybody.
-      'timeout'  => 600,
-      'filename' => $filepath,
-      'insecure' => (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'insecure', FALSE),
+      'insecure' => (bool) $insecure,
     ];
 
-    // Okay, let's do the download.
-    $response = \WP_CLI\Utils\http_request('GET', $download_url, NULL, $headers, $options);
-    if (!$response->success || 200 !== (int) $response->status_code) {
-      WP_CLI::error(sprintf("Couldn't fetch response from %s (HTTP code %s)."), $url, $response->status_code);
-    }
-
-    WP_CLI::log($filepath);
+    // Do the download now.
+    $response = $this->file_download($url, $destination, $headers, $options);
+    echo $response . "\n";
 
   }
 
