@@ -10,7 +10,12 @@
  *     Downloading file...
  *     Success: CiviCRM downloaded to /tmp/
  *
- *     # Check for the latest stable version of CiviCRM
+ *     # Install the current stable version of CiviCRM with localization files.
+ *     $ wp civicrm core install --l10n
+ *     Success: Installed 1 of 1 plugins.
+ *     Success: CiviCRM localization downloaded and extracted to: /wp-content/plugins/civicrm
+ *
+ *     # Check for the latest stable version of CiviCRM.
  *     $ wp civicrm core check-update
  *     +-----------+---------+-------------------------------------------------------------------------------------------+
  *     | Package   | Version | Package URL                                                                               |
@@ -332,16 +337,16 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
-   *     # Install the current stable version of CiviCRM
+   *     # Install the current stable version of CiviCRM.
    *     $ wp civicrm core install
    *     Success: Installed 1 of 1 plugins.
    *
-   *     # Install the current stable version of CiviCRM with localization files
+   *     # Install the current stable version of CiviCRM with localization files.
    *     $ wp civicrm core install --l10n
    *     Success: Installed 1 of 1 plugins.
    *     Success: CiviCRM localization downloaded and extracted to: /wp-content/plugins/civicrm
    *
-   *     # Install a specific version of CiviCRM
+   *     # Install a specific version of CiviCRM.
    *     $ wp civicrm core install --version=5.56.2
    *     Success: Installed 1 of 1 plugins.
    *
@@ -455,6 +460,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
+   *     # Activate the CiviCRM plugin.
    *     $ wp civicrm core activate
    *     CiviCRM database credentials:
    *     +----------+-----------------------+
@@ -464,8 +470,16 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *     | Username | foo                   |
    *     | Password | dbpassword            |
    *     | Host     | localhost             |
+   *     | Locale   | en_US                 |
+   *     | SSL      | on                    |
    *     +----------+-----------------------+
-   *     Do you want to continue? [y/n]
+   *     Do you want to continue? [y/n] y
+   *     Creating file /httpdocs/wp-content/uploads/civicrm/civicrm.settings.php
+   *     Success: CiviCRM data files initialized.
+   *     Creating civicrm_* database tables in civicrm_database_name
+   *     Success: CiviCRM database loaded.
+   *     Plugin 'civicrm' activated.
+   *     Success: Activated 1 of 1 plugins.
    *
    * @since 1.0.0
    *
@@ -1252,7 +1266,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
-   *     $ wp civicrm restore
+   *     $ wp civicrm core restore
    *
    * @since 1.0.0
    *
