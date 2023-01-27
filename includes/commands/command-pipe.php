@@ -23,18 +23,6 @@
 class CLI_Tools_CiviCRM_Command_Pipe extends CLI_Tools_CiviCRM_Command {
 
   /**
-   * Dependency check.
-   *
-   * @since 1.0.0
-   */
-  public static function check_dependencies() {
-    // Check for existence of CiviCRM.
-    if (!function_exists('civicrm_initialize')) {
-      WP_CLI::error('Unable to find CiviCRM install.');
-    }
-  }
-
-  /**
    * Start a Civi::pipe session (JSON-RPC 2.0)
    *
    * The Civi::pipe protocol provides a line-oriented session for executing multiple requests in a single CiviCRM instance.
