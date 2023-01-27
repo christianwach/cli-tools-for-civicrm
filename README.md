@@ -53,7 +53,8 @@ There is a new command `wp civicrm core <command>` which (sort of) mirrors the f
 | `wp civicrm core check-version` | Checks for a CiviCRM version or matching localization archive. | New |
 | `wp civicrm core check-update` | Checks for CiviCRM updates via Version Check API. | New |
 | `wp civicrm core download` | Downloads core CiviCRM files. | New |
-| `wp civicrm core install` | Runs the standard CiviCRM installation process. | `wp civicrm install` |
+| `wp civicrm core install` | Installs the CiviCRM plugin. | `wp civicrm install` but without activation |
+| `wp civicrm core activate` | Activates the CiviCRM plugin and loads the database. | New |
 | `wp civicrm core is-installed` | Checks if CiviCRM is installed. | Not implemented yet |
 | `wp civicrm core version` | Displays the CiviCRM version. | New |
 | `wp civicrm core update` | Updates CiviCRM to a newer version. | `wp civicrm upgrade` currently broken |
