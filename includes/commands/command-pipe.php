@@ -17,6 +17,8 @@
  *     {"Civi::pipe":{"v":"5.47.alpha1","t":"trusted","l":["nologin"]}}
  *
  * @since 1.0.0
+ *
+ * @package Command_Line_Tools_for_CiviCRM
  */
 class CLI_Tools_CiviCRM_Command_Pipe extends CLI_Tools_CiviCRM_Command {
 

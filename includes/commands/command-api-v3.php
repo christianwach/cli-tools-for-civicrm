@@ -8,6 +8,8 @@
  *     Output here.
  *
  * @since 1.0.0
+ *
+ * @package Command_Line_Tools_for_CiviCRM
  */
 class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
 

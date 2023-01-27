@@ -9,6 +9,8 @@
  *     $ wp civicrm upgrade-dl --stability=rc --destination=/some/path
  *
  * @since 1.0.0
+ *
+ * @package Command_Line_Tools_for_CiviCRM
  */
 class CLI_Tools_CiviCRM_Command_Upgrade_Download extends CLI_Tools_CiviCRM_Command {
 

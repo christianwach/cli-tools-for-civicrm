@@ -7,6 +7,8 @@
  *     $ wp civicrm update-cfg
  *
  * @since 1.0.0
+ *
+ * @package Command_Line_Tools_for_CiviCRM
  */
 class CLI_Tools_CiviCRM_Command_Update_Config extends CLI_Tools_CiviCRM_Command {
 

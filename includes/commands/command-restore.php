@@ -7,6 +7,8 @@
  *     $ wp civicrm restore
  *
  * @since 1.0.0
+ *
+ * @package Command_Line_Tools_for_CiviCRM
  */
 class CLI_Tools_CiviCRM_Command_Restore extends CLI_Tools_CiviCRM_Command {
 

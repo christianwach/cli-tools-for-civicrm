@@ -1,14 +1,5 @@
 <?php
 /**
- * CiviCRM command class.
- *
- * @package Command_Line_Tools_for_CiviCRM
- */
-
-// Exit if accessed directly.
-defined('ABSPATH') || exit;
-
-/**
  * Manage CiviCRM through the command-line.
  *
  * ## EXAMPLES
@@ -20,6 +11,8 @@ defined('ABSPATH') || exit;
  *     5.47.1
  *
  * @since 1.0.0
+ *
+ * @package Command_Line_Tools_for_CiviCRM
  */
 class CLI_Tools_CiviCRM_Command extends CLI_Tools_CiviCRM_Command_Base {
 

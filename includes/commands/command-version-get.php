@@ -11,6 +11,8 @@
  *     https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-l10n.tar.gz
  *
  * @since 1.0.0
+ *
+ * @package Command_Line_Tools_for_CiviCRM
  */
 class CLI_Tools_CiviCRM_Command_Version_Get extends CLI_Tools_CiviCRM_Command {
 

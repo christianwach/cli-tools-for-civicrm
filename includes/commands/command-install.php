@@ -7,6 +7,8 @@
  *     $ wp civicrm install --zipfile=~/civicrm-5.57.1-wordpress.zip --ssl=on
  *
  * @since 1.0.0
+ *
+ * @package Command_Line_Tools_for_CiviCRM
  */
 class CLI_Tools_CiviCRM_Command_Install extends CLI_Tools_CiviCRM_Command {
 

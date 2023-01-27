@@ -8,6 +8,8 @@
  *     $ wp civicrm upgrade-get --stability=rc
  *
  * @since 1.0.0
+ *
+ * @package Command_Line_Tools_for_CiviCRM
  */
 class CLI_Tools_CiviCRM_Command_Upgrade_Get extends CLI_Tools_CiviCRM_Command {
 

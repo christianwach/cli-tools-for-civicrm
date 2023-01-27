@@ -2,16 +2,9 @@
 /**
  * Base command class.
  *
- * @package Command_Line_Tools_for_CiviCRM
- */
-
-// Exit if accessed directly.
-defined('ABSPATH') || exit;
-
-/**
- * Base command class.
- *
  * @since 1.0.0
+ *
+ * @package Command_Line_Tools_for_CiviCRM
  */
 abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObject {
 

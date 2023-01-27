@@ -8,6 +8,8 @@
  *     $ wp civicrm upgrade-db --dry-run
  *
  * @since 1.0.0
+ *
+ * @package Command_Line_Tools_for_CiviCRM
  */
 class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
 
