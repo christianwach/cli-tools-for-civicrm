@@ -44,40 +44,31 @@ If you have cloned the code from GitHub, it is assumed that you know what you're
 
 By default, this plugin will load the Command Line Tools in a multi-class structure that WP-CLI expects and which enables proper documentation of the `civicrm` command and all its sub-commands. It is not, however, complete yet.
 
-### Commands that have not been updated
-
-The following commands exist in this repo, but their code has simply been copied across from CiviCRM:
-
-* `wp civicrm restore`
-* `wp civicrm update-cfg`
-
-PRs would be welcome if you want to start improving (or fixing) them.
-
-### Commands that are being updated
-
-The following commands exist in this repo, but are not currently functional:
-
-* `wp civicrm upgrade`
-
-PRs would be welcome if you want to help improve them.
-
-If you need the old `wp civicrm upgrade` command then simply comment out your `CIVICRM_WPCLI_LOADED` define and then you can use it as supplied by CiviCRM. Please bear in mind that it [seems to be broken](https://lab.civicrm.org/dev/wordpress/-/issues/123) at the moment.
-
 ### New Commands
 
-| Command | Description |
-| --- | --- |
-| `wp civicrm upgrade-get` | Find out what file you should use to upgrade CiviCRM. |
-| `wp civicrm upgrade-dl` | Download CiviCRM code and put it in place for an upgrade. |
-| `wp civicrm version-get` | Get the URL for a CiviCRM stable release or matching language archive. |
-| `wp civicrm version-dl` | Download a CiviCRM stable release archive or language archive. |
+There is a new command `wp civicrm core <command>` which (sort of) mirrors the functionality in `wp core <command>`. It  holds many of the commands you may be used to using most frequently.
 
-Use `wp help civicrm command-name` for further details.
+| Command | Description | Old Command |
+| --- | --- | --- |
+| `wp civicrm core check-version` | Checks for a CiviCRM version or matching localization archive. | New |
+| `wp civicrm core check-update` | Checks for CiviCRM updates via Version Check API. | New |
+| `wp civicrm core download` | Downloads core CiviCRM files. | New |
+| `wp civicrm core install` | Runs the standard CiviCRM installation process. | `wp civicrm install` |
+| `wp civicrm core is-installed` | Checks if CiviCRM is installed. | Not implemented yet |
+| `wp civicrm core version` | Displays the CiviCRM version. | New |
+| `wp civicrm core update` | Updates CiviCRM to a newer version. | `wp civicrm upgrade` currently broken |
+| `wp civicrm core update-cfg` | Reset paths to correct config settings. | `wp civicrm update-cfg` |
+| `wp civicrm core update-db` | Runs the CiviCRM database update procedure. | `wp civicrm upgrade-db` |
+| `wp civicrm core verify-checksums` | Verifies CiviCRM files against checksums via `googleapis`. | Not implemented yet |
+| `wp civicrm core version` | Displays the CiviCRM version. | New |
+
+Use `wp help civicrm <command>` or `wp help civicrm core <command>` for full details and examples.
 
 ### Commands that have changed
 
 | Old Command | New Command |
 | --- | --- |
+| `wp civicrm cache-clear` | `wp civicrm cache flush` |
 | `wp civicrm disable-debug` | `wp civicrm debug disable` |
 | `wp civicrm enable-debug` | `wp civicrm debug enable` |
 | `wp civicrm member-records` | `wp civicrm job member-records` or `wp civicrm job membership` |
@@ -87,8 +78,27 @@ Use `wp help civicrm command-name` for further details.
 | `wp civicrm sql-cli` | `wp civicrm db cli` |
 | `wp civicrm sql-dump` | `wp civicrm db dump` |
 | `wp civicrm sql-query` | `wp civicrm db query` |
-| `wp civicrm version-code` | `wp civicrm version code` |
-| `wp civicrm version-db` | `wp civicrm version db` |
+
+As above, use `wp help civicrm <command>` for full details and examples.
+
+### Commands that have not been updated yet
+
+The following commands exist in this repo, but their code has simply been copied across from CiviCRM:
+
+* `wp civicrm core restore`
+* `wp civicrm core update-cfg`
+
+PRs would be welcome if you want to start improving (or fixing) them.
+
+### Commands that are being updated
+
+The following commands exist in this repo, but are not currently functional:
+
+* `wp civicrm core update`
+
+PRs would be welcome if you want to help improve them.
+
+If you need the old `wp civicrm upgrade` command then simply comment out your `CIVICRM_WPCLI_LOADED` define and then you can use it as supplied by CiviCRM. Please bear in mind that it [seems to be broken](https://lab.civicrm.org/dev/wordpress/-/issues/123) at the moment.
 
 ### Commands that have been dropped
 
