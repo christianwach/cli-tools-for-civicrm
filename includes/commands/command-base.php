@@ -93,9 +93,10 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
    *
    * @param string $tarfile The path to the tarfile.
    * @param string $destination The path to extract to.
+   * @param bool $delete True deletes the zip archive once extracted. Default to true.
    * @return bool True if successful, false otherwise.
    */
-  protected function untar($tarfile, $destination) {
+  protected function untar($tarfile, $destination, $delete = TRUE) {
 
     // Sanity check tarfile.
     if (empty($tarfile)) {
@@ -130,6 +131,15 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
       WP_CLI::error(sprintf(WP_CLI::colorize('Failed to extract tarball: %y%s.%n'), $this->tar_error_msg($process_run)));
     }
 
+    // Delete the tar archive.
+    if (!empty($delete)) {
+      $cmd = "rm $tarfile";
+      $process_run = WP_CLI::launch($cmd, $exit_on_error, $return_detailed);
+      if (0 !== $process_run->return_code) {
+        WP_CLI::error(sprintf(WP_CLI::colorize('Failed to delete tarball: %y%s.%n'), $this->tar_error_msg($process_run)));
+      }
+    }
+
     return TRUE;
 
   }
@@ -144,9 +154,10 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
    *
    * @param string $zipfile The path to the zipfile.
    * @param string $destination The path to extract to.
+   * @param bool $delete True deletes the zip archive once extracted. Defaults to true.
    * @return bool True if successful, false otherwise.
    */
-  protected function unzip($zipfile, $destination) {
+  protected function unzip($zipfile, $destination, $delete = TRUE) {
 
     // Sanity check zipfile.
     if (empty($zipfile)) {
@@ -170,6 +181,15 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
     //WP_CLI::log(print_r($process_run, TRUE));
     if (0 !== $process_run->return_code) {
       WP_CLI::error(sprintf(WP_CLI::colorize('Failed to extract zip archive: %y%s.%n'), $this->zip_error_msg($process_run->return_code)));
+    }
+
+    // Delete the zip archive.
+    if (!empty($delete)) {
+      $cmd = "rm $zipfile";
+      $process_run = WP_CLI::launch($cmd, $exit_on_error, $return_detailed);
+      if (0 !== $process_run->return_code) {
+        WP_CLI::error(sprintf(WP_CLI::colorize('Failed to delete zipfile: %y%s.%n'), $this->tar_error_msg($process_run)));
+      }
     }
 
     return TRUE;
@@ -343,6 +363,72 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
     }
 
     return $filepath;
+
+  }
+
+  /**
+   * Gets the path to the CiviCRM plugin directory.
+   *
+   * @since 1.0.0
+   *
+   * @return string|bool $plugin_path The path to the CiviCRM plugin directory.
+   */
+  protected function get_plugin_path() {
+
+    global $wp_filesystem;
+    if (empty($wp_filesystem)) {
+      WP_Filesystem();
+    }
+
+    // Get the path to the WordPress plugins directory.
+    $plugins_dir = $wp_filesystem->wp_plugins_dir();
+    if (empty($plugins_dir)) {
+      WP_CLI::error('Unable to locate WordPress plugins directory.');
+    }
+
+    // The path to the CiviCRM plugin directory.
+    $plugin_path = trailingslashit($plugins_dir) . 'civicrm';
+
+    return $plugin_path;
+
+  }
+
+  /**
+   * Recursively implode an array.
+   *
+   * @since 1.0.0
+   *
+   * @param array $value The array to implode.
+   * @param integer $level The current level.
+   * @return string
+   */
+  protected static function implode_recursive($value, $level = 0) {
+
+    // Maybe recurse.
+    $array = [];
+    if (is_array($value)) {
+      foreach ($value as $val) {
+        if (is_array($val)) {
+          $array[] = self::implode_recursive($val, $level + 1);
+        }
+        else {
+          $array[] = $val;
+        }
+      }
+    }
+    else {
+      $array[] = $value;
+    }
+
+    // Wrap sub-arrays but leave top level alone.
+    if ($level > 0) {
+      $string = '[' . implode(',', $array) . ']';
+    }
+    else {
+      $string = implode(',', $array);
+    }
+
+    return $string;
 
   }
 

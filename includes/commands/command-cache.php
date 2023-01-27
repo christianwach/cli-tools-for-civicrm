@@ -1,31 +1,32 @@
 <?php
 /**
- * Clear the CiviCRM cache.
+ * Flush the CiviCRM cache.
  *
  * ## EXAMPLES
  *
- *     $ wp civicrm cache-clear
+ *     $ wp civicrm cache flush
  *
  * @since 1.0.0
  *
  * @package Command_Line_Tools_for_CiviCRM
  */
-class CLI_Tools_CiviCRM_Command_Cache_Clear extends CLI_Tools_CiviCRM_Command {
+class CLI_Tools_CiviCRM_Command_Cache extends CLI_Tools_CiviCRM_Command {
 
   /**
-   * Clear the CiviCRM cache.
+   * Flush the CiviCRM cache.
    *
    * ## EXAMPLES
    *
-   *     $ wp civicrm cache-clear
+   *     $ wp civicrm cache flush
    *
    * @since 1.0.0
    *
    * @param array $args The WP-CLI positional arguments.
    * @param array $assoc_args The WP-CLI associative arguments.
    */
-  public function __invoke($args, $assoc_args) {
+  public function flush($args, $assoc_args) {
 
+    // Bootstrap CiviCRM.
     civicrm_initialize();
 
     $config = CRM_Core_Config::singleton();
