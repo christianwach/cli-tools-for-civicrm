@@ -335,6 +335,9 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    * [--l10n-tarfile=<l10n-tarfile>]
    * : Path to your l10n tar.gz file. If specified --l10n is ignored.
    *
+   * [--force]
+   * : If set, the command will overwrite any installed version of the plugin, without prompting for confirmation.
+   *
    * ## EXAMPLES
    *
    *     # Install the current stable version of CiviCRM.
@@ -362,6 +365,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     $zipfile = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'zipfile', '');
     $l10n = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'l10n', '');
     $l10n_tarfile = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'l10n-tarfile', '');
+    $force = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'force', FALSE);
 
     // Get the path to the CiviCRM plugin directory.
     $plugin_path = $this->get_plugin_path();
@@ -369,7 +373,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     // Only install plugin if not already installed.
     $fetcher = new \WP_CLI\Fetchers\Plugin();
     $installed = $fetcher->get('civicrm');
-    if (!$installed) {
+    if (!$installed || !empty($force)) {
 
       // When no zipfile is specified.
       if (!empty($version) && empty($zipfile)) {
@@ -382,11 +386,20 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
 
         // Use "wp plugin install" to install CiviCRM core.
         $options = ['launch' => FALSE, 'return' => FALSE];
-        $command = 'plugin install ' . $url;
+        $command = 'plugin install ' . $url . (empty($force) ? '' : ' --force');
         WP_CLI::runcommand($command, $options);
 
       }
       elseif (!empty($zipfile)) {
+
+        // If forcing, remove existing CiviCRM plugin directory.
+        if (!empty($force)) {
+          $cmd = 'rm -r ' . $plugin_path . '/civicrm';
+          $process_run = WP_CLI::launch($cmd, $exit_on_error, $return_detailed);
+          if (0 !== $process_run->return_code) {
+            WP_CLI::error(sprintf(WP_CLI::colorize('Failed to delete existing CiviCRM plugin: %y%s.%n'), $this->tar_error_msg($process_run)));
+          }
+        }
 
         // Extract to plugin directory.
         WP_CLI::log(sprintf(WP_CLI::colorize('Extracting plugin archive to: %y%s%n'), $plugin_path));
@@ -455,7 +468,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    * [--ssl=<ssl>]
    * : The SSL setting for your website, e.g. '--ssl=on'. Defaults to "on".
    *
-   * [--site_url=<site_url>]
+   * [--site-url=<site-url>]
    * : Domain for your website, e.g. 'mysite.com'.
    *
    * ## EXAMPLES
@@ -524,7 +537,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     $dbname = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'dbname', (defined('DB_NAME') ? DB_NAME : ''));
     $locale = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'locale', 'en_US');
     $ssl = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'ssl', 'on');
-    $base_url = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'site_url', '');
+    $base_url = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'site-url', '');
 
     // Show database parameters.
     WP_CLI::log(WP_CLI::colorize('%GCiviCRM database credentials:%n'));
@@ -706,28 +719,23 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *
    * ## OPTIONS
    *
-   * [--stability=<stability>]
-   * : Specify the stability of the version to get.
-   * ---
-   * default: stable
-   * options:
-   *   - nightly
-   *   - rc
-   *   - stable
-   * ---
+   * [--version=<version>]
+   * : Specify the CiviCRM version to get. Accepts a version number, 'stable', 'rc' or 'nightly'. Defaults to latest stable version.
    *
    * [--zipfile=<zipfile>]
-   * : Path to your CiviCRM zip file. If specified --stability is ignored.
+   * : Path to your CiviCRM zip file. If specified --version is ignored.
    *
-   * [--tarfile=<tarfile>]
-   * : Path to your CiviCRM tar.gz file. Not currently available.
+   * [--l10n]
+   * : Additionally install the localization files for the specified version.
    *
-   * [--backup-dir=<backup-dir>]
-   * : Path to your CiviCRM backup directory. Default is one level above ABSPATH.
+   * [--l10n-tarfile=<l10n-tarfile>]
+   * : Path to your l10n tar.gz file. If specified --l10n is ignored.
    *
    * ## EXAMPLES
    *
-   *     $ wp civicrm core update --zipfile=~/civicrm-5.57.1-wordpress.zip
+   *     # Update to the current stable version of CiviCRM.
+   *     $ wp civicrm core update
+   *     Success: Installed 1 of 1 plugins.
    *
    * @since 1.0.0
    *
@@ -736,20 +744,22 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    */
   public function update($args, $assoc_args) {
 
+    // Grab associative arguments.
+    $version = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'version', 'stable');
+    $zipfile = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'zipfile', '');
+    $l10n = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'l10n', '');
+    $l10n_tarfile = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'l10n-tarfile', '');
+
     WP_CLI::log(WP_CLI::colorize('%GGathering system information.%n'));
-
-    // Get requested version.
-    $stability = \WP_CLI\Utils\get_flag_value($assoc_args, 'stability', 'stable');
-
-    // Get compressed archive location.
-    $tarfile = \WP_CLI\Utils\get_flag_value($assoc_args, 'tarfile', FALSE);
-    $zipfile = \WP_CLI\Utils\get_flag_value($assoc_args, 'zipfile', FALSE);
 
     // Get backup directory.
     $backup_dir = \WP_CLI\Utils\get_flag_value($assoc_args, 'backup-dir', trailingslashit(dirname(ABSPATH)) . 'civicrm');
 
-    // Let's have a look for some CiviCRM variables.
+    // Bootstrap CiviCRM.
+    $this->check_dependencies();
     civicrm_initialize();
+
+    // Let's have a look for some CiviCRM variables.
     global $civicrm_root;
     $config = CRM_Core_Config::singleton();
     //WP_CLI::log(print_r($config, TRUE));
@@ -760,16 +770,14 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
 
     // Build feedback.
     $feedback = [];
-    if (!empty($tarfile)) {
-      $feedback['Plugin tar.gz archive'] = $tarfile;
-    }
     if (!empty($zipfile)) {
-      $feedback['Plugin zip archive'] = $tarfile;
+      $feedback['Plugin zip archive'] = $zipfile;
     }
-    if (!empty($stability) && empty($zipfile)) {
-      $feedback['Requested version'] = $stability;
+    if (!empty($version) && empty($zipfile)) {
+      $feedback['Requested version'] = $version;
       $options = ['launch' => FALSE, 'return' => TRUE];
-      $archive = WP_CLI::runcommand('civicrm upgrade-get --raw --stability=' . $stability, $options);
+      $command = 'civicrm core check-version --version=' . $version . ' --format=url';
+      $archive = WP_CLI::runcommand($command, $options);
       // Maybe strip all the Google authentication stuff if present.
       if (FALSE !== strpos($archive, '?')) {
         $arr = explode('?', $archive);
@@ -820,36 +828,30 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     $formatter = $this->get_formatter($assoc_args);
     $formatter->display_item($feedback);
 
-    return;
+    // Let's give folks a chance to exit now.
+    WP_CLI::confirm(WP_CLI::colorize('%GDo you want to continue?%n'), $assoc_args);
 
     // ----------------------------------------------------------------------------
     // Start upgrade.
     // ----------------------------------------------------------------------------
 
-    // Unpack the archive into the WordPress plugins directory.
-    if (!empty($stability) && empty($zipfile)) {
-      // Use "wp civicrm update-dl" to get the CiviCRM archive.
-      WP_CLI::log(WP_CLI::colorize('%GDownloading archive.%n'));
-      $options = ['launch' => FALSE, 'return' => TRUE];
-      $archive = WP_CLI::runcommand('civicrm upgrade-dl --stability=' . $stability, $options);
-      if (!$this->unzip($archive, $plugins_dir)) {
-        WP_CLI::error('Could not extract zipfile.');
-      }
-      unlink($archive);
-    }
-    elseif (!empty($tarfile)) {
-      if (!$this->untar($tarfile, $plugins_dir)) {
-        WP_CLI::error('Could not extract tarfile.');
-      }
-    }
-    elseif (!empty($zipfile)) {
-      if (!$this->unzip($zipfile, $plugins_dir)) {
-        WP_CLI::error('Could not extract zipfile.');
-      }
-    }
-    else {
-      WP_CLI::error('No archive specified.');
-    }
+    // Enable Maintenance Mode.
+    //WP_CLI::runcommand('maintenance-mode activate', ['launch' => FALSE, 'return' => FALSE]);
+
+    // Build install command.
+    $command = 'civicrm core install' .
+      (empty($version) ? '' : ' --version=' . $version) .
+      (empty($zipfile) ? '' : ' --zipfile=' . $zipfile) .
+      (empty($l10n) ? '' : ' --l10n') .
+      (empty($langtarfile) ? '' : ' --l10n-tarfile=' . $langtarfile) .
+      ' --force';
+
+    // Run "wp civicrm core install".
+    $options = ['launch' => FALSE, 'return' => FALSE];
+    WP_CLI::runcommand($command, $options);
+
+    // Disable Maintenance Mode.
+    //WP_CLI::runcommand('maintenance-mode deactivate', ['launch' => FALSE, 'return' => FALSE]);
 
   }
 

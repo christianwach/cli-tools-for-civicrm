@@ -68,8 +68,8 @@ class CLI_Tools_CiviCRM_Command_Install extends CLI_Tools_CiviCRM_Command {
     $tarfile = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'tarfile', '');
     $lang = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'lang', '');
     $langtarfile = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'langtarfile', '');
-    $ssl = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'ssl', 'on');
-    $base_url = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'site_url', '');
+    $ssl = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'ssl', '');
+    $site_url = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'site_url', '');
 
     // Bail when .tar.gz archive is specified.
     if (!empty($tarfile)) {
@@ -93,7 +93,7 @@ class CLI_Tools_CiviCRM_Command_Install extends CLI_Tools_CiviCRM_Command {
       (empty($dbname) ? '' : ' --dbname=' . $dbname) .
       (empty($lang) ? '' : ' --locale=' . $lang) .
       (empty($ssl) ? '' : ' --ssl=' . $ssl) .
-      (empty($base_url) ? '' : ' --site-url=' . $base_url);
+      (empty($site_url) ? '' : ' --site-url=' . $site_url);
 
     // Run "wp civicrm core activate".
     $options = ['launch' => FALSE, 'return' => FALSE];

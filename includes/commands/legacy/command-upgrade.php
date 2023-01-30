@@ -44,6 +44,13 @@ class CLI_Tools_CiviCRM_Command_Upgrade extends CLI_Tools_CiviCRM_Command {
     $tarfile = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'l10n-tarfile', '');
     $backup_dir = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'backup-dir', '');
 
+    // Bail when .tar.gz archive is specified.
+    if (!empty($tarfile)) {
+      WP_CLI::error('CiviCRM .tar.gz archives are not supported.');
+    }
+
+    // TODO: Backup command.
+
     // Build command.
     $command = 'civicrm core update' . (empty($zipfile) ? '' : ' --zipfile=' . $zipfile);
 
