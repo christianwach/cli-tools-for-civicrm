@@ -13,7 +13,7 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
    *
    * @since 1.0.0
    */
-  protected static function check_dependencies() {
+  public static function check_dependencies() {
     // Check for existence of CiviCRM.
     if (!function_exists('civicrm_initialize')) {
       WP_CLI::error('Unable to find CiviCRM install.');
