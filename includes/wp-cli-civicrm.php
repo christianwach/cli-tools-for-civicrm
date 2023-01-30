@@ -24,6 +24,10 @@ WP_CLI::add_hook('before_wp_load', function() {
   require_once __DIR__ . '/commands/command-job.php';
   require_once __DIR__ . '/commands/command-pipe.php';
 
+  // ----------------------------------------------------------------------------
+  // Add commands.
+  // ----------------------------------------------------------------------------
+
   // Add top-level commands.
   WP_CLI::add_command('civicrm', 'CLI_Tools_CiviCRM_Command');
   WP_CLI::add_command('cv', 'CLI_Tools_CiviCRM_Command');
@@ -59,6 +63,81 @@ WP_CLI::add_hook('before_wp_load', function() {
   // Add Pipe command.
   WP_CLI::add_command('civicrm pipe', 'CLI_Tools_CiviCRM_Command_Pipe', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Pipe::check_dependencies']);
   WP_CLI::add_command('cv pipe', 'CLI_Tools_CiviCRM_Command_Pipe', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Pipe::check_dependencies']);
+
+  // ----------------------------------------------------------------------------
+  // Add deprecated legacy commands.
+  // ----------------------------------------------------------------------------
+
+  // Include legacy files.
+  require_once __DIR__ . '/commands/legacy/command-cache-clear.php';
+  require_once __DIR__ . '/commands/legacy/command-debug-disable.php';
+  require_once __DIR__ . '/commands/legacy/command-debug-enable.php';
+  require_once __DIR__ . '/commands/legacy/command-member-records.php';
+  require_once __DIR__ . '/commands/legacy/command-restore.php';
+  require_once __DIR__ . '/commands/legacy/command-sql-cli.php';
+  require_once __DIR__ . '/commands/legacy/command-sql-conf.php';
+  require_once __DIR__ . '/commands/legacy/command-sql-connect.php';
+  require_once __DIR__ . '/commands/legacy/command-sql-dump.php';
+  require_once __DIR__ . '/commands/legacy/command-sql-query.php';
+  require_once __DIR__ . '/commands/legacy/command-update-cfg.php';
+  require_once __DIR__ . '/commands/legacy/command-upgrade.php';
+  require_once __DIR__ . '/commands/legacy/command-upgrade-db.php';
+
+  // Deprecated: Add Cache Clear command.
+  WP_CLI::add_command('civicrm cache-clear', 'CLI_Tools_CiviCRM_Command_Cache_Clear', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Cache_Clear::check_dependencies']);
+  WP_CLI::add_command('cv cache-clear', 'CLI_Tools_CiviCRM_Command_Cache_Clear', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Cache_Clear::check_dependencies']);
+
+  // Deprecated: Add Debug Disable command.
+  WP_CLI::add_command('civicrm disable-debug', 'CLI_Tools_CiviCRM_Command_Debug_Disable', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Debug_Disable::check_dependencies']);
+  WP_CLI::add_command('cv disable-debug', 'CLI_Tools_CiviCRM_Command_Debug_Disable', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Debug_Disable::check_dependencies']);
+
+  // Deprecated: Add Debug Enable command.
+  WP_CLI::add_command('civicrm enable-debug', 'CLI_Tools_CiviCRM_Command_Debug_Enable', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Debug_Enable::check_dependencies']);
+  WP_CLI::add_command('cv enable-debug', 'CLI_Tools_CiviCRM_Command_Debug_Enable', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Debug_Enable::check_dependencies']);
+
+  // Deprecated: Add Member Records command.
+  WP_CLI::add_command('civicrm member-records', 'CLI_Tools_CiviCRM_Command_Member_Records', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Member_Records::check_dependencies']);
+  WP_CLI::add_command('cv member-records', 'CLI_Tools_CiviCRM_Command_Member_Records', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Member_Records::check_dependencies']);
+
+  // Deprecated: Add Restore command.
+  WP_CLI::add_command('civicrm restore', 'CLI_Tools_CiviCRM_Command_Restore', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Restore::check_dependencies']);
+  WP_CLI::add_command('cv restore', 'CLI_Tools_CiviCRM_Command_Restore', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Restore::check_dependencies']);
+
+  // Deprecated: Add SQL CLI command.
+  WP_CLI::add_command('civicrm sql-cli', 'CLI_Tools_CiviCRM_Command_SQL_CLI', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_SQL_CLI::check_dependencies']);
+  WP_CLI::add_command('cv sql-cli', 'CLI_Tools_CiviCRM_Command_SQL_CLI', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_SQL_CLI::check_dependencies']);
+
+  // Deprecated: Add SQL Config command.
+  WP_CLI::add_command('civicrm sql-conf', 'CLI_Tools_CiviCRM_Command_SQL_Conf', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_SQL_Conf::check_dependencies']);
+  WP_CLI::add_command('cv sql-conf', 'CLI_Tools_CiviCRM_Command_SQL_Conf', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_SQL_Conf::check_dependencies']);
+
+  // Deprecated: Add SQL Connect command.
+  WP_CLI::add_command('civicrm sql-connect', 'CLI_Tools_CiviCRM_Command_SQL_Connect', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_SQL_Connect::check_dependencies']);
+  WP_CLI::add_command('cv sql-connect', 'CLI_Tools_CiviCRM_Command_SQL_Connect', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_SQL_Connect::check_dependencies']);
+
+  // Deprecated: Add SQL Dump command.
+  WP_CLI::add_command('civicrm sql-dump', 'CLI_Tools_CiviCRM_Command_SQL_Dump', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_SQL_Dump::check_dependencies']);
+  WP_CLI::add_command('cv sql-dump', 'CLI_Tools_CiviCRM_Command_SQL_Dump', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_SQL_Dump::check_dependencies']);
+
+  // Deprecated: Add SQL Query command.
+  WP_CLI::add_command('civicrm sql-query', 'CLI_Tools_CiviCRM_Command_SQL_Query', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_SQL_Query::check_dependencies']);
+  WP_CLI::add_command('cv sql-query', 'CLI_Tools_CiviCRM_Command_SQL_Query', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_SQL_Query::check_dependencies']);
+
+  // Deprecated: Add Update Config command.
+  WP_CLI::add_command('civicrm update-cfg', 'CLI_Tools_CiviCRM_Command_Update_Config', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Update_Config::check_dependencies']);
+  WP_CLI::add_command('cv update-cfg', 'CLI_Tools_CiviCRM_Command_Update_Config', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Update_Config::check_dependencies']);
+
+  // Deprecated: Add Upgrade command.
+  WP_CLI::add_command('civicrm upgrade', 'CLI_Tools_CiviCRM_Command_Upgrade', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Upgrade::check_dependencies']);
+  WP_CLI::add_command('cv upgrade', 'CLI_Tools_CiviCRM_Command_Upgrade', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Upgrade::check_dependencies']);
+
+  // Deprecated: Add Upgrade DB command.
+  WP_CLI::add_command('civicrm upgrade-db', 'CLI_Tools_CiviCRM_Command_Upgrade_DB', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Upgrade_DB::check_dependencies']);
+  WP_CLI::add_command('cv upgrade-db', 'CLI_Tools_CiviCRM_Command_Upgrade_DB', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Upgrade_DB::check_dependencies']);
+
+  // ----------------------------------------------------------------------------
+  // Define CiviCRM paths.
+  // ----------------------------------------------------------------------------
 
   // Set paths early.
   global $civicrm_paths;
