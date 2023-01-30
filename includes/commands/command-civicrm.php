@@ -4,11 +4,42 @@
  *
  * ## EXAMPLES
  *
- *     $ wp civicrm version db
- *     Found CiviCRM database version: 5.47.1
+ *     # Download the latest stable CiviCRM core archive.
+ *     $ wp civicrm core download
+ *     Checking file to download...
+ *     Downloading file...
+ *     Success: CiviCRM downloaded to /tmp/
  *
- *     $ wp civicrm version db --raw
- *     5.47.1
+ *     # Install the current stable version of CiviCRM with localization files.
+ *     $ wp civicrm core install --l10n
+ *     Success: Installed 1 of 1 plugins.
+ *     Success: CiviCRM localization downloaded and extracted to: /wp-content/plugins/civicrm
+ *
+ *     # Check for the latest stable version of CiviCRM.
+ *     $ wp civicrm core check-update
+ *     +-----------+---------+-------------------------------------------------------------------------------------------+
+ *     | Package   | Version | Package URL                                                                               |
+ *     +-----------+---------+-------------------------------------------------------------------------------------------+
+ *     | WordPress | 5.57.2  | https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-wordpress.zip |
+ *     | L10n      | 5.57.2  | https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-l10n.tar.gz   |
+ *     +-----------+---------+-------------------------------------------------------------------------------------------+
+ *
+ *     # Check the CiviCRM database config.
+ *     $ wp civicrm db config --format=table
+ *     +----------+----------------+
+ *     | Field    | Value          |
+ *     +----------+----------------+
+ *     | phptype  | mysqli         |
+ *     | dbsyntax | mysqli         |
+ *     | username | db_username    |
+ *     | password | db_password    |
+ *     | protocol | tcp            |
+ *     | hostspec | localhost      |
+ *     | port     | false          |
+ *     | socket   | false          |
+ *     | database | civicrm_dbname |
+ *     | new_link | true           |
+ *     +----------+----------------+
  *
  * @since 1.0.0
  *
