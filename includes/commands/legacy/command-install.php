@@ -92,7 +92,7 @@ class CLI_Tools_CiviCRM_Command_Install extends CLI_Tools_CiviCRM_Command {
       (empty($dbhost) ? '' : ' --dbhost=' . $dbhost) .
       (empty($dbname) ? '' : ' --dbname=' . $dbname) .
       (empty($lang) ? '' : ' --locale=' . $lang) .
-      (empty($ssl) ? '' : ' --ssl=' . $ssl),
+      (empty($ssl) ? '' : ' --ssl=' . $ssl) .
       (empty($base_url) ? '' : ' --site-url=' . $base_url);
 
     // Run "wp civicrm core activate".
