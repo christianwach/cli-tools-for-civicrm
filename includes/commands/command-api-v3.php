@@ -39,6 +39,9 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
    *   - json
    * ---
    *
+   * [--timezone=<timezone>]
+   * : The CiviCRM timezone string. Defaults to the WordPress `timezone_string` setting.
+   *
    * [--format=<format>]
    * : Render output in a particular format. The "table" format can only be used when retrieving a single item.
    * ---
@@ -63,14 +66,17 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
    */
   public function __invoke($args, $assoc_args) {
 
-    $defaults = ['version' => 3];
+    // Grab associative arguments.
+    $input_format = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'input', 'args');
+    $wp_user_timezone = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'timezone', get_option('timezone_string'));
+    $format = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'pretty');
 
     // Get the Entity and Action from the first positional argument.
     list($entity, $action) = explode('.', $args[0]);
     array_shift($args);
 
     // Parse params.
-    $input_format = \WP_CLI\Utils\get_flag_value($assoc_args, 'input', 'args');
+    $defaults = ['version' => 3];
     switch ($input_format) {
 
       // Input params supplied via args.
@@ -99,16 +105,17 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
 
     }
 
+    // Bootstrap CiviCRM.
     civicrm_initialize();
 
     // CRM-18062: Set CiviCRM timezone if any.
     $wp_base_timezone = date_default_timezone_get();
-    $wp_user_timezone = \WP_CLI\Utils\get_flag_value($assoc_args, 'timezone', get_option('timezone_string'));
     if ($wp_user_timezone) {
       date_default_timezone_set($wp_user_timezone);
       CRM_Core_Config::singleton()->userSystem->setMySQLTimeZone();
     }
 
+    // Now call the CiviCRM API.
     $result = civicrm_api($entity, $action, $params);
 
     // Restore WordPress timezone.
@@ -116,7 +123,6 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
       date_default_timezone_set($wp_base_timezone);
     }
 
-    $format = \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'pretty');
     switch ($format) {
 
       // Pretty-print output (default).
