@@ -737,6 +737,8 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *     $ wp civicrm core update
    *     Success: Installed 1 of 1 plugins.
    *
+   * @alias upgrade
+   *
    * @since 1.0.0
    *
    * @param array $args The WP-CLI positional arguments.
@@ -903,6 +905,8 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *     Have a nice day.
    *
    * @subcommand update-db
+   *
+   * @alias upgrade-db
    *
    * @since 1.0.0
    *
