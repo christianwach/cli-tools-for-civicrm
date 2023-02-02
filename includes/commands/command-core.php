@@ -63,6 +63,311 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
   private $google_download_url = 'https://storage.googleapis.com/civicrm/';
 
   /**
+   * Back up the CiviCRM plugin files and database.
+   *
+   * ## OPTIONS
+   *
+   * [--backup-dir=<backup-dir>]
+   * : Path to your CiviCRM backup directory. Default is one level above ABSPATH.
+   *
+   * ## EXAMPLES
+   *
+   *     $ wp civicrm core backup
+   *     Gathering system information.
+   *     +------------------------+-----------------------------------------------------------------------+
+   *     | Field                  | Value                                                                 |
+   *     +------------------------+-----------------------------------------------------------------------+
+   *     | Backup directory       | /example.com/civicrm-backup                                           |
+   *     | Plugin path            | /example.com/httpdocs/wp-content/plugins/civicrm/                     |
+   *     | Database name          | civicrm_db                                                            |
+   *     | Database username      | dbuser                                                                |
+   *     | Database password      | dbpassword                                                            |
+   *     | Database host          | localhost                                                             |
+   *     | Settings file          | /example.com/httpdocs/wp-content/uploads/civicrm/civicrm.settings.php |
+   *     | Config and Log         | /example.com/httpdocs/wp-content/uploads/civicrm/ConfigAndLog/        |
+   *     | Custom PHP             | Not found                                                             |
+   *     | Custom templates       | Not found                                                             |
+   *     | Compiled templates     | /example.com/httpdocs/wp-content/uploads/civicrm/templates_c/         |
+   *     | Compiled templates     | /example.com/httpdocs/wp-content/uploads/civicrm/templates_c/         |
+   *     | Extensions directory   | /example.com/httpdocs/wp-content/uploads/civicrm/ext/                 |
+   *     | Uploads directory      | /example.com/httpdocs/wp-content/uploads/civicrm/upload/              |
+   *     | Image upload directory | /example.com/httpdocs/wp-content/uploads/civicrm/persist/contribute/  |
+   *     | File upload directory  | /example.com/httpdocs/wp-content/uploads/civicrm/custom/              |
+   *     +------------------------+-----------------------------------------------------------------------+
+   *     Do you want to continue? [y/n] y
+   *
+   * @since 1.0.0
+   *
+   * @param array $args The WP-CLI positional arguments.
+   * @param array $assoc_args The WP-CLI associative arguments.
+   */
+  public function backup($args, $assoc_args) {
+
+    // Grab associative arguments.
+    $backup_dir = \WP_CLI\Utils\get_flag_value($assoc_args, 'backup-dir', trailingslashit(dirname(ABSPATH)) . 'civicrm-backup');
+
+    // ----------------------------------------------------------------------------
+    // Build feedback table.
+    // ----------------------------------------------------------------------------
+    WP_CLI::log(WP_CLI::colorize('%GGathering system information.%n'));
+
+    // Bootstrap CiviCRM.
+    $this->check_dependencies();
+    civicrm_initialize();
+
+    // Let's have a look for some CiviCRM variables.
+    $config = CRM_Core_Config::singleton();
+    //WP_CLI::log(print_r($config, TRUE));
+
+    // Build feedback.
+    $feedback = [];
+    if (!empty($backup_dir)) {
+      $feedback['Backup directory'] = $backup_dir;
+    }
+    if (defined('CIVICRM_PLUGIN_DIR')) {
+      $feedback['Plugin path'] = CIVICRM_PLUGIN_DIR;
+    }
+    else {
+      $feedback['Plugin path'] = 'Not found';
+    }
+    if (defined('CIVICRM_DSN')) {
+      $dsn = DB::parseDSN(CIVICRM_DSN);
+      $feedback['Database name'] = $dsn['database'];
+      $feedback['Database username'] = $dsn['username'];
+      $feedback['Database password'] = $dsn['password'];
+      $feedback['Database host'] = $dsn['hostspec'];
+    }
+    else {
+      $feedback['Database Settings'] = 'Not found';
+    }
+    if (defined('CIVICRM_SETTINGS_PATH')) {
+      $feedback['Settings file'] = CIVICRM_SETTINGS_PATH;
+    }
+    else {
+      $feedback['Settings file'] = 'Not found';
+    }
+    if (!empty($config->configAndLogDir)) {
+      $feedback['Config and Log'] = $config->configAndLogDir;
+    }
+    else {
+      $feedback['Config and Log'] = 'Not found';
+    }
+    if (!empty($config->customPHPPathDir)) {
+      $feedback['Custom PHP'] = $config->customPHPPathDir;
+    }
+    else {
+      $feedback['Custom PHP'] = 'Not found';
+    }
+    if (!empty($config->customTemplateDir)) {
+      $feedback['Custom templates'] = $config->customTemplateDir;
+    }
+    else {
+      $feedback['Custom templates'] = 'Not found';
+    }
+    if (!empty($config->templateCompileDir)) {
+      $feedback['Compiled templates'] = $config->templateCompileDir;
+    }
+    else {
+      $feedback['Compiled templates'] = 'Not found';
+    }
+    if (!empty($config->extensionsDir)) {
+      $feedback['Extensions directory'] = $config->extensionsDir;
+    }
+    else {
+      $feedback['Extensions directory'] = 'Not found';
+    }
+    if (!empty($config->uploadDir)) {
+      $feedback['Uploads directory'] = $config->uploadDir;
+    }
+    else {
+      $feedback['Uploads directory'] = 'Not found';
+    }
+    if (!empty($config->imageUploadDir)) {
+      $feedback['Image upload directory'] = $config->imageUploadDir;
+    }
+    else {
+      $feedback['Image upload directory'] = 'Not found';
+    }
+    if (!empty($config->customFileUploadDir)) {
+      $feedback['File upload directory'] = $config->customFileUploadDir;
+    }
+    else {
+      $feedback['File upload directory'] = 'Not found';
+    }
+
+    // Render feedback.
+    $assoc_args['fields'] = array_keys($feedback);
+    $formatter = $this->get_formatter($assoc_args);
+    $formatter->display_item($feedback);
+
+    // Let's give folks a chance to exit now.
+    WP_CLI::confirm(WP_CLI::colorize('%GDo you want to continue?%n'), $assoc_args);
+
+    // ----------------------------------------------------------------------------
+    // Validate backup directory.
+    // ----------------------------------------------------------------------------
+    $backup_dir = untrailingslashit($backup_dir);
+
+    // Maybe create destination directory.
+    if (!is_dir($backup_dir)) {
+      if (!is_writable(dirname($backup_dir))) {
+        WP_CLI::error("Insufficient permission to create directory '{$backup_dir}'.");
+      }
+      WP_CLI::log("Creating directory '{$backup_dir}'.");
+      // Recursively create directory.
+      if (!@mkdir($backup_dir, 0777, TRUE)) {
+        $error = error_get_last();
+        WP_CLI::error("Failed to create directory '{$backup_dir}': {$error['message']}.");
+      }
+    }
+
+    // Sanity check.
+    if (!is_writable($backup_dir)) {
+      WP_CLI::error("'{$backup_dir}' is not writable by current user.");
+    }
+
+    // ----------------------------------------------------------------------------
+    // Export database.
+    // ----------------------------------------------------------------------------
+    WP_CLI::log('');
+    WP_CLI::log(WP_CLI::colorize('%GExporting database...%n'));
+
+    // Use "wp civicrm db dump".
+    $command = 'civicrm db dump --result-file=' . $backup_dir . '/civicrm-db.sql';
+    $options = ['launch' => FALSE, 'return' => FALSE];
+    WP_CLI::runcommand($command, $options);
+    WP_CLI::success("Database exported.");
+
+    // ----------------------------------------------------------------------------
+    // Back up plugin directory.
+    // ----------------------------------------------------------------------------
+    WP_CLI::log('');
+    WP_CLI::log(WP_CLI::colorize('%GBacking up plugin directory...%n'));
+    $plugin_path = $this->get_plugin_path();
+    if (!$this->zip($plugin_path, $backup_dir . '/civicrm.zip')) {
+      WP_CLI::error('Could not compress plugin archive.');
+    }
+    WP_CLI::success("Plugin directory backed up.");
+
+    // ----------------------------------------------------------------------------
+    // Back up "civicrm.settings.php" file.
+    // ----------------------------------------------------------------------------
+    if (defined('CIVICRM_SETTINGS_PATH')) {
+      WP_CLI::log('');
+      WP_CLI::log(WP_CLI::colorize('%GBacking up Settings File...%n'));
+      $dest_path = $backup_dir . '/civicrm.settings.php';
+      if (file_exists($dest_path) && is_writable($dest_path)) {
+        copy(CIVICRM_SETTINGS_PATH, $dest_path);
+      }
+      elseif ( ! file_exists($dest_path)) {
+        copy(CIVICRM_SETTINGS_PATH, $dest_path);
+      }
+      else {
+        $error = 1;
+        WP_CLI::error( "Could not copy '" . CIVICRM_SETTINGS_PATH . "' to backup directory." );
+      }
+      WP_CLI::success("Settings File backed up.");
+    }
+
+    // ----------------------------------------------------------------------------
+    // Back up Config and Log directory.
+    // ----------------------------------------------------------------------------
+    if (!empty($config->configAndLogDir)) {
+      WP_CLI::log('');
+      WP_CLI::log(WP_CLI::colorize('%GBacking up Config and Log directory...%n'));
+      if (!$this->zip(untrailingslashit($config->configAndLogDir), $backup_dir . '/civicrm-config-log.zip')) {
+        WP_CLI::error('Could not compress Config and Log archive.');
+      }
+      WP_CLI::success("Config and Log directory backed up.");
+    }
+
+    // ----------------------------------------------------------------------------
+    // Back up Custom PHP directory.
+    // ----------------------------------------------------------------------------
+    if (!empty($config->customPHPPathDir)) {
+      WP_CLI::log('');
+      WP_CLI::log(WP_CLI::colorize('%GBacking up Custom PHP directory...%n'));
+      if (!$this->zip(untrailingslashit($config->customPHPPathDir), $backup_dir . '/civicrm-custom-php.zip')) {
+        WP_CLI::error('Could not compress Custom PHP archive.');
+      }
+      WP_CLI::success("Custom PHP directory backed up.");
+    }
+
+    // ----------------------------------------------------------------------------
+    // Back up Custom templates directory.
+    // ----------------------------------------------------------------------------
+    if (!empty($config->customTemplateDir)) {
+      WP_CLI::log('');
+      WP_CLI::log(WP_CLI::colorize('%GBacking up Custom Templates directory...%n'));
+      if (!$this->zip(untrailingslashit($config->customTemplateDir), $backup_dir . '/civicrm-custom-templates.zip')) {
+        WP_CLI::error('Could not compress Custom Templates archive.');
+      }
+      WP_CLI::success("Custom Templates directory backed up.");
+    }
+
+    // ----------------------------------------------------------------------------
+    // Back up Compiled templates directory.
+    // ----------------------------------------------------------------------------
+    if (!empty($config->templateCompileDir)) {
+      WP_CLI::log('');
+      WP_CLI::log(WP_CLI::colorize('%GBacking up Compiled Templates directory...%n'));
+      if (!$this->zip(untrailingslashit($config->templateCompileDir), $backup_dir . '/civicrm-compiled-templates.zip')) {
+        WP_CLI::error('Could not compress Compiled templates archive.');
+      }
+      WP_CLI::success("Compiled Templates directory backed up.");
+    }
+
+    // ----------------------------------------------------------------------------
+    // Back up Extensions directory.
+    // ----------------------------------------------------------------------------
+    if (!empty($config->extensionsDir)) {
+      WP_CLI::log('');
+      WP_CLI::log(WP_CLI::colorize('%GBacking up Extensions directory...%n'));
+      if (!$this->zip(untrailingslashit($config->extensionsDir), $backup_dir . '/civicrm-extensions.zip')) {
+        WP_CLI::error('Could not compress Extensions archive.');
+      }
+      WP_CLI::success("Extensions directory backed up.");
+    }
+
+    // ----------------------------------------------------------------------------
+    // Back up Uploads directory.
+    // ----------------------------------------------------------------------------
+    if (!empty($config->uploadDir)) {
+      WP_CLI::log('');
+      WP_CLI::log(WP_CLI::colorize('%GBacking up Uploads directory...%n'));
+      if (!$this->zip(untrailingslashit($config->uploadDir), $backup_dir . '/civicrm-uploads.zip')) {
+        WP_CLI::error('Could not compress Uploads archive.');
+      }
+      WP_CLI::success("Uploads directory backed up.");
+    }
+
+    // ----------------------------------------------------------------------------
+    // Back up Image upload directory.
+    // ----------------------------------------------------------------------------
+    if (!empty($config->imageUploadDir)) {
+      WP_CLI::log('');
+      WP_CLI::log(WP_CLI::colorize('%GBacking up Image Uploads directory...%n'));
+      if (!$this->zip(untrailingslashit($config->imageUploadDir), $backup_dir . '/civicrm-image-uploads.zip')) {
+        WP_CLI::error('Could not compress Image Uploads archive.');
+      }
+      WP_CLI::success("Image Uploads directory backed up.");
+    }
+
+    // ----------------------------------------------------------------------------
+    // Back up File Uploads directory.
+    // ----------------------------------------------------------------------------
+    if (!empty($config->customFileUploadDir)) {
+      WP_CLI::log('');
+      WP_CLI::log(WP_CLI::colorize('%GBacking up File Uploads directory...%n'));
+      if (!$this->zip(untrailingslashit($config->customFileUploadDir), $backup_dir . '/civicrm-file-uploads.zip')) {
+        WP_CLI::error('Could not compress File Uploads archive.');
+      }
+      WP_CLI::success("File Uploads directory backed up.");
+    }
+
+  }
+
+  /**
    * Checks for a CiviCRM version or matching localization archive.
    *
    * ## OPTIONS
@@ -830,6 +1135,11 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
   /**
    * Restore the CiviCRM plugin files and database.
    *
+   * ## OPTIONS
+   *
+   * [--backup-dir=<backup-dir>]
+   * : Path to your CiviCRM backup directory. Default is one level above ABSPATH.
+   *
    * ## EXAMPLES
    *
    *     $ wp civicrm core restore
@@ -1012,9 +1322,6 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
 
     WP_CLI::log(WP_CLI::colorize('%GGathering system information.%n'));
 
-    // Get backup directory.
-    $backup_dir = \WP_CLI\Utils\get_flag_value($assoc_args, 'backup-dir', trailingslashit(dirname(ABSPATH)) . 'civicrm');
-
     // Bootstrap CiviCRM.
     $this->check_dependencies();
     civicrm_initialize();
@@ -1057,30 +1364,6 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
       $feedback['Database username'] = $dsn['username'];
       $feedback['Database password'] = $dsn['password'];
       $feedback['Database host'] = $dsn['hostspec'];
-    }
-    if (!empty($config->configAndLogDir)) {
-      $feedback['Config and Log'] = $config->configAndLogDir;
-    }
-    if (!empty($config->customPHPPathDir)) {
-      $feedback['Custom PHP'] = $config->customPHPPathDir;
-    }
-    if (!empty($config->customTemplateDir)) {
-      $feedback['Custom templates'] = $config->customTemplateDir;
-    }
-    if (!empty($config->templateCompileDir)) {
-      $feedback['Compiled templates'] = $config->templateCompileDir;
-    }
-    if (!empty($config->extensionsDir)) {
-      $feedback['Extensions directory'] = $config->extensionsDir;
-    }
-    if (!empty($config->uploadDir)) {
-      $feedback['Uploads directory'] = $config->uploadDir;
-    }
-    if (!empty($config->imageUploadDir)) {
-      $feedback['Image upload directory'] = $config->imageUploadDir;
-    }
-    if (!empty($config->customFileUploadDir)) {
-      $feedback['File upload directory'] = $config->customFileUploadDir;
     }
 
     // Render feedback.
