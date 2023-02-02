@@ -73,6 +73,7 @@ WP_CLI::add_hook('before_wp_load', function() {
   require_once __DIR__ . '/commands/legacy/command-debug-disable.php';
   require_once __DIR__ . '/commands/legacy/command-debug-enable.php';
   require_once __DIR__ . '/commands/legacy/command-install.php';
+  require_once __DIR__ . '/commands/legacy/command-mail-queue.php';
   require_once __DIR__ . '/commands/legacy/command-member-records.php';
   require_once __DIR__ . '/commands/legacy/command-restore.php';
   require_once __DIR__ . '/commands/legacy/command-sql-cli.php';
@@ -99,6 +100,10 @@ WP_CLI::add_hook('before_wp_load', function() {
   // Deprecated: Add Install command.
   WP_CLI::add_command('civicrm install', 'CLI_Tools_CiviCRM_Command_Install');
   WP_CLI::add_command('cv install', 'CLI_Tools_CiviCRM_Command_Install');
+
+  // Deprecated: Add Process Mail Queue command.
+  WP_CLI::add_command('civicrm process-mail-queue', 'CLI_Tools_CiviCRM_Command_Mail_Queue', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Mail_Queue::check_dependencies']);
+  WP_CLI::add_command('cv process-mail-queue', 'CLI_Tools_CiviCRM_Command_Mail_Queue', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Mail_Queue::check_dependencies']);
 
   // Deprecated: Add Member Records command.
   WP_CLI::add_command('civicrm member-records', 'CLI_Tools_CiviCRM_Command_Member_Records', ['before_invoke' => 'CLI_Tools_CiviCRM_Command_Member_Records::check_dependencies']);

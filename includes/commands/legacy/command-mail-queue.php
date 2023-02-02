@@ -8,7 +8,7 @@
  *
  * @since 1.0.0
  */
-class CLI_Tools_CiviCRM_Command_Member_Records extends CLI_Tools_CiviCRM_Command {
+class CLI_Tools_CiviCRM_Command_Mail_Queue extends CLI_Tools_CiviCRM_Command {
 
   /**
    * Process pending CiviMail mailing jobs. Deprecated: use `wp civicrm job mailing` instead.
