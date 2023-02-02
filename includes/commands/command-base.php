@@ -180,7 +180,7 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
     $process_run = WP_CLI::launch($cmd, $exit_on_error, $return_detailed);
     //WP_CLI::log(print_r($process_run, TRUE));
     if (0 !== $process_run->return_code) {
-      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to extract zip archive: %y%s.%n'), $this->zip_error_msg($process_run->return_code)));
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to extract zip archive: %y%s.%n'), $this->unzip_error_msg($process_run->return_code)));
     }
 
     // Delete the zip archive.
@@ -190,6 +190,45 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
       if (0 !== $process_run->return_code) {
         WP_CLI::error(sprintf(WP_CLI::colorize('Failed to delete zipfile: %y%s.%n'), $this->tar_error_msg($process_run)));
       }
+    }
+
+    return TRUE;
+
+  }
+
+  /**
+   * Compresses a zip archive.
+   *
+   * @since 1.0.0
+   *
+   * @param string $directory The directory to compress.
+   * @param string $destination The path to the directory where the compressed archive will be saved.
+   * @return bool True if successful, false otherwise.
+   */
+  protected function zip($directory, $destination) {
+
+    // Sanity check directory.
+    if (empty($directory)) {
+      return FALSE;
+    }
+
+    // Sanity check destination.
+    if (empty($destination)) {
+      return FALSE;
+    }
+
+    WP_CLI::log(WP_CLI::colorize('%GCompressing zip archive...%n'));
+
+    // Let's handle errors here.
+    $exit_on_error = FALSE;
+    $return_detailed = TRUE;
+
+    // Run the command.
+    $command = "zip -rq {$destination} {$directory}";
+    $process_run = WP_CLI::launch($command, $exit_on_error, $return_detailed);
+    //WP_CLI::log(print_r($process_run, TRUE));
+    if (0 !== $process_run->return_code) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to compress zip archive: %y%s.%n'), $this->zip_error_msg($process_run->return_code)));
     }
 
     return TRUE;
@@ -231,7 +270,7 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
    * @param int $error_code The error code.
    * @return string $error_code The formatted error code.
    */
-  private function zip_error_msg($error_code) {
+  private function unzip_error_msg($error_code) {
 
     $zip_err_msgs = [
       0 => 'No errors or warnings detected.',
@@ -251,6 +290,45 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
       80 => 'The user aborted unzip prematurely with control-C (or similar)',
       81 => 'Testing or extraction of one or more files failed due to unsupported compression methods or unsupported decryption.',
       82 => 'No files were found due to bad decryption password(s). (If even one file is successfully processed, however, the exit status is 1.)',
+    ];
+
+    if (isset($zip_err_msgs[$error_code])) {
+      return sprintf('%s (%d)', $zip_err_msgs[$error_code], $error_code);
+    }
+
+    return $error_code;
+
+  }
+
+  /**
+   * Returns a formatted `zip` error message for a given error code.
+   *
+   * @since 1.0.0
+   *
+   * @param int $error_code The error code.
+   * @return string $error_code The formatted error code.
+   */
+  private function zip_error_msg($error_code) {
+
+    $zip_err_msgs = [
+      0 => 'No errors or warnings detected.',
+      2 => 'Unexpected end of zip file.',
+      3 => 'A generic error in the zipfile format was detected. Processing may have completed successfully anyway; some broken zipfiles created by other archivers have simple work-arounds..',
+      4 => 'zip was unable to allocate memory for one or more buffers during program initialization.',
+      5 => 'A severe error in the zipfile format was detected. Processing probably failed immediately.',
+      6 => 'Entry too large to be processed (such as input files larger than 2 GB when not using Zip64 or trying to read an existing archive that is too large) or entry too large to be split with zipsplit',
+      7 => 'Invalid comment format.',
+      8 => 'zip -T failed or out of memory',
+      9 => 'The user aborted zip prematurely with control-C (or similar).',
+      10 => 'zip encountered an error while using a temp file.',
+      11 => 'read or seek error.',
+      12 => 'zip has nothing to do.',
+      13 => 'Missing or empty zip file.',
+      14 => 'Error writing to a file.',
+      15 => 'zip was unable to create a file to write to.',
+      16 => 'Bad command line parameters.',
+      18 => 'zip could not open a specified file to read.',
+      19 => 'zip was compiled with options not supported on this system.',
     ];
 
     if (isset($zip_err_msgs[$error_code])) {
