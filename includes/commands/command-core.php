@@ -1137,6 +1137,9 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *
    * ## OPTIONS
    *
+   * [--restore-dir=<restore-dir>]
+   * : Path to your CiviCRM restore directory.
+   *
    * [--backup-dir=<backup-dir>]
    * : Path to your CiviCRM backup directory. Default is one level above ABSPATH.
    *
@@ -1321,6 +1324,9 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     $l10n_tarfile = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'l10n-tarfile', '');
 
     WP_CLI::log(WP_CLI::colorize('%GGathering system information.%n'));
+
+    // Get backup directory.
+    $backup_dir = \WP_CLI\Utils\get_flag_value($assoc_args, 'backup-dir', trailingslashit(dirname(ABSPATH)) . 'civicrm');
 
     // Bootstrap CiviCRM.
     $this->check_dependencies();
