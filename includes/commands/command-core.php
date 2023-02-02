@@ -63,18 +63,15 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
   private $google_download_url = 'https://storage.googleapis.com/civicrm/';
 
   /**
-   * Get the current version of the CiviCRM plugin and database.
+   * Checks for a CiviCRM version or matching localization archive.
    *
    * ## OPTIONS
    *
-   * [--source=<source>]
-   * : Specify the version to get.
-   * ---
-   * default: all
-   * options:
-   *   - all
-   *   - plugin
-   *   - db
+   * [--version=<version>]
+   * : Specify the version to check. Accepts a version number, 'stable', 'rc' or 'nightly'.
+   *
+   * [--l10n]
+   * : Get the localization file data for the specified version.
    *
    * [--format=<format>]
    * : Render output in a particular format.
@@ -83,75 +80,92 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    * options:
    *   - table
    *   - json
-   *   - number
+   *   - url
+   *   - version
    * ---
    *
    * ## EXAMPLES
    *
-   *     # Get all CiviCRM version information.
-   *     $ wp civicrm core version
-   *     +----------+---------+
-   *     | Source   | Version |
-   *     +----------+---------+
-   *     | Plugin   | 5.57.1  |
-   *     | Database | 5.46.3  |
-   *     +----------+---------+
+   *     # Check for a stable version of CiviCRM
+   *     $ wp civicrm core check-version --version=5.17.2
+   *     +-----------+---------+-------------------------------------------------------------------------------------------+
+   *     | Package   | Version | Package URL                                                                               |
+   *     +-----------+---------+-------------------------------------------------------------------------------------------+
+   *     | WordPress | 5.17.2  | https://storage.googleapis.com/civicrm/civicrm-stable/5.17.2/civicrm-5.17.2-wordpress.zip |
+   *     | L10n      | 5.17.2  | https://storage.googleapis.com/civicrm/civicrm-stable/5.17.2/civicrm-5.17.2-l10n.tar.gz   |
+   *     +-----------+---------+-------------------------------------------------------------------------------------------+
    *
-   *     # Get just the CiviCRM database version number.
-   *     $ wp civicrm core version --source=db --format=number
-   *     5.46.3
+   *     # Get the URL for a stable version of CiviCRM
+   *     $ wp civicrm core check-version --version=5.17.2 --format=url
+   *     https://storage.googleapis.com/civicrm/civicrm-stable/5.17.2/civicrm-5.17.2-wordpress.zip
    *
-   *     # Get just the CiviCRM plugin version number.
-   *     $ wp civicrm core version --source=plugin --format=number
-   *     5.57.1
+   *     # Get the URL for a stable version of the CiviCRM localisation archive
+   *     $ wp civicrm core check-version --version=5.17.2 --format=url --l10n
+   *     https://storage.googleapis.com/civicrm/civicrm-stable/5.17.2/civicrm-5.17.2-l10n.tar.gz
    *
-   *     # Get all CiviCRM version information as JSON-formatted data.
-   *     $ wp civicrm core version --format=json
-   *     {"plugin":"5.57.1","db":"5.46.3"}
+   *     # Get the JSON-formatted data for a stable version of CiviCRM
+   *     $ wp civicrm core check-version --version=5.17.2 --format=json
+   *     {"version":"5.17.2","tar":{"L10n":"civicrm-stable\/5.17.2\/civicrm-5.17.2-l10n.tar.gz","WordPress":"civicrm-stable\/5.17.2\/civicrm-5.17.2-wordpress.zip"}}
+   *
+   *     # Get the latest nightly version of CiviCRM
+   *     $ wp civicrm core check-version --version=nightly --format=version
+   *     5.59.alpha1
+   *
+   * @subcommand check-version
    *
    * @since 1.0.0
    *
    * @param array $args The WP-CLI positional arguments.
    * @param array $assoc_args The WP-CLI associative arguments.
    */
-  public function version($args, $assoc_args) {
+  public function check_version($args, $assoc_args) {
 
     // Grab associative arguments.
-    $source = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'source', 'all');
+    $version = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'version', 'stable');
+    $l10n = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'l10n', FALSE);
     $format = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'table');
 
-    // Bootstrap CiviCRM.
-    $this->check_dependencies();
-    civicrm_initialize();
+    // Pass to "check-update" for "stable", "rc" or "nightly".
+    if (in_array($version, ['stable', 'rc', 'nightly'])) {
+      $options = ['launch' => FALSE, 'return' => FALSE];
+      $command = 'civicrm core check-update --version=' . $version . ' --format=' . $format . (empty($l10n) ? '' : ' --l10n');
+      WP_CLI::runcommand($command, $options);
+      return;
+    }
 
-    // Get the data we want.
-    $plugin_version = CRM_Utils_System::version();
-    $db_version = CRM_Core_BAO_Domain::version();
+    // Check for valid release.
+    $versions = $this->releases_get();
+    if (!in_array($version, $versions)) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('Version %Y%s%n is not a valid CiviCRM version.'), $version));
+    }
+
+    // Get the release data.
+    $data = $this->release_data_get($version);
 
     switch ($format) {
 
-      // Version number-only output.
-      case 'number':
-        if (!in_array($source, ['db', 'plugin'])) {
-          WP_CLI::error(WP_CLI::colorize("You must specify %Y--source=plugin%n or %Y--source=db%n to use this output format."));
+      // URL-only output.
+      case 'url':
+        if ($l10n) {
+          echo $this->google_download_url . $data['L10n'] . "\n";
         }
-        if ('plugin' === $source) {
-          echo $plugin_version . "\n";
+        else {
+          echo $this->google_download_url . $data['WordPress'] . "\n";
         }
-        if ('db' === $source) {
-          echo $db_version . "\n";
-        }
+        break;
+
+      // Version-only output.
+      case 'version':
+        echo $version . "\n";
         break;
 
       // Display output as json.
       case 'json':
-        $info = [];
-        if (in_array($source, ['all', 'plugin'])) {
-          $info['plugin'] = $plugin_version;
-        }
-        if (in_array($source, ['all', 'db'])) {
-          $info['db'] = $db_version;
-        }
+        // Use a similar format to the Version Check API.
+        $info = [
+          'version' => $version,
+          'tar' => $data,
+        ];
         $json = json_encode($info);
         if (JSON_ERROR_NONE !== json_last_error()) {
           WP_CLI::error(sprintf(WP_CLI::colorize('Failed to encode JSON: %Y%s.%n'), json_last_error_msg()));
@@ -164,19 +178,149 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
       default:
         // Build the rows.
         $rows = [];
-        $fields = ['Source', 'Version'];
-        if (in_array($source, ['all', 'plugin'])) {
-          $rows[] = [
-            'Source' => 'Plugin',
-            'Version' => $plugin_version,
-          ];
+        $fields = ['Package', 'Version', 'Package URL'];
+        $rows[] = [
+          'Package' => 'WordPress',
+          'Version' => $version,
+          'Package URL' => $this->google_download_url . $data['WordPress'],
+        ];
+        $rows[] = [
+          'Package'  => 'L10n',
+          'Version' => $version,
+          'Package URL' => $this->google_download_url . $data['L10n'],
+        ];
+
+        // Display the rows.
+        $args = ['format' => $format];
+        $formatter = new \WP_CLI\Formatter($args, $fields);
+        $formatter->display_items($rows);
+
+    }
+
+  }
+
+  /**
+   * Checks for CiviCRM updates via Version Check API.
+   *
+   * ## OPTIONS
+   *
+   * [--version=<version>]
+   * : Specify the version to get.
+   * ---
+   * default: stable
+   * options:
+   *   - nightly
+   *   - rc
+   *   - stable
+   * ---
+   *
+   * [--l10n]
+   * : Get the localization file data for the specified version.
+   *
+   * [--format=<format>]
+   * : Render output in a particular format.
+   * ---
+   * default: table
+   * options:
+   *   - table
+   *   - json
+   *   - url
+   *   - version
+   * ---
+   *
+   * ## EXAMPLES
+   *
+   *     # Check for the latest stable version of CiviCRM
+   *     $ wp civicrm core check-update
+   *     +-----------+---------+-------------------------------------------------------------------------------------------+
+   *     | Package   | Version | Package URL                                                                               |
+   *     +-----------+---------+-------------------------------------------------------------------------------------------+
+   *     | WordPress | 5.57.2  | https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-wordpress.zip |
+   *     | L10n      | 5.57.2  | https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-l10n.tar.gz   |
+   *     +-----------+---------+-------------------------------------------------------------------------------------------+
+   *
+   *     # Get the URL for the latest stable version of CiviCRM core
+   *     $ wp civicrm core check-update --format=url
+   *     https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-wordpress.zip
+   *
+   *     # Get the URL for the latest stable version of CiviCRM localisation archive
+   *     $ wp civicrm core check-update --format=url --l10n
+   *     https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-l10n.tar.gz
+   *
+   *     # Get the complete JSON-formatted data for the latest RC version of CiviCRM core
+   *     $ wp civicrm core check-update --version=rc --format=json
+   *     {"version":"5.58.beta1","rev":"5.58.beta1-202301260741" [...] "pretty":"Thu, 26 Jan 2023 07:41:00 +0000"}}
+   *
+   * @subcommand check-update
+   *
+   * @since 1.0.0
+   *
+   * @param array $args The WP-CLI positional arguments.
+   * @param array $assoc_args The WP-CLI associative arguments.
+   */
+  public function check_update($args, $assoc_args) {
+
+    // Grab associative arguments.
+    $version = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'version', 'stable');
+    $l10n = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'l10n', FALSE);
+    $format = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'table');
+
+    // Look up the data.
+    $url = $this->upgrade_url . '?stability=' . $version;
+    $response = $this->json_get_response($url);
+
+    // Try and decode response.
+    $lookup = json_decode($response, TRUE);
+    if (JSON_ERROR_NONE !== json_last_error()) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to decode JSON: %Y%s.%n'), json_last_error_msg()));
+    }
+
+    // Sanity checks.
+    if (empty($lookup)) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('Version not found at: %Y%s%n'), $url));
+    }
+    if (empty($lookup['tar']['WordPress'])) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('No WordPress version found at: %Y%s%n'), $url));
+    }
+
+    switch ($format) {
+
+      // URL-only output.
+      case 'url':
+        if ($l10n) {
+          echo $lookup['tar']['L10n'] . "\n";
         }
-        if (in_array($source, ['all', 'db'])) {
-          $rows[] = [
-            'Source' => 'Database',
-            'Version' => $db_version,
-          ];
+        else {
+          echo $lookup['tar']['WordPress'] . "\n";
         }
+        break;
+
+      // Version-only output.
+      case 'version':
+        echo $lookup['version'] . "\n";
+        break;
+
+      // Display output as json.
+      case 'json':
+        echo $response . "\n";
+        break;
+
+      // Display output as table (default).
+      case 'table':
+      default:
+        // Build the rows.
+        $rows = [];
+        $fields = ['Package', 'Version', 'Package URL'];
+        $rows[] = [
+          'Package' => 'WordPress',
+          'Version' => $lookup['version'],
+          'Package URL' => $lookup['tar']['WordPress'],
+        ];
+        $rows[] = [
+          'Package' => 'L10n',
+          'Version' => $lookup['version'],
+          'Package URL' => $lookup['tar']['L10n'],
+        ];
 
         // Display the rows.
         $args = ['format' => $format];
@@ -261,9 +405,9 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
       }
       WP_CLI::log("Creating directory '{$download_dir}'.");
       // Recursively create directory.
-      if (!@mkdir( $download_dir, 0777, true )) {
+      if (!@mkdir($download_dir, 0777, TRUE)) {
         $error = error_get_last();
-        WP_CLI::error( "Failed to create directory '{$download_dir}': {$error['message']}.");
+        WP_CLI::error("Failed to create directory '{$download_dir}': {$error['message']}.");
       }
     }
 
@@ -296,9 +440,9 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
       else {
         WP_CLI::success(sprintf(WP_CLI::colorize('CiviCRM localization downloaded to: %Y%s%n'), $download_dir));
       }
-  		if (!empty(WP_CLI::get_config('quiet'))) {
+      if (!empty(WP_CLI::get_config('quiet'))) {
         echo $archive . "\n";
-  		}
+      }
       WP_CLI::halt(0);
     }
 
@@ -620,7 +764,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     }
     else {
       WP_CLI::log(sprintf(WP_CLI::colorize('%gFound existing%n %Y%s%n %Gin%n %Y%s%n'), basename($setup->getModel()->settingsPath), dirname($setup->getModel()->settingsPath)));
-      switch ($this->pick_conflict_action('civicrm.settings.php')) {
+      switch ($this->conflict_action_pick('civicrm.settings.php')) {
         case 'abort':
           WP_CLI::log(WP_CLI::colorize('%CAborted%n'));
           WP_CLI::halt(0);
@@ -656,7 +800,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     }
     else {
       WP_CLI::log(sprintf(WP_CLI::colorize('%GFound existing%n %Ycivicrm_*%n database tables in%n %Y%s%n'), $setup->getModel()->db['database']));
-      switch ($this->pick_conflict_action('database tables')) {
+      switch ($this->conflict_action_pick('database tables')) {
         case 'abort':
           WP_CLI::log(WP_CLI::colorize('%CAborted%n'));
           WP_CLI::halt(0);
@@ -684,33 +828,147 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
   }
 
   /**
-   * Determine what action to take to resolve a conflict.
+   * Restore the CiviCRM plugin files and database.
+   *
+   * ## EXAMPLES
+   *
+   *     $ wp civicrm core restore
    *
    * @since 1.0.0
    *
-   * @param string $title The thing which had a conflict.
-   * @return string One of 'abort', 'keep' or 'overwrite'.
+   * @param array $args The WP-CLI positional arguments.
+   * @param array $assoc_args The WP-CLI associative arguments.
    */
-  private function pick_conflict_action($title) {
+  public function restore($args, $assoc_args) {
 
-    WP_CLI::log(sprintf(WP_CLI::colorize('%GThe%n %Y%s%n %Galready exists.%n'), $title));
-    WP_CLI::log(WP_CLI::colorize('%G[a]%n %gAbort. (Default.)%n'));
-    WP_CLI::log(sprintf(WP_CLI::colorize('%G[k]%n %gKeep existing%n %y%s%n%g.%n %r(%n%RWARNING:%n %rThis may fail if the existing version is out-of-date.)%n'), $title));
-    WP_CLI::log(sprintf(WP_CLI::colorize('%G[o]%n %gOverwrite with new%n %y%s%g.%n %r(%n%RWARNING:%n %rThis may destroy data.)%n'), $title));
+    // Bootstrap CiviCRM.
+    $this->check_dependencies();
+    civicrm_initialize();
 
-    fwrite(STDOUT, WP_CLI::colorize('%GWhat you like to do?%n '));
-    $action = strtolower(trim(fgets(STDIN)));
-    switch ($action) {
-      case 'k':
-        return 'keep';
-
-      case 'o':
-        return 'overwrite';
-
-      case 'a':
-      default:
-        return 'abort';
+    // Validate.
+    $restore_dir = \WP_CLI\Utils\get_flag_value('restore-dir', FALSE);
+    $restore_dir = rtrim($restore_dir, '/');
+    if (!$restore_dir) {
+      WP_CLI::error('"restore-dir" not specified.');
     }
+
+    $sql_file = $restore_dir . '/civicrm.sql';
+    if (!file_exists($sql_file)) {
+      WP_CLI::error('Could not locate "civicrm.sql" file in the restore directory.');
+    }
+
+    $code_dir = $restore_dir . '/civicrm';
+    if (!is_dir($code_dir)) {
+      WP_CLI::error('Could not locate the CiviCRM directory inside "restore-dir".');
+    }
+    elseif (!file_exists("$code_dir/civicrm/civicrm-version.txt") && !file_exists("$code_dir/civicrm/civicrm-version.php")) {
+      WP_CLI::error('The CiviCRM directory inside "restore-dir" does not seem to be a valid CiviCRM codebase.');
+    }
+
+    // Prepare to restore.
+    $date = date('YmdHis');
+
+    global $civicrm_root;
+
+    $civicrm_root_base = explode('/', $civicrm_root);
+    array_pop($civicrm_root_base);
+    $civicrm_root_base = implode('/', $civicrm_root_base) . '/';
+
+    $basepath = explode('/', $civicrm_root);
+
+    if (!end($basepath)) {
+      array_pop($basepath);
+    }
+
+    array_pop($basepath);
+    $project_path = implode('/', $basepath) . '/';
+
+    $restore_backup_dir = \WP_CLI\Utils\get_flag_value('backup-dir', ABSPATH . '../backup');
+    $restore_backup_dir = rtrim($restore_backup_dir, '/');
+
+    // Get confirmation from user.
+
+    if (!defined('CIVICRM_DSN')) {
+      WP_CLI::error('CIVICRM_DSN is not defined.');
+    }
+
+    $db_spec = DB::parseDSN(CIVICRM_DSN);
+    WP_CLI::log('');
+    WP_CLI::log('Process involves:');
+    WP_CLI::log(sprintf("1. Restoring '\$restore-dir/civicrm' directory to '%s'.", $civicrm_root_base));
+    WP_CLI::log(sprintf("2. Dropping and creating '%s' database.", $db_spec['database']));
+    WP_CLI::log("3. Loading '\$restore-dir/civicrm.sql' file into the database.");
+    WP_CLI::log('');
+    WP_CLI::log(sprintf("Note: Before restoring, a backup will be taken in '%s' directory.", "$restore_backup_dir/plugins/restore"));
+    WP_CLI::log('');
+
+    WP_CLI::confirm('Do you really want to continue?');
+
+    $restore_backup_dir .= '/plugins/restore/' . $date;
+
+    if (!mkdir($restore_backup_dir, 0755, TRUE)) {
+      WP_CLI::error(sprintf('Failed to create directory: %s', $restore_backup_dir));
+    }
+
+    // 1. Backup and restore codebase.
+    WP_CLI::log('Restoring CiviCRM codebase...');
+    if (is_dir($project_path) && !rename($project_path, $restore_backup_dir . '/civicrm')) {
+      WP_CLI::error(sprintf("Failed to take backup for '%s' directory", $project_path));
+    }
+
+    if (!rename($code_dir, $project_path)) {
+      WP_CLI::error(sprintf("Failed to restore CiviCRM directory '%s' to '%s'", $code_dir, $project_path));
+    }
+
+    WP_CLI::success('Codebase restored.');
+
+    // 2. Backup, drop and create database.
+    WP_CLI::run_command(
+      ['civicrm', 'sql-dump'],
+      ['result-file' => $restore_backup_dir . '/civicrm.sql']
+    );
+
+    WP_CLI::success('Database backed up.');
+
+    // Prepare a mysql command-line string for issuing db drop/create commands.
+    $command = sprintf(
+      'mysql --user=%s --password=%s',
+      $db_spec['username'],
+      $db_spec['password']
+    );
+
+    if (isset($db_spec['hostspec'])) {
+      $command .= ' --host=' . $db_spec['hostspec'];
+    }
+
+    if (isset($dsn['port']) && !mpty($dsn['port'])) {
+      $command .= ' --port=' . $db_spec['port'];
+    }
+
+    // Attempt to drop old database.
+    if (system($command . sprintf(' --execute="DROP DATABASE IF EXISTS %s"', $db_spec['database']))) {
+      WP_CLI::error(sprintf('Could not drop database: %s', $db_spec['database']));
+    }
+
+    WP_CLI::success('Database dropped.');
+
+    // Attempt to create new database.
+    if (system($command . sprintf(' --execute="CREATE DATABASE %s"', $db_spec['database']))) {
+      WP_CLI::error(sprintf('Could not create new database: %s', $db_spec['database']));
+    }
+
+    WP_CLI::success('Database created.');
+
+    // 3. Restore database.
+    WP_CLI::log('Loading "civicrm.sql" file from "restore-dir"...');
+    system($command . ' ' . $db_spec['database'] . ' < ' . $sql_file);
+
+    WP_CLI::success('Database restored.');
+
+    WP_CLI::log('Clearing caches...');
+    WP_CLI::run_command(['civicrm', 'cache-clear']);
+
+    WP_CLI::success('Restore process completed.');
 
   }
 
@@ -1023,11 +1281,10 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
 
     // Maybe suppress Task Context logger output.
     if (empty($verbose_extra) && empty($verbose)) {
-      $task_context->log = new class {
-
-        public function info($param) {}
-
-      };
+      if (!class_exists('CLI_Tools_CiviCRM_Logger_Dummy')) {
+        require_once __DIR__ . '/utilities/class-logger-dummy.php';
+      }
+      $task_context->log = new CLI_Tools_CiviCRM_Logger_Dummy();
     }
     else {
       $task_context->log = \Log::singleton('display');
@@ -1041,7 +1298,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
 
       // Feedback.
       if (!empty($verbose_extra)) {
-        $feedback = self::format_task_callback($task);
+        $feedback = self::task_callback_format($task);
         WP_CLI::log(WP_CLI::colorize('%g' . $task->title . '%n') . ' ' . WP_CLI::colorize($feedback));
       }
       elseif (!empty($verbose)) {
@@ -1118,28 +1375,6 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
   }
 
   /**
-   * Format the task for when run with extra verbosity.
-   *
-   * This method re-builds the task arguments because some of them may themselves be arrays.
-   *
-   * @since 1.0.0
-   *
-   * @param CRM_Queue_Task $task The CiviCRM task object.
-   * @return string $task The CiviCRM task object.
-   */
-  private static function format_task_callback($task) {
-
-    $callback_info = implode('::', (array) $task->callback);
-    $args_info = self::implode_recursive((array) $task->arguments);
-
-    // Build string with colorization tokens.
-    $feedback = '%y' . $callback_info . '(' . $args_info . '%n)';
-
-    return $feedback;
-
-  }
-
-  /**
    * Reset paths to correct config settings.
    *
    * This command can be useful when the CiviCRM site has been cloned or migrated.
@@ -1176,8 +1411,8 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
       }
     }
 
-    $webserver_user = $this->getWebServerUser();
-    $webserver_group = $this->getWebServerGroup();
+    $webserver_user = $this->web_server_user_get();
+    $webserver_group = $this->web_server_group_get();
 
     require_once 'CRM/Core/I18n.php';
     require_once 'CRM/Core/BAO/ConfigSetting.php';
@@ -1203,225 +1438,18 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
   }
 
   /**
-   * Get the user the web server runs as - used to preserve file permissions on
-   * templates_c, civicrm/upload etc when running as root. This is not a very
-   * good check, but is good enough for what we want to do, which is to preserve
-   * file permissions.
-   *
-   * @since 1.0.0
-   *
-   * @return string The user which owns templates_c. Empty string if not found.
-   */
-  private function getWebServerUser() {
-
-    $plugins_dir_root = WP_PLUGIN_DIR;
-    $upload_dir = wp_upload_dir();
-    $tpl_path = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'civicrm' . DIRECTORY_SEPARATOR . 'templates_c';
-    $legacy_tpl_path = $plugins_dir_root . '/files/civicrm/templates_c';
-
-    if (is_dir($legacy_tpl_path)) {
-      $owner = posix_getpwuid(fileowner($legacy_tpl_path));
-      if (isset($owner['name'])) {
-        return $owner['name'];
-      }
-    }
-    elseif (is_dir($tpl_path)) {
-      $owner = posix_getpwuid(fileowner($tpl_path));
-      if (isset($owner['name'])) {
-        return $owner['name'];
-      }
-    }
-
-    return '';
-
-  }
-
-  /**
-   * Get the group the webserver runs as - as above, but for group.
-   *
-   * @since 1.0.0
-   *
-   * @return string The group the webserver runs as. Empty string if not found.
-   */
-  private function getWebServerGroup() {
-
-    $plugins_dir_root = WP_PLUGIN_DIR;
-    $upload_dir = wp_upload_dir();
-    $tpl_path = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'civicrm' . DIRECTORY_SEPARATOR . 'templates_c';
-    $legacy_tpl_path = $plugins_dir_root . '/files/civicrm/templates_c';
-
-    if (is_dir($legacy_tpl_path)) {
-      $group = posix_getgrgid(filegroup($legacy_tpl_path));
-      if (isset($group['name'])) {
-        return $group['name'];
-      }
-    }
-    elseif (is_dir($tpl_path)) {
-      $group = posix_getgrgid(filegroup($tpl_path));
-      if (isset($group['name'])) {
-        return $group['name'];
-      }
-    }
-
-    return '';
-
-  }
-
-  /**
-   * Restore the CiviCRM plugin files and database.
-   *
-   * ## EXAMPLES
-   *
-   *     $ wp civicrm core restore
-   *
-   * @since 1.0.0
-   *
-   * @param array $args The WP-CLI positional arguments.
-   * @param array $assoc_args The WP-CLI associative arguments.
-   */
-  public function restore($args, $assoc_args) {
-
-    // Bootstrap CiviCRM.
-    $this->check_dependencies();
-    civicrm_initialize();
-
-    // Validate.
-    $restore_dir = \WP_CLI\Utils\get_flag_value('restore-dir', FALSE);
-    $restore_dir = rtrim($restore_dir, '/');
-    if (!$restore_dir) {
-      WP_CLI::error('"restore-dir" not specified.');
-    }
-
-    $sql_file = $restore_dir . '/civicrm.sql';
-    if (!file_exists($sql_file)) {
-      WP_CLI::error('Could not locate "civicrm.sql" file in the restore directory.');
-    }
-
-    $code_dir = $restore_dir . '/civicrm';
-    if (!is_dir($code_dir)) {
-      WP_CLI::error('Could not locate the CiviCRM directory inside "restore-dir".');
-    }
-    elseif (!file_exists("$code_dir/civicrm/civicrm-version.txt") && !file_exists("$code_dir/civicrm/civicrm-version.php")) {
-      WP_CLI::error('The CiviCRM directory inside "restore-dir" does not seem to be a valid CiviCRM codebase.');
-    }
-
-    // Prepare to restore.
-    $date = date('YmdHis');
-
-    global $civicrm_root;
-
-    $civicrm_root_base = explode('/', $civicrm_root);
-    array_pop($civicrm_root_base);
-    $civicrm_root_base = implode('/', $civicrm_root_base) . '/';
-
-    $basepath = explode('/', $civicrm_root);
-
-    if (!end($basepath)) {
-      array_pop($basepath);
-    }
-
-    array_pop($basepath);
-    $project_path = implode('/', $basepath) . '/';
-
-    $restore_backup_dir = \WP_CLI\Utils\get_flag_value('backup-dir', ABSPATH . '../backup');
-    $restore_backup_dir = rtrim($restore_backup_dir, '/');
-
-    // Get confirmation from user.
-
-    if (!defined('CIVICRM_DSN')) {
-      WP_CLI::error('CIVICRM_DSN is not defined.');
-    }
-
-    $db_spec = DB::parseDSN(CIVICRM_DSN);
-    WP_CLI::log('');
-    WP_CLI::log('Process involves:');
-    WP_CLI::log(sprintf("1. Restoring '\$restore-dir/civicrm' directory to '%s'.", $civicrm_root_base));
-    WP_CLI::log(sprintf("2. Dropping and creating '%s' database.", $db_spec['database']));
-    WP_CLI::log("3. Loading '\$restore-dir/civicrm.sql' file into the database.");
-    WP_CLI::log('');
-    WP_CLI::log(sprintf("Note: Before restoring, a backup will be taken in '%s' directory.", "$restore_backup_dir/plugins/restore"));
-    WP_CLI::log('');
-
-    WP_CLI::confirm('Do you really want to continue?');
-
-    $restore_backup_dir .= '/plugins/restore/' . $date;
-
-    if (!mkdir($restore_backup_dir, 0755, TRUE)) {
-      WP_CLI::error(sprintf('Failed to create directory: %s', $restore_backup_dir));
-    }
-
-    // 1. Backup and restore codebase.
-    WP_CLI::log('Restoring CiviCRM codebase...');
-    if (is_dir($project_path) && !rename($project_path, $restore_backup_dir . '/civicrm')) {
-      WP_CLI::error(sprintf("Failed to take backup for '%s' directory", $project_path));
-    }
-
-    if (!rename($code_dir, $project_path)) {
-      WP_CLI::error(sprintf("Failed to restore CiviCRM directory '%s' to '%s'", $code_dir, $project_path));
-    }
-
-    WP_CLI::success('Codebase restored.');
-
-    // 2. Backup, drop and create database.
-    WP_CLI::run_command(
-      ['civicrm', 'sql-dump'],
-      ['result-file' => $restore_backup_dir . '/civicrm.sql']
-    );
-
-    WP_CLI::success('Database backed up.');
-
-    // Prepare a mysql command-line string for issuing db drop/create commands.
-    $command = sprintf(
-      'mysql --user=%s --password=%s',
-      $db_spec['username'],
-      $db_spec['password']
-    );
-
-    if (isset($db_spec['hostspec'])) {
-      $command .= ' --host=' . $db_spec['hostspec'];
-    }
-
-    if (isset($dsn['port']) && !mpty($dsn['port'])) {
-      $command .= ' --port=' . $db_spec['port'];
-    }
-
-    // Attempt to drop old database.
-    if (system($command . sprintf(' --execute="DROP DATABASE IF EXISTS %s"', $db_spec['database']))) {
-      WP_CLI::error(sprintf('Could not drop database: %s', $db_spec['database']));
-    }
-
-    WP_CLI::success('Database dropped.');
-
-    // Attempt to create new database.
-    if (system($command . sprintf(' --execute="CREATE DATABASE %s"', $db_spec['database']))) {
-      WP_CLI::error(sprintf('Could not create new database: %s', $db_spec['database']));
-    }
-
-    WP_CLI::success('Database created.');
-
-    // 3. Restore database.
-    WP_CLI::log('Loading "civicrm.sql" file from "restore-dir"...');
-    system($command . ' ' . $db_spec['database'] . ' < ' . $sql_file);
-
-    WP_CLI::success('Database restored.');
-
-    WP_CLI::log('Clearing caches...');
-    WP_CLI::run_command(['civicrm', 'cache-clear']);
-
-    WP_CLI::success('Restore process completed.');
-
-  }
-
-  /**
-   * Checks for a CiviCRM version or matching localization archive.
+   * Get the current version of the CiviCRM plugin and database.
    *
    * ## OPTIONS
    *
-   * [--version=<version>]
-   * : Specify the version to check. Accepts a version number, 'stable', 'rc' or 'nightly'.
-   *
-   * [--l10n]
-   * : Get the localization file data for the specified version.
+   * [--source=<source>]
+   * : Specify the version to get.
+   * ---
+   * default: all
+   * options:
+   *   - all
+   *   - plugin
+   *   - db
    *
    * [--format=<format>]
    * : Render output in a particular format.
@@ -1430,92 +1458,75 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    * options:
    *   - table
    *   - json
-   *   - url
-   *   - version
+   *   - number
    * ---
    *
    * ## EXAMPLES
    *
-   *     # Check for a stable version of CiviCRM
-   *     $ wp civicrm core check-version --version=5.17.2
-   *     +-----------+---------+-------------------------------------------------------------------------------------------+
-   *     | Package   | Version | Package URL                                                                               |
-   *     +-----------+---------+-------------------------------------------------------------------------------------------+
-   *     | WordPress | 5.17.2  | https://storage.googleapis.com/civicrm/civicrm-stable/5.17.2/civicrm-5.17.2-wordpress.zip |
-   *     | L10n      | 5.17.2  | https://storage.googleapis.com/civicrm/civicrm-stable/5.17.2/civicrm-5.17.2-l10n.tar.gz   |
-   *     +-----------+---------+-------------------------------------------------------------------------------------------+
+   *     # Get all CiviCRM version information.
+   *     $ wp civicrm core version
+   *     +----------+---------+
+   *     | Source   | Version |
+   *     +----------+---------+
+   *     | Plugin   | 5.57.1  |
+   *     | Database | 5.46.3  |
+   *     +----------+---------+
    *
-   *     # Get the URL for a stable version of CiviCRM
-   *     $ wp civicrm core check-version --version=5.17.2 --format=url
-   *     https://storage.googleapis.com/civicrm/civicrm-stable/5.17.2/civicrm-5.17.2-wordpress.zip
+   *     # Get just the CiviCRM database version number.
+   *     $ wp civicrm core version --source=db --format=number
+   *     5.46.3
    *
-   *     # Get the URL for a stable version of the CiviCRM localisation archive
-   *     $ wp civicrm core check-version --version=5.17.2 --format=url --l10n
-   *     https://storage.googleapis.com/civicrm/civicrm-stable/5.17.2/civicrm-5.17.2-l10n.tar.gz
+   *     # Get just the CiviCRM plugin version number.
+   *     $ wp civicrm core version --source=plugin --format=number
+   *     5.57.1
    *
-   *     # Get the JSON-formatted data for a stable version of CiviCRM
-   *     $ wp civicrm core check-version --version=5.17.2 --format=json
-   *     {"version":"5.17.2","tar":{"L10n":"civicrm-stable\/5.17.2\/civicrm-5.17.2-l10n.tar.gz","WordPress":"civicrm-stable\/5.17.2\/civicrm-5.17.2-wordpress.zip"}}
-   *
-   *     # Get the latest nightly version of CiviCRM
-   *     $ wp civicrm core check-version --version=nightly --format=version
-   *     5.59.alpha1
-   *
-   * @subcommand check-version
+   *     # Get all CiviCRM version information as JSON-formatted data.
+   *     $ wp civicrm core version --format=json
+   *     {"plugin":"5.57.1","db":"5.46.3"}
    *
    * @since 1.0.0
    *
    * @param array $args The WP-CLI positional arguments.
    * @param array $assoc_args The WP-CLI associative arguments.
    */
-  public function check_version($args, $assoc_args) {
+  public function version($args, $assoc_args) {
 
     // Grab associative arguments.
-    $version = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'version', 'stable');
-    $l10n = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'l10n', FALSE);
+    $source = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'source', 'all');
     $format = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'table');
 
-    // Pass to "check-update" for "stable", "rc" or "nightly".
-    if (in_array($version, ['stable', 'rc', 'nightly'])) {
-      $options = ['launch' => FALSE, 'return' => FALSE];
-      $command = 'civicrm core check-update --version=' . $version . ' --format=' . $format . (empty($l10n) ? '' : ' --l10n');
-      WP_CLI::runcommand($command, $options);
-      return;
-    }
+    // Bootstrap CiviCRM.
+    $this->check_dependencies();
+    civicrm_initialize();
 
-    // Check for valid release.
-    $versions = $this->releases_get();
-    if (!in_array($version, $versions)) {
-      WP_CLI::error(sprintf(WP_CLI::colorize('Version %Y%s%n is not a valid CiviCRM version.'), $version));
-    }
-
-    // Get the release data.
-    $data = $this->release_data_get($version);
+    // Get the data we want.
+    $plugin_version = CRM_Utils_System::version();
+    $db_version = CRM_Core_BAO_Domain::version();
 
     switch ($format) {
 
-      // URL-only output.
-      case 'url':
-        if ($l10n) {
-          echo $this->google_download_url . $data['L10n'] . "\n";
+      // Version number-only output.
+      case 'number':
+        if (!in_array($source, ['db', 'plugin'])) {
+          WP_CLI::error(WP_CLI::colorize("You must specify %Y--source=plugin%n or %Y--source=db%n to use this output format."));
         }
-        else {
-          echo $this->google_download_url . $data['WordPress'] . "\n";
+        if ('plugin' === $source) {
+          echo $plugin_version . "\n";
         }
-        break;
-
-      // Version-only output.
-      case 'version':
-        echo $version . "\n";
+        if ('db' === $source) {
+          echo $db_version . "\n";
+        }
         break;
 
       // Display output as json.
       case 'json':
-        // Use a similar format to the Version Check API.
-        $info = [
-          'version' => $version,
-          'tar' => $data,
-        ];
+        $info = [];
+        if (in_array($source, ['all', 'plugin'])) {
+          $info['plugin'] = $plugin_version;
+        }
+        if (in_array($source, ['all', 'db'])) {
+          $info['db'] = $db_version;
+        }
         $json = json_encode($info);
         if (JSON_ERROR_NONE !== json_last_error()) {
           WP_CLI::error(sprintf(WP_CLI::colorize('Failed to encode JSON: %Y%s.%n'), json_last_error_msg()));
@@ -1528,23 +1539,60 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
       default:
         // Build the rows.
         $rows = [];
-        $fields = ['Package', 'Version', 'Package URL'];
-        $rows[] = [
-          'Package' => 'WordPress',
-          'Version' => $version,
-          'Package URL' => $this->google_download_url . $data['WordPress'],
-        ];
-        $rows[] = [
-          'Package'  => 'L10n',
-          'Version' => $version,
-          'Package URL' => $this->google_download_url . $data['L10n'],
-        ];
+        $fields = ['Source', 'Version'];
+        if (in_array($source, ['all', 'plugin'])) {
+          $rows[] = [
+            'Source' => 'Plugin',
+            'Version' => $plugin_version,
+          ];
+        }
+        if (in_array($source, ['all', 'db'])) {
+          $rows[] = [
+            'Source' => 'Database',
+            'Version' => $db_version,
+          ];
+        }
 
         // Display the rows.
         $args = ['format' => $format];
         $formatter = new \WP_CLI\Formatter($args, $fields);
         $formatter->display_items($rows);
 
+    }
+
+  }
+
+  // ----------------------------------------------------------------------------
+  // Private methods.
+  // ----------------------------------------------------------------------------
+
+  /**
+   * Determine what action to take to resolve a conflict.
+   *
+   * @since 1.0.0
+   *
+   * @param string $title The thing which had a conflict.
+   * @return string One of 'abort', 'keep' or 'overwrite'.
+   */
+  private function conflict_action_pick($title) {
+
+    WP_CLI::log(sprintf(WP_CLI::colorize('%GThe%n %Y%s%n %Galready exists.%n'), $title));
+    WP_CLI::log(WP_CLI::colorize('%G[a]%n %gAbort. (Default.)%n'));
+    WP_CLI::log(sprintf(WP_CLI::colorize('%G[k]%n %gKeep existing%n %y%s%n%g.%n %r(%n%RWARNING:%n %rThis may fail if the existing version is out-of-date.)%n'), $title));
+    WP_CLI::log(sprintf(WP_CLI::colorize('%G[o]%n %gOverwrite with new%n %y%s%g.%n %r(%n%RWARNING:%n %rThis may destroy data.)%n'), $title));
+
+    fwrite(STDOUT, WP_CLI::colorize('%GWhat you like to do?%n '));
+    $action = strtolower(trim(fgets(STDIN)));
+    switch ($action) {
+      case 'k':
+        return 'keep';
+
+      case 'o':
+        return 'overwrite';
+
+      case 'a':
+      default:
+        return 'abort';
     }
 
   }
@@ -1583,8 +1631,8 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *
    * @since 1.0.0
    *
-   * @param string The CiviCRM release.
-   * @return array The array of CiviCRM release data.
+   * @param string $release The CiviCRM release.
+   * @return array $data The array of CiviCRM release data.
    */
   private function release_data_get($release) {
 
@@ -1613,134 +1661,89 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
   }
 
   /**
-   * Checks for CiviCRM updates via Version Check API.
+   * Format the task for when run with extra verbosity.
    *
-   * ## OPTIONS
-   *
-   * [--version=<version>]
-   * : Specify the version to get.
-   * ---
-   * default: stable
-   * options:
-   *   - nightly
-   *   - rc
-   *   - stable
-   * ---
-   *
-   * [--l10n]
-   * : Get the localization file data for the specified version.
-   *
-   * [--format=<format>]
-   * : Render output in a particular format.
-   * ---
-   * default: table
-   * options:
-   *   - table
-   *   - json
-   *   - url
-   *   - version
-   * ---
-   *
-   * ## EXAMPLES
-   *
-   *     # Check for the latest stable version of CiviCRM
-   *     $ wp civicrm core check-update
-   *     +-----------+---------+-------------------------------------------------------------------------------------------+
-   *     | Package   | Version | Package URL                                                                               |
-   *     +-----------+---------+-------------------------------------------------------------------------------------------+
-   *     | WordPress | 5.57.2  | https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-wordpress.zip |
-   *     | L10n      | 5.57.2  | https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-l10n.tar.gz   |
-   *     +-----------+---------+-------------------------------------------------------------------------------------------+
-   *
-   *     # Get the URL for the latest stable version of CiviCRM core
-   *     $ wp civicrm core check-update --format=url
-   *     https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-wordpress.zip
-   *
-   *     # Get the URL for the latest stable version of CiviCRM localisation archive
-   *     $ wp civicrm core check-update --format=url --l10n
-   *     https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-l10n.tar.gz
-   *
-   *     # Get the complete JSON-formatted data for the latest RC version of CiviCRM core
-   *     $ wp civicrm core check-update --version=rc --format=json
-   *     {"version":"5.58.beta1","rev":"5.58.beta1-202301260741" [...] "pretty":"Thu, 26 Jan 2023 07:41:00 +0000"}}
-   *
-   * @subcommand check-update
+   * This method re-builds the task arguments because some of them may themselves be arrays.
    *
    * @since 1.0.0
    *
-   * @param array $args The WP-CLI positional arguments.
-   * @param array $assoc_args The WP-CLI associative arguments.
+   * @param CRM_Queue_Task $task The CiviCRM task object.
+   * @return string $task The CiviCRM task object.
    */
-  public function check_update($args, $assoc_args) {
+  private static function task_callback_format($task) {
 
-    // Grab associative arguments.
-    $version = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'version', 'stable');
-    $l10n = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'l10n', FALSE);
-    $format = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'table');
+    $callback_info = implode('::', (array) $task->callback);
+    $args_info = self::implode_recursive((array) $task->arguments);
 
-    // Look up the data.
-    $url = $this->upgrade_url . '?stability=' . $version;
-    $response = $this->json_get_response($url);
+    // Build string with colorization tokens.
+    $feedback = '%y' . $callback_info . '(' . $args_info . '%n)';
 
-    // Try and decode response.
-    $lookup = json_decode($response, TRUE);
-    if (JSON_ERROR_NONE !== json_last_error()) {
-      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to decode JSON: %Y%s.%n'), json_last_error_msg()));
+    return $feedback;
+
+  }
+
+  /**
+   * Get the group the webserver runs as - as above, but for group.
+   *
+   * @since 1.0.0
+   *
+   * @return string The group the webserver runs as. Empty string if not found.
+   */
+  private function web_server_group_get() {
+
+    $plugins_dir_root = WP_PLUGIN_DIR;
+    $upload_dir = wp_upload_dir();
+    $tpl_path = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'civicrm' . DIRECTORY_SEPARATOR . 'templates_c';
+    $legacy_tpl_path = $plugins_dir_root . '/files/civicrm/templates_c';
+
+    if (is_dir($legacy_tpl_path)) {
+      $group = posix_getgrgid(filegroup($legacy_tpl_path));
+      if (isset($group['name'])) {
+        return $group['name'];
+      }
+    }
+    elseif (is_dir($tpl_path)) {
+      $group = posix_getgrgid(filegroup($tpl_path));
+      if (isset($group['name'])) {
+        return $group['name'];
+      }
     }
 
-    // Sanity checks.
-    if (empty($lookup)) {
-      WP_CLI::error(sprintf(WP_CLI::colorize('Version not found at: %Y%s%n'), $url));
+    return '';
+
+  }
+
+  /**
+   * Get the user the web server runs as - used to preserve file permissions on
+   * templates_c, civicrm/upload etc when running as root. This is not a very
+   * good check, but is good enough for what we want to do, which is to preserve
+   * file permissions.
+   *
+   * @since 1.0.0
+   *
+   * @return string The user which owns templates_c. Empty string if not found.
+   */
+  private function web_server_user_get() {
+
+    $plugins_dir_root = WP_PLUGIN_DIR;
+    $upload_dir = wp_upload_dir();
+    $tpl_path = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'civicrm' . DIRECTORY_SEPARATOR . 'templates_c';
+    $legacy_tpl_path = $plugins_dir_root . '/files/civicrm/templates_c';
+
+    if (is_dir($legacy_tpl_path)) {
+      $owner = posix_getpwuid(fileowner($legacy_tpl_path));
+      if (isset($owner['name'])) {
+        return $owner['name'];
+      }
     }
-    if (empty($lookup['tar']['WordPress'])) {
-      WP_CLI::error(sprintf(WP_CLI::colorize('No WordPress version found at: %Y%s%n'), $url));
+    elseif (is_dir($tpl_path)) {
+      $owner = posix_getpwuid(fileowner($tpl_path));
+      if (isset($owner['name'])) {
+        return $owner['name'];
+      }
     }
 
-    switch ($format) {
-
-      // URL-only output.
-      case 'url':
-        if ($l10n) {
-          echo $lookup['tar']['L10n'] . "\n";
-        }
-        else {
-          echo $lookup['tar']['WordPress'] . "\n";
-        }
-        break;
-
-      // Version-only output.
-      case 'version':
-        echo $lookup['version'] . "\n";
-        break;
-
-      // Display output as json.
-      case 'json':
-        echo $response . "\n";
-        break;
-
-      // Display output as table (default).
-      case 'table':
-      default:
-        // Build the rows.
-        $rows = [];
-        $fields = ['Package', 'Version', 'Package URL'];
-        $rows[] = [
-          'Package' => 'WordPress',
-          'Version' => $lookup['version'],
-          'Package URL' => $lookup['tar']['WordPress'],
-        ];
-        $rows[] = [
-          'Package' => 'L10n',
-          'Version' => $lookup['version'],
-          'Package URL' => $lookup['tar']['L10n'],
-        ];
-
-        // Display the rows.
-        $args = ['format' => $format];
-        $formatter = new \WP_CLI\Formatter($args, $fields);
-        $formatter->display_items($rows);
-
-    }
+    return '';
 
   }
 
