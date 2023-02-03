@@ -93,34 +93,6 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
   }
 
   /**
-   * Verifies the User for a given identifier.
-   *
-   * @since 1.0.0
-   *
-   * @param mixed $identifier The User ID, email or username.
-   * @return WP_User $user The WordPress User object.
-   */
-  protected function get_user_id_from_identifier($identifier) {
-
-    // Get user depending on type of param.
-    if (is_numeric($identifier)) {
-      $user = get_user_by('id', $identifier);
-    }
-    elseif (is_email($identifier)) {
-      $user = get_user_by('email', $identifier);
-    }
-    else {
-      $user = get_user_by('login', $identifier);
-    }
-
-    if (!$user) {
-      WP_CLI::error(sprintf('No user found by that username, email or ID (%s).', $identifier));
-    }
-
-    return $user;
-  }
-
-  /**
    * Gets the path to the CiviCRM plugin directory.
    *
    * @since 1.0.0
