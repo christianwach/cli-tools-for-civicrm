@@ -116,7 +116,6 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
 
     // Let's have a look for some CiviCRM variables.
     $config = CRM_Core_Config::singleton();
-    //WP_CLI::log(print_r($config, TRUE));
 
     // Build feedback.
     $feedback = [];
@@ -1164,7 +1163,6 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
 
     // Let's have a look for some CiviCRM variables.
     $config = CRM_Core_Config::singleton();
-    //WP_CLI::log(print_r($config, TRUE));
 
     // Build feedback.
     $feedback = [];
@@ -1426,7 +1424,6 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     // Let's have a look for some CiviCRM variables.
     global $civicrm_root;
     $config = CRM_Core_Config::singleton();
-    //WP_CLI::log(print_r($config, TRUE));
 
     // ----------------------------------------------------------------------------
     // Build feedback table.
@@ -1624,7 +1621,6 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
 
     // Let's create a file for storing upgrade messages.
     $post_upgrade_message_file = CRM_Utils_File::tempnam('civicrm-post-upgrade');
-    //WP_CLI::log(sprintf('Created upgrade message file: %s', $post_upgrade_message_file));
 
     // Build the queue.
     if ($first_try) {

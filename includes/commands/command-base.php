@@ -207,7 +207,6 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
     // First unpack the gz archive.
     $command = "gzip -d $tarfile";
     $process_run = WP_CLI::launch($command, $exit_on_error, $return_detailed);
-    //WP_CLI::log(print_r($process_run, TRUE));
     if (0 !== $process_run->return_code) {
       WP_CLI::error(sprintf(WP_CLI::colorize('Failed to extract gz archive: %y%s.%n'), $this->stderr_error_msg($process_run)));
     }
@@ -216,7 +215,6 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
     $tarfile = substr($tarfile, 0, strlen($tarfile) - 3);
     $command = "tar -xf $tarfile -C \"$destination\"";
     $process_run = WP_CLI::launch($command, $exit_on_error, $return_detailed);
-    //WP_CLI::log(print_r($process_run, TRUE));
     if (0 !== $process_run->return_code) {
       WP_CLI::error(sprintf(WP_CLI::colorize('Failed to extract tarball: %y%s.%n'), $this->stderr_error_msg($process_run)));
     }
@@ -268,7 +266,6 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
     // Run the command.
     $command = "unzip -q $zipfile -d $destination";
     $process_run = WP_CLI::launch($command, $exit_on_error, $return_detailed);
-    //WP_CLI::log(print_r($process_run, TRUE));
     if (0 !== $process_run->return_code) {
       WP_CLI::error(sprintf(WP_CLI::colorize('Failed to extract zip archive: %y%s.%n'), $this->unzip_error_msg($process_run->return_code)));
     }
@@ -315,9 +312,7 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
 
     // Run the command.
     $command = 'pushd ' . dirname($directory) . '; ' . "zip -rq {$destination} ./" . basename($directory) . '; popd';
-    WP_CLI::log(print_r($command, TRUE));
     $process_run = WP_CLI::launch($command, $exit_on_error, $return_detailed);
-    //WP_CLI::log(print_r($process_run, TRUE));
     if (0 !== $process_run->return_code) {
       WP_CLI::error(sprintf(WP_CLI::colorize('Failed to compress zip archive: %y%s.%n'), $this->zip_error_msg($process_run->return_code)));
     }
