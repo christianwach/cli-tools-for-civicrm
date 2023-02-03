@@ -224,7 +224,8 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
     $return_detailed = TRUE;
 
     // Run the command.
-    $command = "zip -rq {$destination} {$directory}";
+    $command = 'pushd ' . dirname($directory) . '; ' . "zip -rq {$destination} ./" . basename($directory) . '; popd';
+    WP_CLI::log(print_r($command, TRUE));
     $process_run = WP_CLI::launch($command, $exit_on_error, $return_detailed);
     //WP_CLI::log(print_r($process_run, TRUE));
     if (0 !== $process_run->return_code) {
