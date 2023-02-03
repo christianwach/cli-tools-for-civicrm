@@ -237,6 +237,37 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
   }
 
   /**
+   * Extracts a zip archive and overwrites a destination directory.
+   *
+   * @since 1.0.0
+   *
+   * @param string $zipfile The path to the zipfile.
+   * @param string $destination The directory name to extract to.
+   * @return bool True if successful, false otherwise.
+   */
+  protected function zip_overwrite($zipfile, $destination) {
+
+    // Let's use a custom WP_Upgrader object.
+    require_once __DIR__ . '/utilities/class-backup-restorer.php';
+    $overwriter = \WP_CLI\Utils\get_upgrader('CLI_Tools_CiviCRM_WP_Upgrader');
+
+    // Go ahead and restore from backup.
+    $overwriter->init();
+    $result = $overwriter->restore($zipfile, $destination);
+
+    // Trap any problems.
+    if ($result === FALSE) {
+      WP_CLI::error('Unable to connect to the filesystem.');
+    }
+    if (is_wp_error($result)) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to extract zip archive: %y%s.%n'), $result->get_error_message()));
+    }
+
+    return TRUE;
+
+  }
+
+  /**
    * Returns a formatted error message from a ProcessRun command.
    *
    * @since 1.0.0
