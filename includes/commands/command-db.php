@@ -231,7 +231,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
       WP_CLI::error('DSN is not defined.');
     }
 
-    $mysqldump_binary = \WP_CLI\Utils\force_env_on_nix_systems( 'mysqldump' );
+    $mysqldump_binary = \WP_CLI\Utils\force_env_on_nix_systems('mysqldump');
     $dsn = self::parseDSN(defined('CIVICRM_DSN') ? CIVICRM_DSN : CIVICRM_OLD_DSN);
 
     // Build command and escaped shell arguments.

@@ -18,12 +18,12 @@ if (!class_exists('WP_Upgrader')) {
 class CLI_Tools_CiviCRM_WP_Upgrader extends WP_Upgrader {
 
   /**
+   * @var bool
    * Whether a bulk upgrade/installation is being performed.
-   *
    * @since 1.0.0
-   * @var bool $bulk
+   * @access public
    */
-  public $bulk = false;
+  public $bulk = FALSE;
 
   /**
    * Initialize the backup strings.
