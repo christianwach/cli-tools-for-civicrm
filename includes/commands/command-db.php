@@ -264,6 +264,48 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   }
 
   /**
+   * Loads a whole CiviCRM database.
+   *
+   * ## OPTIONS
+   *
+   * [--load-file=<load-file>]
+   * : The path to the database file.
+   *
+   * ## EXAMPLES
+   *
+   *     $ wp civicrm db load /tmp/civicrm.sql
+   *
+   * @since 1.0.0
+   *
+   * @param array $args The WP-CLI positional arguments.
+   * @param array $assoc_args The WP-CLI associative arguments.
+   */
+  public function load($args, $assoc_args) {
+
+    // Grab associative arguments.
+    $load_file = \WP_CLI\Utils\get_flag_value($assoc_args, 'load-file', FALSE);
+
+    civicrm_initialize();
+
+    if (!defined('CIVICRM_DSN')) {
+      WP_CLI::error('CIVICRM_DSN is not defined.');
+    }
+
+    $dsn = DB::parseDSN(CIVICRM_DSN);
+
+    $mysql_args = [
+      'host'     => $dsn['hostspec'],
+      'database' => $dsn['database'],
+      'user'     => $dsn['username'],
+      'password' => $dsn['password'],
+      'execute'  => 'SOURCE ' . $load_file,
+    ];
+
+    \WP_CLI\Utils\run_mysql_command('/usr/bin/env mysql', $mysql_args);
+
+  }
+
+  /**
    * Perform a query on the CiviCRM database.
    *
    * ## OPTIONS
