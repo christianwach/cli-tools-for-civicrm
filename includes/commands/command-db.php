@@ -228,10 +228,11 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
       WP_CLI::error('DSN is not defined.');
     }
 
+    $mysqldump_binary = \WP_CLI\Utils\force_env_on_nix_systems( 'mysqldump' );
     $dsn = self::parseDSN(defined('CIVICRM_DSN') ? CIVICRM_DSN : CIVICRM_OLD_DSN);
 
     // Build command and escaped shell arguments.
-    $command = "mysqldump --no-defaults --host={$dsn['hostspec']} --user={$dsn['username']} --password='{$dsn['password']}' %s";
+    $command = $mysqldump_binary . " --no-defaults --host={$dsn['hostspec']} --user={$dsn['username']} --password='{$dsn['password']}' %s";
     $command_esc_args = [$dsn['database']];
     if (isset($assoc_args['tables'])) {
       $tables = explode(',', $assoc_args['tables']);
@@ -311,7 +312,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
       'execute'  => $query,
     ];
 
-    \WP_CLI\Utils\run_mysql_command('mysql --no-defaults', $mysql_args);
+    \WP_CLI\Utils\run_mysql_command('/usr/bin/env mysql --no-defaults', $mysql_args);
 
   }
 
