@@ -117,7 +117,7 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
     $process_run = WP_CLI::launch($command, $exit_on_error, $return_detailed);
     //WP_CLI::log(print_r($process_run, TRUE));
     if (0 !== $process_run->return_code) {
-      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to extract gz archive: %y%s.%n'), $this->tar_error_msg($process_run)));
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to extract gz archive: %y%s.%n'), $this->stderr_error_msg($process_run)));
     }
 
     // Next unpack the tarball.
@@ -126,7 +126,7 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
     $process_run = WP_CLI::launch($command, $exit_on_error, $return_detailed);
     //WP_CLI::log(print_r($process_run, TRUE));
     if (0 !== $process_run->return_code) {
-      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to extract tarball: %y%s.%n'), $this->tar_error_msg($process_run)));
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to extract tarball: %y%s.%n'), $this->stderr_error_msg($process_run)));
     }
 
     // Delete the tar archive.
@@ -309,7 +309,7 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
    * @param object $process_run The ProcessRun object.
    * @return string|int The error message of the process if available, otherwise the return code.
    */
-  private function tar_error_msg($process_run) {
+  private function stderr_error_msg($process_run) {
 
     // Grab error string.
     $stderr = trim($process_run->stderr);
