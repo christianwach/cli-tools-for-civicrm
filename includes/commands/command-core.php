@@ -112,8 +112,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     WP_CLI::log(WP_CLI::colorize('%GGathering system information.%n'));
 
     // Bootstrap CiviCRM.
-    $this->check_dependencies();
-    civicrm_initialize();
+    $this->bootstrap_civicrm();
 
     // Let's have a look for some CiviCRM variables.
     $config = CRM_Core_Config::singleton();
@@ -1072,7 +1071,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
 
     // Clean the "templates_c" directory to avoid fatal error when overwriting the database.
     if (function_exists('civicrm_initialize')) {
-      civicrm_initialize();
+      $this->bootstrap_civicrm();
       $config = CRM_Core_Config::singleton();
       $config->cleanup(1, FALSE);
     }
@@ -1161,8 +1160,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     WP_CLI::log(WP_CLI::colorize('%GGathering system information.%n'));
 
     // Bootstrap CiviCRM.
-    $this->check_dependencies();
-    civicrm_initialize();
+    $this->bootstrap_civicrm();
 
     // Let's have a look for some CiviCRM variables.
     $config = CRM_Core_Config::singleton();
@@ -1423,8 +1421,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     $backup_dir = \WP_CLI\Utils\get_flag_value($assoc_args, 'backup-dir', trailingslashit(dirname(ABSPATH)) . 'civicrm');
 
     // Bootstrap CiviCRM.
-    $this->check_dependencies();
-    civicrm_initialize();
+    $this->bootstrap_civicrm();
 
     // Let's have a look for some CiviCRM variables.
     global $civicrm_root;
@@ -1557,8 +1554,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
   public function update_db($args, $assoc_args) {
 
     // Bootstrap CiviCRM.
-    $this->check_dependencies();
-    civicrm_initialize();
+    $this->bootstrap_civicrm();
 
     if (!defined('CIVICRM_UPGRADE_ACTIVE')) {
       define('CIVICRM_UPGRADE_ACTIVE', 1);
@@ -1778,8 +1774,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
   public function update_cfg($args, $assoc_args) {
 
     // Bootstrap CiviCRM.
-    $this->check_dependencies();
-    civicrm_initialize();
+    $this->bootstrap_civicrm();
 
     $default_values = [];
     $states = ['old', 'new'];
@@ -1879,8 +1874,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     $format = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'table');
 
     // Bootstrap CiviCRM.
-    $this->check_dependencies();
-    civicrm_initialize();
+    $this->bootstrap_civicrm();
 
     // Get the data we want.
     $plugin_version = CRM_Utils_System::version();

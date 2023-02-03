@@ -51,7 +51,8 @@ class CLI_Tools_CiviCRM_Command_Pipe extends CLI_Tools_CiviCRM_Command {
    */
   public function __invoke($args, $assoc_args) {
 
-    civicrm_initialize();
+    // Bootstrap CiviCRM.
+    $this->bootstrap_civicrm();
 
     if (!is_callable(['Civi', 'pipe'])) {
       WP_CLI::error('This version of CiviCRM does not include Civi::pipe() support.');

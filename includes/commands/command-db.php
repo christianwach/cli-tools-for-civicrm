@@ -64,7 +64,8 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    */
   public function cli($args, $assoc_args) {
 
-    civicrm_initialize();
+    // Bootstrap CiviCRM.
+    $this->bootstrap_civicrm();
 
     if (!defined('CIVICRM_DSN')) {
       WP_CLI::error('CIVICRM_DSN is not defined.');
@@ -125,7 +126,8 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    */
   public function config($args, $assoc_args) {
 
-    civicrm_initialize();
+    // Bootstrap CiviCRM.
+    $this->bootstrap_civicrm();
 
     if (!defined('CIVICRM_DSN')) {
       WP_CLI::error('CIVICRM_DSN is not defined.');
@@ -173,7 +175,8 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    */
   public function connect($args, $assoc_args) {
 
-    civicrm_initialize();
+    // Bootstrap CiviCRM.
+    $this->bootstrap_civicrm();
 
     if (!defined('CIVICRM_DSN')) {
       WP_CLI::error('CIVICRM_DSN is not defined.');
@@ -221,7 +224,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
 
     // Bootstrap CiviCRM when not called as part of an upgrade.
     if (!defined('CIVICRM_UPGRADE_ACTIVE')) {
-      civicrm_initialize();
+      $this->bootstrap_civicrm();
     }
 
     if (!defined('CIVICRM_DSN') && !defined('CIVICRM_OLD_DSN')) {
@@ -285,7 +288,8 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     // Grab associative arguments.
     $load_file = \WP_CLI\Utils\get_flag_value($assoc_args, 'load-file', FALSE);
 
-    civicrm_initialize();
+    // Bootstrap CiviCRM.
+    $this->bootstrap_civicrm();
 
     if (!defined('CIVICRM_DSN')) {
       WP_CLI::error('CIVICRM_DSN is not defined.');
@@ -338,7 +342,8 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
 
     $query = $args[0];
 
-    civicrm_initialize();
+    // Bootstrap CiviCRM.
+    $this->bootstrap_civicrm();
 
     if (!defined('CIVICRM_DSN')) {
       WP_CLI::error('CIVICRM_DSN is not defined.');

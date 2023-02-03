@@ -31,7 +31,8 @@ class CLI_Tools_CiviCRM_Command_Debug extends CLI_Tools_CiviCRM_Command {
    */
   public function enable($args, $assoc_args) {
 
-    civicrm_initialize();
+    // Bootstrap CiviCRM.
+    $this->bootstrap_civicrm();
 
     Civi::settings()->add([
       'debug_enabled' => 1,
@@ -57,7 +58,8 @@ class CLI_Tools_CiviCRM_Command_Debug extends CLI_Tools_CiviCRM_Command {
    */
   public function disable($args, $assoc_args) {
 
-    civicrm_initialize();
+    // Bootstrap CiviCRM.
+    $this->bootstrap_civicrm();
 
     Civi::settings()->add([
       'debug_enabled' => 0,

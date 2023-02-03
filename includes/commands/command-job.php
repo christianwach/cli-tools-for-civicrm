@@ -33,7 +33,8 @@ class CLI_Tools_CiviCRM_Command_Job extends CLI_Tools_CiviCRM_Command {
    */
   public function mailing($args, $assoc_args) {
 
-    civicrm_initialize();
+    // Bootstrap CiviCRM.
+    $this->bootstrap_civicrm();
 
     $job = new CRM_Core_JobManager();
     $job->executeJobByAction('job', 'process_mailing');
@@ -59,7 +60,8 @@ class CLI_Tools_CiviCRM_Command_Job extends CLI_Tools_CiviCRM_Command {
    */
   public function membership($args, $assoc_args) {
 
-    civicrm_initialize();
+    // Bootstrap CiviCRM.
+    $this->bootstrap_civicrm();
 
     $job = new CRM_Core_JobManager();
     $job->executeJobByAction('job', 'process_membership');

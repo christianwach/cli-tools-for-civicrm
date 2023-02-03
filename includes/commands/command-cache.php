@@ -27,7 +27,7 @@ class CLI_Tools_CiviCRM_Command_Cache extends CLI_Tools_CiviCRM_Command {
   public function flush($args, $assoc_args) {
 
     // Bootstrap CiviCRM.
-    civicrm_initialize();
+    $this->bootstrap_civicrm();
 
     $config = CRM_Core_Config::singleton();
 

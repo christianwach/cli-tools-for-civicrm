@@ -21,6 +21,18 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
   }
 
   /**
+   * Bootstrap CiviCRM.
+   *
+   * @since 1.0.0
+   */
+  public static function bootstrap_civicrm() {
+    self::check_dependencies();
+    if (!civicrm_initialize()) {
+      WP_CLI::error('Unable to initialize CiviCRM.');
+    }
+  }
+
+  /**
    * Gets the Formatter object for a given set of arguments.
    *
    * @since 1.0.0

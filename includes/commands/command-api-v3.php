@@ -106,7 +106,7 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
     }
 
     // Bootstrap CiviCRM.
-    civicrm_initialize();
+    $this->bootstrap_civicrm();
 
     // CRM-18062: Set CiviCRM timezone if any.
     $wp_base_timezone = date_default_timezone_get();
