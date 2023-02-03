@@ -114,7 +114,7 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
 
     WP_CLI::log(WP_CLI::colorize('%GExtracting tar.gz archive...%n'));
 
-    // First unzip the gz archive.
+    // First unpack the gz archive.
     $command = "gzip -d $tarfile";
     $process_run = WP_CLI::launch($command, $exit_on_error, $return_detailed);
     //WP_CLI::log(print_r($process_run, TRUE));
@@ -122,7 +122,7 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
       WP_CLI::error(sprintf(WP_CLI::colorize('Failed to extract gz archive: %y%s.%n'), $this->tar_error_msg($process_run)));
     }
 
-    // Next untar the tarball.
+    // Next unpack the tarball.
     $tarfile = substr($tarfile, 0, strlen($tarfile) - 3);
     $command = "tar -xf $tarfile -C \"$destination\"";
     $process_run = WP_CLI::launch($command, $exit_on_error, $return_detailed);
@@ -133,11 +133,11 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
 
     // Delete the tar archive.
     if (!empty($delete)) {
-      $command = "rm $tarfile";
-      $process_run = WP_CLI::launch($command, $exit_on_error, $return_detailed);
-      if (0 !== $process_run->return_code) {
-        WP_CLI::error(sprintf(WP_CLI::colorize('Failed to delete tarball: %y%s.%n'), $this->tar_error_msg($process_run)));
+      global $wp_filesystem;
+      if (empty($wp_filesystem)) {
+        WP_Filesystem();
       }
+      $wp_filesystem->delete($tarfile, TRUE);
     }
 
     return TRUE;
@@ -185,11 +185,11 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
 
     // Delete the zip archive.
     if (!empty($delete)) {
-      $command = "rm $zipfile";
-      $process_run = WP_CLI::launch($command, $exit_on_error, $return_detailed);
-      if (0 !== $process_run->return_code) {
-        WP_CLI::error(sprintf(WP_CLI::colorize('Failed to delete zipfile: %y%s.%n'), $this->tar_error_msg($process_run)));
+      global $wp_filesystem;
+      if (empty($wp_filesystem)) {
+        WP_Filesystem();
       }
+      $wp_filesystem->delete($zipfile, TRUE);
     }
 
     return TRUE;
