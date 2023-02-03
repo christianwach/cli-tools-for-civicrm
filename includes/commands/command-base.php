@@ -33,6 +33,54 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
   }
 
   /**
+   * Downloads a remote file with a GET request.
+   *
+   * @since 1.0.0
+   *
+   * @param string $url The URL to execute the GET request on.
+   * @param string $destination Optional. The path to the download directory. Default is local temp dir.
+   * @param array $headers Optional. Associative array of headers.
+   * @param array $options Optional. Associative array of options.
+   * @return string $filepath The path to the downloaded file.
+   */
+  protected function file_download($url, $destination = '', $headers = [], $options = []) {
+
+    // Set default destination.
+    if (empty($destination)) {
+      $destination = \WP_CLI\Utils\get_temp_dir();
+    }
+
+    // Extract filename, stripping query variables if present.
+    $filename = basename($url);
+    if (FALSE !== strpos($filename, '?')) {
+      $arr = explode('?', $filename);
+      $filename = $arr[0];
+    }
+
+    // Build final path to file.
+    $filepath = trailingslashit($destination) . $filename;
+
+    // Build request options.
+    $options = array_merge(
+      [
+        'timeout'  => 600,
+        'filename' => $filepath,
+        'insecure' => FALSE,
+      ],
+      $options
+    );
+
+    // Okay, do the download.
+    $response = \WP_CLI\Utils\http_request('GET', $url, NULL, $headers, $options);
+    if (!$response->success || 200 !== (int) $response->status_code) {
+      WP_CLI::error(sprintf(WP_CLI::colorize("Couldn't fetch response from %y%s%n (HTTP code %y%s%n)."), $url, $response->status_code));
+    }
+
+    return $filepath;
+
+  }
+
+  /**
    * Gets the Formatter object for a given set of arguments.
    *
    * @since 1.0.0
@@ -73,15 +121,126 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
   }
 
   /**
-   * String sanitization.
+   * Gets the path to the CiviCRM plugin directory.
    *
    * @since 1.0.0
    *
-   * @param string $type The string to sanitize.
-   * @return string The sanitized string.
+   * @return string|bool $plugin_path The path to the CiviCRM plugin directory.
    */
-  protected function sanitize_string($type) {
-    return strtolower(str_replace('-', '_', $type));
+  protected function get_plugin_path() {
+
+    global $wp_filesystem;
+    if (empty($wp_filesystem)) {
+      WP_Filesystem();
+    }
+
+    // Get the path to the WordPress plugins directory.
+    $plugins_dir = $wp_filesystem->wp_plugins_dir();
+    if (empty($plugins_dir)) {
+      WP_CLI::error('Unable to locate WordPress plugins directory.');
+    }
+
+    // The path to the CiviCRM plugin directory.
+    $plugin_path = trailingslashit($plugins_dir) . 'civicrm';
+
+    return $plugin_path;
+
+  }
+
+  /**
+   * Recursively implode an array.
+   *
+   * @since 1.0.0
+   *
+   * @param array $value The array to implode.
+   * @param integer $level The current level.
+   * @return string
+   */
+  protected static function implode_recursive($value, $level = 0) {
+
+    // Maybe recurse.
+    $array = [];
+    if (is_array($value)) {
+      foreach ($value as $val) {
+        if (is_array($val)) {
+          $array[] = self::implode_recursive($val, $level + 1);
+        }
+        else {
+          $array[] = $val;
+        }
+      }
+    }
+    else {
+      $array[] = $value;
+    }
+
+    // Wrap sub-arrays but leave top level alone.
+    if ($level > 0) {
+      $string = '[' . implode(',', $array) . ']';
+    }
+    else {
+      $string = implode(',', $array);
+    }
+
+    return $string;
+
+  }
+
+  /**
+   * Performs a remote GET request that requires JSON data in response.
+   *
+   * @since 1.0.0
+   *
+   * @param string $url The URL to execute the GET request on.
+   * @param array $headers Optional. Associative array of headers.
+   * @param array $options Optional. Associative array of options.
+   * @return mixed|false False on failure. Decoded JSON on success.
+   */
+  protected function json_get_request($url, $headers = [], $options = []) {
+
+    $headers = array_merge(
+      ['Accept' => 'application/json'],
+      $headers
+    );
+
+    $response = $this->json_get_response($url, $headers, $options);
+    if (FALSE === $response) {
+      return $response;
+    }
+
+    $data = json_decode($response, TRUE);
+    if (JSON_ERROR_NONE !== json_last_error()) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to decode JSON: %y%s.%n'), json_last_error_msg()));
+    }
+
+    return $data;
+
+  }
+
+  /**
+   * Performs a remote GET request.
+   *
+   * @since 1.0.0
+   *
+   * @param string $url The URL to execute the GET request on.
+   * @param array $headers Optional. Associative array of headers.
+   * @param array $options Optional. Associative array of options.
+   * @return object $response The response object.
+   */
+  protected function json_get_response($url, $headers = [], $options = []) {
+
+    $options = array_merge(
+      ['halt_on_error' => FALSE],
+      $options
+    );
+
+    $response = \WP_CLI\Utils\http_request('GET', $url, NULL, $headers, $options);
+    if (!$response->success || 200 > (int) $response->status_code || 300 <= $response->status_code) {
+      WP_CLI::error(sprintf(WP_CLI::colorize("Couldn't fetch response from %y%s%n (HTTP code %y%s%n)."), $url, $response->status_code));
+    }
+
+    return trim($response->body);
+
   }
 
   /**
@@ -301,6 +460,10 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
 
   }
 
+  // ----------------------------------------------------------------------------
+  // Private methods.
+  // ----------------------------------------------------------------------------
+
   /**
    * Returns a formatted error message from a ProcessRun command.
    *
@@ -402,177 +565,6 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
     }
 
     return $error_code;
-
-  }
-
-  /**
-   * Performs a remote GET request that requires JSON data in response.
-   *
-   * @since 1.0.0
-   *
-   * @param string $url The URL to execute the GET request on.
-   * @param array $headers Optional. Associative array of headers.
-   * @param array $options Optional. Associative array of options.
-   * @return mixed|false False on failure. Decoded JSON on success.
-   */
-  protected function json_get_request($url, $headers = [], $options = []) {
-
-    $headers = array_merge(
-      ['Accept' => 'application/json'],
-      $headers
-    );
-
-    $response = $this->json_get_response($url, $headers, $options);
-    if (FALSE === $response) {
-      return $response;
-    }
-
-    $data = json_decode($response, TRUE);
-    if (JSON_ERROR_NONE !== json_last_error()) {
-      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to decode JSON: %y%s.%n'), json_last_error_msg()));
-    }
-
-    return $data;
-
-  }
-
-  /**
-   * Performs a remote GET request.
-   *
-   * @since 1.0.0
-   *
-   * @param string $url The URL to execute the GET request on.
-   * @param array $headers Optional. Associative array of headers.
-   * @param array $options Optional. Associative array of options.
-   * @return object $response The response object.
-   */
-  protected function json_get_response($url, $headers = [], $options = []) {
-
-    $options = array_merge(
-      ['halt_on_error' => FALSE],
-      $options
-    );
-
-    $response = \WP_CLI\Utils\http_request('GET', $url, NULL, $headers, $options);
-    if (!$response->success || 200 > (int) $response->status_code || 300 <= $response->status_code) {
-      WP_CLI::error(sprintf(WP_CLI::colorize("Couldn't fetch response from %y%s%n (HTTP code %y%s%n)."), $url, $response->status_code));
-    }
-
-    return trim($response->body);
-
-  }
-
-  /**
-   * Downloads a remote file with a GET request.
-   *
-   * @since 1.0.0
-   *
-   * @param string $url The URL to execute the GET request on.
-   * @param string $destination Optional. The path to the download directory. Default is local temp dir.
-   * @param array $headers Optional. Associative array of headers.
-   * @param array $options Optional. Associative array of options.
-   * @return string $filepath The path to the downloaded file.
-   */
-  protected function file_download($url, $destination = '', $headers = [], $options = []) {
-
-    // Set default destination.
-    if (empty($destination)) {
-      $destination = \WP_CLI\Utils\get_temp_dir();
-    }
-
-    // Extract filename, stripping query variables if present.
-    $filename = basename($url);
-    if (FALSE !== strpos($filename, '?')) {
-      $arr = explode('?', $filename);
-      $filename = $arr[0];
-    }
-
-    // Build final path to file.
-    $filepath = trailingslashit($destination) . $filename;
-
-    // Build request options.
-    $options = array_merge(
-      [
-        'timeout'  => 600,
-        'filename' => $filepath,
-        'insecure' => FALSE,
-      ],
-      $options
-    );
-
-    // Okay, do the download.
-    $response = \WP_CLI\Utils\http_request('GET', $url, NULL, $headers, $options);
-    if (!$response->success || 200 !== (int) $response->status_code) {
-      WP_CLI::error(sprintf(WP_CLI::colorize("Couldn't fetch response from %y%s%n (HTTP code %y%s%n)."), $url, $response->status_code));
-    }
-
-    return $filepath;
-
-  }
-
-  /**
-   * Gets the path to the CiviCRM plugin directory.
-   *
-   * @since 1.0.0
-   *
-   * @return string|bool $plugin_path The path to the CiviCRM plugin directory.
-   */
-  protected function get_plugin_path() {
-
-    global $wp_filesystem;
-    if (empty($wp_filesystem)) {
-      WP_Filesystem();
-    }
-
-    // Get the path to the WordPress plugins directory.
-    $plugins_dir = $wp_filesystem->wp_plugins_dir();
-    if (empty($plugins_dir)) {
-      WP_CLI::error('Unable to locate WordPress plugins directory.');
-    }
-
-    // The path to the CiviCRM plugin directory.
-    $plugin_path = trailingslashit($plugins_dir) . 'civicrm';
-
-    return $plugin_path;
-
-  }
-
-  /**
-   * Recursively implode an array.
-   *
-   * @since 1.0.0
-   *
-   * @param array $value The array to implode.
-   * @param integer $level The current level.
-   * @return string
-   */
-  protected static function implode_recursive($value, $level = 0) {
-
-    // Maybe recurse.
-    $array = [];
-    if (is_array($value)) {
-      foreach ($value as $val) {
-        if (is_array($val)) {
-          $array[] = self::implode_recursive($val, $level + 1);
-        }
-        else {
-          $array[] = $val;
-        }
-      }
-    }
-    else {
-      $array[] = $value;
-    }
-
-    // Wrap sub-arrays but leave top level alone.
-    if ($level > 0) {
-      $string = '[' . implode(',', $array) . ']';
-    }
-    else {
-      $string = implode(',', $array);
-    }
-
-    return $string;
 
   }
 
