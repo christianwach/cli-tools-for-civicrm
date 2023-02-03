@@ -49,12 +49,18 @@ class CLI_Tools_CiviCRM_Command_Upgrade extends CLI_Tools_CiviCRM_Command {
       WP_CLI::error('CiviCRM .tar.gz archives are not supported.');
     }
 
-    // TODO: Backup command.
+    // Use "wp civicrm core backup" to backup the CiviCRM installation.
+    $command = 'civicrm core backup' . (empty($backup_dir) ? '' : ' --backup-dir=' . $backup_dir);
+    $options = ['launch' => FALSE, 'return' => FALSE];
+    WP_CLI::runcommand($command, $options);
 
-    // Build command.
+    // Use "wp civicrm core update" to upgrade CiviCRM.
     $command = 'civicrm core update' . (empty($zipfile) ? '' : ' --zipfile=' . $zipfile);
+    $options = ['launch' => FALSE, 'return' => FALSE];
+    WP_CLI::runcommand($command, $options);
 
-    // Pass on to "wp civicrm core update".
+    // Use "wp civicrm core update-db" to upgrade the CiviCRM database.
+    $command = 'civicrm core update-db --v';
     $options = ['launch' => FALSE, 'return' => FALSE];
     WP_CLI::runcommand($command, $options);
 
