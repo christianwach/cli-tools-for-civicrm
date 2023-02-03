@@ -85,20 +85,6 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
   }
 
   /**
-   * Helper method to replicate functionality of 'drush_get_option'.
-   *
-   * @since 1.0.0
-   *
-   * @param array $assoc_args The WP-CLI associative arguments.
-   * @param string $name The name of the argument to find.
-   * @param string $default The default value if the argument is not.
-   * @return mixed The value if found or default if not.
-   */
-  protected function get_option($assoc_args, $name, $default) {
-    return \WP_CLI\Utils\get_flag_value($assoc_args, $name, $default);
-  }
-
-  /**
    * Extracts a tar.gz archive.
    *
    * @since 1.0.0
