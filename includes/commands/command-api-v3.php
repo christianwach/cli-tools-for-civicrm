@@ -141,7 +141,7 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
         if (count($result['values']) === 1) {
           $item = array_pop($result['values']);
           $assoc_args['fields'] = array_keys($item);
-          $formatter = $this->get_formatter($assoc_args);
+          $formatter = $this->formatter_get($assoc_args);
           $formatter->display_item($item);
         }
         else {
@@ -175,7 +175,7 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
           });
           //WP_CLI::log(print_r($result['values'], TRUE));
 
-          $formatter = $this->get_formatter($assoc_args);
+          $formatter = $this->formatter_get($assoc_args);
           //WP_CLI::log(print_r($formatter, TRUE));
 
           $formatter->display_items($result['values']);

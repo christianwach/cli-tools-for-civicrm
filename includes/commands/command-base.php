@@ -88,73 +88,33 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
    * @param array $assoc_args The params passed to a command. Determines the formatting.
    * @return \WP_CLI\Formatter
    */
-  protected function get_formatter(&$assoc_args) {
+  protected function formatter_get(&$assoc_args) {
     return new \WP_CLI\Formatter($assoc_args, $this->obj_fields);
   }
 
   /**
-   * Gets the path to the CiviCRM plugin directory.
+   * Performs a remote GET request.
    *
    * @since 1.0.0
    *
-   * @return string|bool $plugin_path The path to the CiviCRM plugin directory.
+   * @param string $url The URL to execute the GET request on.
+   * @param array $headers Optional. Associative array of headers.
+   * @param array $options Optional. Associative array of options.
+   * @return object $response The response object.
    */
-  protected function get_plugin_path() {
+  protected function http_get_response($url, $headers = [], $options = []) {
 
-    global $wp_filesystem;
-    if (empty($wp_filesystem)) {
-      WP_Filesystem();
+    $options = array_merge(
+      ['halt_on_error' => FALSE],
+      $options
+    );
+
+    $response = \WP_CLI\Utils\http_request('GET', $url, NULL, $headers, $options);
+    if (!$response->success || 200 > (int) $response->status_code || 300 <= $response->status_code) {
+      WP_CLI::error(sprintf(WP_CLI::colorize("Couldn't fetch response from %y%s%n (HTTP code %y%s%n)."), $url, $response->status_code));
     }
 
-    // Get the path to the WordPress plugins directory.
-    $plugins_dir = $wp_filesystem->wp_plugins_dir();
-    if (empty($plugins_dir)) {
-      WP_CLI::error('Unable to locate WordPress plugins directory.');
-    }
-
-    // The path to the CiviCRM plugin directory.
-    $plugin_path = trailingslashit($plugins_dir) . 'civicrm';
-
-    return $plugin_path;
-
-  }
-
-  /**
-   * Recursively implode an array.
-   *
-   * @since 1.0.0
-   *
-   * @param array $value The array to implode.
-   * @param integer $level The current level.
-   * @return string
-   */
-  protected static function implode_recursive($value, $level = 0) {
-
-    // Maybe recurse.
-    $array = [];
-    if (is_array($value)) {
-      foreach ($value as $val) {
-        if (is_array($val)) {
-          $array[] = self::implode_recursive($val, $level + 1);
-        }
-        else {
-          $array[] = $val;
-        }
-      }
-    }
-    else {
-      $array[] = $value;
-    }
-
-    // Wrap sub-arrays but leave top level alone.
-    if ($level > 0) {
-      $string = '[' . implode(',', $array) . ']';
-    }
-    else {
-      $string = implode(',', $array);
-    }
-
-    return $string;
+    return trim($response->body);
 
   }
 
@@ -175,7 +135,7 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
       $headers
     );
 
-    $response = $this->json_get_response($url, $headers, $options);
+    $response = $this->http_get_response($url, $headers, $options);
     if (FALSE === $response) {
       return $response;
     }
@@ -190,28 +150,29 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
   }
 
   /**
-   * Performs a remote GET request.
+   * Gets the path to the CiviCRM plugin directory.
    *
    * @since 1.0.0
    *
-   * @param string $url The URL to execute the GET request on.
-   * @param array $headers Optional. Associative array of headers.
-   * @param array $options Optional. Associative array of options.
-   * @return object $response The response object.
+   * @return string|bool $plugin_path The path to the CiviCRM plugin directory.
    */
-  protected function json_get_response($url, $headers = [], $options = []) {
+  protected function plugin_path_get() {
 
-    $options = array_merge(
-      ['halt_on_error' => FALSE],
-      $options
-    );
-
-    $response = \WP_CLI\Utils\http_request('GET', $url, NULL, $headers, $options);
-    if (!$response->success || 200 > (int) $response->status_code || 300 <= $response->status_code) {
-      WP_CLI::error(sprintf(WP_CLI::colorize("Couldn't fetch response from %y%s%n (HTTP code %y%s%n)."), $url, $response->status_code));
+    global $wp_filesystem;
+    if (empty($wp_filesystem)) {
+      WP_Filesystem();
     }
 
-    return trim($response->body);
+    // Get the path to the WordPress plugins directory.
+    $plugins_dir = $wp_filesystem->wp_plugins_dir();
+    if (empty($plugins_dir)) {
+      WP_CLI::error('Unable to locate WordPress plugins directory.');
+    }
+
+    // The path to the CiviCRM plugin directory.
+    $plugin_path = trailingslashit($plugins_dir) . 'civicrm';
+
+    return $plugin_path;
 
   }
 
@@ -334,7 +295,7 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
    * @param string $destination The path to the directory where the compressed archive will be saved.
    * @return bool True if successful, false otherwise.
    */
-  protected function zip($directory, $destination) {
+  protected function zip_compress($directory, $destination) {
 
     // Sanity check directory.
     if (empty($directory)) {

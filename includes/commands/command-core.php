@@ -196,7 +196,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
 
     // Render feedback.
     $assoc_args['fields'] = array_keys($feedback);
-    $formatter = $this->get_formatter($assoc_args);
+    $formatter = $this->formatter_get($assoc_args);
     $formatter->display_item($feedback);
 
     // Let's give folks a chance to exit now.
@@ -240,8 +240,8 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     // Back up plugin directory.
     WP_CLI::log('');
     WP_CLI::log(WP_CLI::colorize('%GBacking up plugin directory...%n'));
-    $plugin_path = $this->get_plugin_path();
-    if (!$this->zip($plugin_path, $backup_dir . '/civicrm.zip')) {
+    $plugin_path = $this->plugin_path_get();
+    if (!$this->zip_compress($plugin_path, $backup_dir . '/civicrm.zip')) {
       WP_CLI::error('Could not compress plugin archive.');
     }
     WP_CLI::success("Plugin directory backed up.");
@@ -267,7 +267,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     if (!empty($config->configAndLogDir)) {
       WP_CLI::log('');
       WP_CLI::log(WP_CLI::colorize('%GBacking up Config and Log directory...%n'));
-      if (!$this->zip(untrailingslashit($config->configAndLogDir), $backup_dir . '/civicrm-config-log.zip')) {
+      if (!$this->zip_compress(untrailingslashit($config->configAndLogDir), $backup_dir . '/civicrm-config-log.zip')) {
         WP_CLI::error('Could not compress Config and Log archive.');
       }
       WP_CLI::success("Config and Log directory backed up.");
@@ -277,7 +277,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     if (!empty($config->customPHPPathDir)) {
       WP_CLI::log('');
       WP_CLI::log(WP_CLI::colorize('%GBacking up Custom PHP directory...%n'));
-      if (!$this->zip(untrailingslashit($config->customPHPPathDir), $backup_dir . '/civicrm-custom-php.zip')) {
+      if (!$this->zip_compress(untrailingslashit($config->customPHPPathDir), $backup_dir . '/civicrm-custom-php.zip')) {
         WP_CLI::error('Could not compress Custom PHP archive.');
       }
       WP_CLI::success("Custom PHP directory backed up.");
@@ -287,7 +287,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     if (!empty($config->customTemplateDir)) {
       WP_CLI::log('');
       WP_CLI::log(WP_CLI::colorize('%GBacking up Custom Templates directory...%n'));
-      if (!$this->zip(untrailingslashit($config->customTemplateDir), $backup_dir . '/civicrm-custom-templates.zip')) {
+      if (!$this->zip_compress(untrailingslashit($config->customTemplateDir), $backup_dir . '/civicrm-custom-templates.zip')) {
         WP_CLI::error('Could not compress Custom Templates archive.');
       }
       WP_CLI::success("Custom Templates directory backed up.");
@@ -297,7 +297,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     if (!empty($config->templateCompileDir)) {
       WP_CLI::log('');
       WP_CLI::log(WP_CLI::colorize('%GBacking up Compiled Templates directory...%n'));
-      if (!$this->zip(untrailingslashit($config->templateCompileDir), $backup_dir . '/civicrm-compiled-templates.zip')) {
+      if (!$this->zip_compress(untrailingslashit($config->templateCompileDir), $backup_dir . '/civicrm-compiled-templates.zip')) {
         WP_CLI::error('Could not compress Compiled templates archive.');
       }
       WP_CLI::success("Compiled Templates directory backed up.");
@@ -307,7 +307,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     if (!empty($config->extensionsDir)) {
       WP_CLI::log('');
       WP_CLI::log(WP_CLI::colorize('%GBacking up Extensions directory...%n'));
-      if (!$this->zip(untrailingslashit($config->extensionsDir), $backup_dir . '/civicrm-extensions.zip')) {
+      if (!$this->zip_compress(untrailingslashit($config->extensionsDir), $backup_dir . '/civicrm-extensions.zip')) {
         WP_CLI::error('Could not compress Extensions archive.');
       }
       WP_CLI::success("Extensions directory backed up.");
@@ -317,7 +317,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     if (!empty($config->uploadDir)) {
       WP_CLI::log('');
       WP_CLI::log(WP_CLI::colorize('%GBacking up Uploads directory...%n'));
-      if (!$this->zip(untrailingslashit($config->uploadDir), $backup_dir . '/civicrm-uploads.zip')) {
+      if (!$this->zip_compress(untrailingslashit($config->uploadDir), $backup_dir . '/civicrm-uploads.zip')) {
         WP_CLI::error('Could not compress Uploads archive.');
       }
       WP_CLI::success("Uploads directory backed up.");
@@ -327,7 +327,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     if (!empty($config->imageUploadDir)) {
       WP_CLI::log('');
       WP_CLI::log(WP_CLI::colorize('%GBacking up Image Uploads directory...%n'));
-      if (!$this->zip(untrailingslashit($config->imageUploadDir), $backup_dir . '/civicrm-image-uploads.zip')) {
+      if (!$this->zip_compress(untrailingslashit($config->imageUploadDir), $backup_dir . '/civicrm-image-uploads.zip')) {
         WP_CLI::error('Could not compress Image Uploads archive.');
       }
       WP_CLI::success("Image Uploads directory backed up.");
@@ -337,7 +337,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     if (!empty($config->customFileUploadDir)) {
       WP_CLI::log('');
       WP_CLI::log(WP_CLI::colorize('%GBacking up File Uploads directory...%n'));
-      if (!$this->zip(untrailingslashit($config->customFileUploadDir), $backup_dir . '/civicrm-file-uploads.zip')) {
+      if (!$this->zip_compress(untrailingslashit($config->customFileUploadDir), $backup_dir . '/civicrm-file-uploads.zip')) {
         WP_CLI::error('Could not compress File Uploads archive.');
       }
       WP_CLI::success("File Uploads directory backed up.");
@@ -550,7 +550,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
 
     // Look up the data.
     $url = $this->upgrade_url . '?stability=' . $version;
-    $response = $this->json_get_response($url);
+    $response = $this->http_get_response($url);
 
     // Try and decode response.
     $lookup = json_decode($response, TRUE);
@@ -795,7 +795,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     $force = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'force', FALSE);
 
     // Get the path to the CiviCRM plugin directory.
-    $plugin_path = $this->get_plugin_path();
+    $plugin_path = $this->plugin_path_get();
 
     // Only install plugin if not already installed.
     $fetcher = new \WP_CLI\Fetchers\Plugin();
@@ -936,7 +936,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     }
 
     // Get the path to the CiviCRM plugin directory.
-    $plugin_path = $this->get_plugin_path();
+    $plugin_path = $this->plugin_path_get();
 
     /*
      * Check for the presence of the CiviCRM core codebase.
@@ -978,7 +978,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
       'SSL' => $ssl,
     ];
     $assoc_args['fields'] = array_keys($feedback);
-    $formatter = $this->get_formatter($assoc_args);
+    $formatter = $this->formatter_get($assoc_args);
     $formatter->display_item($feedback);
 
     // Let's give folks a chance to exit now.
@@ -1244,7 +1244,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
 
     // Render feedback.
     $assoc_args['fields'] = array_keys($feedback);
-    $formatter = $this->get_formatter($assoc_args);
+    $formatter = $this->formatter_get($assoc_args);
     $formatter->display_item($feedback);
 
     // Let's give folks a chance to exit now.
@@ -1465,7 +1465,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
 
     // Render feedback.
     $assoc_args['fields'] = array_keys($feedback);
-    $formatter = $this->get_formatter($assoc_args);
+    $formatter = $this->formatter_get($assoc_args);
     $formatter->display_item($feedback);
 
     // Let's give folks a chance to exit now.
@@ -1971,6 +1971,45 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
       default:
         return 'abort';
     }
+
+  }
+
+  /**
+   * Recursively implode an array.
+   *
+   * @since 1.0.0
+   *
+   * @param array $value The array to implode.
+   * @param integer $level The current level.
+   * @return string
+   */
+  private static function implode_recursive($value, $level = 0) {
+
+    // Maybe recurse.
+    $array = [];
+    if (is_array($value)) {
+      foreach ($value as $val) {
+        if (is_array($val)) {
+          $array[] = self::implode_recursive($val, $level + 1);
+        }
+        else {
+          $array[] = $val;
+        }
+      }
+    }
+    else {
+      $array[] = $value;
+    }
+
+    // Wrap sub-arrays but leave top level alone.
+    if ($level > 0) {
+      $string = '[' . implode(',', $array) . ']';
+    }
+    else {
+      $string = implode(',', $array);
+    }
+
+    return $string;
 
   }
 

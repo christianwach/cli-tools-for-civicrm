@@ -153,7 +153,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
       default:
         $assoc_args['format'] = $format;
         $assoc_args['fields'] = array_keys($dsn);
-        $formatter = $this->get_formatter($assoc_args);
+        $formatter = $this->formatter_get($assoc_args);
         $formatter->display_item($dsn);
 
     }
