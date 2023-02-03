@@ -61,7 +61,7 @@ class CLI_Tools_CiviCRM_Command_Upgrade extends CLI_Tools_CiviCRM_Command {
 
     // Use "wp civicrm core update-db" to upgrade the CiviCRM database.
     $command = 'civicrm core update-db --v';
-    $options = ['launch' => FALSE, 'return' => FALSE];
+    $options = ['launch' => TRUE, 'return' => FALSE];
     WP_CLI::runcommand($command, $options);
 
   }
