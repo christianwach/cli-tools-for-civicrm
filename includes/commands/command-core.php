@@ -259,12 +259,11 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
       if (file_exists($dest_path) && is_writable($dest_path)) {
         copy(CIVICRM_SETTINGS_PATH, $dest_path);
       }
-      elseif ( ! file_exists($dest_path)) {
+      elseif (!file_exists($dest_path)) {
         copy(CIVICRM_SETTINGS_PATH, $dest_path);
       }
       else {
-        $error = 1;
-        WP_CLI::error( "Could not copy '" . CIVICRM_SETTINGS_PATH . "' to backup directory." );
+        WP_CLI::error("Could not copy '" . CIVICRM_SETTINGS_PATH . "' to backup directory.");
       }
       WP_CLI::success("Settings File backed up.");
     }
@@ -1386,7 +1385,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
         copy($source_path, CIVICRM_SETTINGS_PATH);
       }
       else {
-        WP_CLI::error( "Could not restore '" . CIVICRM_SETTINGS_PATH . "' from backup directory." );
+        WP_CLI::error("Could not restore '" . CIVICRM_SETTINGS_PATH . "' from backup directory.");
       }
       WP_CLI::success("Settings File restored.");
     }
