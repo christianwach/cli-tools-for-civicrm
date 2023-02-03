@@ -115,8 +115,8 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
     WP_CLI::log(WP_CLI::colorize('%GExtracting tar.gz archive...%n'));
 
     // First unzip the gz archive.
-    $cmd = "gzip -d $tarfile";
-    $process_run = WP_CLI::launch($cmd, $exit_on_error, $return_detailed);
+    $command = "gzip -d $tarfile";
+    $process_run = WP_CLI::launch($command, $exit_on_error, $return_detailed);
     //WP_CLI::log(print_r($process_run, TRUE));
     if (0 !== $process_run->return_code) {
       WP_CLI::error(sprintf(WP_CLI::colorize('Failed to extract gz archive: %y%s.%n'), $this->tar_error_msg($process_run)));
@@ -124,8 +124,8 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
 
     // Next untar the tarball.
     $tarfile = substr($tarfile, 0, strlen($tarfile) - 3);
-    $cmd = "tar -xf $tarfile -C \"$destination\"";
-    $process_run = WP_CLI::launch($cmd, $exit_on_error, $return_detailed);
+    $command = "tar -xf $tarfile -C \"$destination\"";
+    $process_run = WP_CLI::launch($command, $exit_on_error, $return_detailed);
     //WP_CLI::log(print_r($process_run, TRUE));
     if (0 !== $process_run->return_code) {
       WP_CLI::error(sprintf(WP_CLI::colorize('Failed to extract tarball: %y%s.%n'), $this->tar_error_msg($process_run)));
@@ -133,8 +133,8 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
 
     // Delete the tar archive.
     if (!empty($delete)) {
-      $cmd = "rm $tarfile";
-      $process_run = WP_CLI::launch($cmd, $exit_on_error, $return_detailed);
+      $command = "rm $tarfile";
+      $process_run = WP_CLI::launch($command, $exit_on_error, $return_detailed);
       if (0 !== $process_run->return_code) {
         WP_CLI::error(sprintf(WP_CLI::colorize('Failed to delete tarball: %y%s.%n'), $this->tar_error_msg($process_run)));
       }
@@ -176,8 +176,8 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
     $return_detailed = TRUE;
 
     // Run the command.
-    $cmd = "unzip -q $zipfile -d $destination";
-    $process_run = WP_CLI::launch($cmd, $exit_on_error, $return_detailed);
+    $command = "unzip -q $zipfile -d $destination";
+    $process_run = WP_CLI::launch($command, $exit_on_error, $return_detailed);
     //WP_CLI::log(print_r($process_run, TRUE));
     if (0 !== $process_run->return_code) {
       WP_CLI::error(sprintf(WP_CLI::colorize('Failed to extract zip archive: %y%s.%n'), $this->unzip_error_msg($process_run->return_code)));
@@ -185,8 +185,8 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
 
     // Delete the zip archive.
     if (!empty($delete)) {
-      $cmd = "rm $zipfile";
-      $process_run = WP_CLI::launch($cmd, $exit_on_error, $return_detailed);
+      $command = "rm $zipfile";
+      $process_run = WP_CLI::launch($command, $exit_on_error, $return_detailed);
       if (0 !== $process_run->return_code) {
         WP_CLI::error(sprintf(WP_CLI::colorize('Failed to delete zipfile: %y%s.%n'), $this->tar_error_msg($process_run)));
       }
