@@ -201,6 +201,74 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   }
 
   /**
+   * Drop the CiviCRM tables from the database.
+   *
+   * ## EXAMPLES
+   *
+   *     $ wp civicrm db drop-tables
+   *
+   * @subcommand drop-tables
+   *
+   * @since 1.0.0
+   *
+   * @param array $args The WP-CLI positional arguments.
+   * @param array $assoc_args The WP-CLI associative arguments.
+   */
+  public function drop_tables($args, $assoc_args) {
+
+    // Use "wp civicrm db tables" to find the CiviCRM core tables.
+    $command = "civicrm db tables 'civicrm_*' 'log_civicrm_*' 'snap_civicrm_*' --base-tables-only --format=json";
+    $options = ['launch' => FALSE, 'return' => TRUE];
+    $core_tables = WP_CLI::runcommand($command, $options);
+
+    // Convert to array.
+    $tables = json_decode($core_tables, TRUE);
+    if (JSON_ERROR_NONE !== json_last_error()) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to decode JSON: %y%s.%n'), json_last_error_msg()));
+    }
+
+    // Use "wp civicrm db tables" to find the CiviCRM core views.
+    $command = "civicrm db tables 'civicrm_*' 'log_civicrm_*' 'snap_civicrm_*' --views-only --format=json";
+    $options = ['launch' => FALSE, 'return' => TRUE];
+    $core_views = WP_CLI::runcommand($command, $options);
+
+    // Convert to array.
+    $views = json_decode($core_views, TRUE);
+    if (JSON_ERROR_NONE !== json_last_error()) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to decode JSON: %y%s.%n'), json_last_error_msg()));
+    }
+
+    // Get an instance of wpdb with CiviCRM credentials.
+    $cividb = $this->cividb_get();
+    $cividb->query('SET FOREIGN_KEY_CHECKS = 0');
+
+    // Drop all the CiviCRM core tables.
+    if (!empty($tables)) {
+      WP_CLI::log('Dropping CiviCRM core tables...');
+      foreach ($tables as $table) {
+        $query = 'DROP TABLE IF EXISTS ' . \WP_CLI\Utils\esc_sql_ident($table);
+        WP_CLI::debug($query);
+        $cividb->query($query);
+      }
+      WP_CLI::success('CiviCRM core tables dropped.');
+    }
+
+    // Drop all the the CiviCRM core views.
+    if (!empty($views)) {
+      WP_CLI::log('Dropping CiviCRM core views...');
+      foreach ($views as $view) {
+        $query = 'DROP VIEW ' . \WP_CLI\Utils\esc_sql_ident($view);
+        WP_CLI::debug($query);
+        $cividb->query($query);
+      }
+      WP_CLI::success('CiviCRM core views dropped.');
+    }
+
+    // TODO: Perhaps we should also remove stored-procedures/functions?
+
+  }
+
+  /**
    * Export the whole CiviCRM database and print to STDOUT or save to a file.
    *
    * ## OPTIONS
