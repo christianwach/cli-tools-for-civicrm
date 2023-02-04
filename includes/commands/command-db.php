@@ -364,6 +364,159 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   }
 
   /**
+   * Gets a set of CiviCRM tables in the database.
+   *
+   * ## OPTIONS
+   *
+   * [<table>...]
+   * : List tables based on wildcard search, e.g. 'civicrm_*_group' or 'civicrm_event?'.
+   *
+   * [--base-tables-only]
+   * : Restrict returned tables to those that are not views.
+   *
+   * [--views-only]
+   * : Restrict returned tables to those that are views.
+   *
+   * [--format=<format>]
+   * : Render output in a particular format.
+   * ---
+   * default: list
+   * options:
+   *   - list
+   *   - json
+   *   - csv
+   * ---
+   *
+   * ## EXAMPLES
+   *
+   *     $ wp civicrm db tables 'civicrm_*_group' --base-tables-only
+   *     civicrm_campaign_group
+   *     civicrm_custom_group
+   *     civicrm_dedupe_rule_group
+   *     civicrm_mailing_group
+   *     civicrm_option_group
+   *     civicrm_uf_group
+   *
+   * @since 1.0.0
+   *
+   * @param array $args The WP-CLI positional arguments.
+   * @param array $assoc_args The WP-CLI associative arguments.
+   */
+  public function tables($args, $assoc_args) {
+
+    // Grab associative arguments.
+    $base_tables_only = \WP_CLI\Utils\get_flag_value($assoc_args, 'base-tables-only');
+    $views_only = \WP_CLI\Utils\get_flag_value($assoc_args, 'views-only');
+    $format = \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'list');
+
+    // Bail if incompatible args have been supplied.
+    if (!empty($base_tables_only) && !empty($views_only)) {
+      WP_CLI::error('You cannot supply --base-tables-only and --views-only at the same time.');
+    }
+
+    // Let's use an instance of wpdb with CiviCRM credentials.
+    $cividb = $this->cividb_get();
+
+    // Default query.
+    $tables_sql = 'SHOW TABLES';
+
+    // Override query with table type restriction if needed.
+    if (!empty($base_tables_only)) {
+      $tables_sql = 'SHOW FULL TABLES WHERE Table_Type = "BASE TABLE"';
+    }
+    elseif (!empty($views_only)) {
+      $tables_sql = 'SHOW FULL TABLES WHERE Table_Type = "VIEW"';
+    }
+
+    // Perform query
+    $tables = $cividb->get_col($tables_sql, 0);
+
+    // Filter by `$args` wildcard.
+    if ($args) {
+
+      // Build filtered array.
+      $args_tables = [];
+      foreach ($args as $arg) {
+        if (FALSE !== strpos($arg, '*') || FALSE !== strpos($arg, '?')) {
+          $args_tables = array_merge(
+            $args_tables,
+            array_filter(
+              $tables,
+              function ($v) use ($arg) {
+                // WP-CLI itself uses fnmatch() so ignore the civilint warning.
+                // phpcs:disable
+                return fnmatch($arg, $v);
+                // phpcs:enable
+              }
+            )
+          );
+        }
+        else {
+          $args_tables[] = $arg;
+        }
+      }
+
+      // Clean up.
+      $args_tables = array_values(array_unique($args_tables));
+      $tables = array_values(array_intersect($tables, $args_tables));
+
+    }
+
+    // Render output.
+    if ('csv' === $format) {
+      WP_CLI::log(implode(',', $tables));
+    }
+    elseif ('json' === $format) {
+      $json = json_encode($tables);
+      if (JSON_ERROR_NONE !== json_last_error()) {
+        WP_CLI::error(sprintf(WP_CLI::colorize('Failed to encode JSON: %Y%s.%n'), json_last_error_msg()));
+      }
+      echo $json . "\n";
+    }
+    else {
+      foreach ($tables as $table) {
+        WP_CLI::log($table);
+      }
+    }
+
+  }
+
+  // ----------------------------------------------------------------------------
+  // Private methods.
+  // ----------------------------------------------------------------------------
+
+  /**
+   * Gets the instance of wpdb with CiviCRM credentials.
+   *
+   * @since 1.0.0
+   *
+   * @return object $cividb The instance of wpdb with CiviCRM credentials.
+   */
+  private function cividb_get() {
+
+    // Return instance if we have it.
+    static $cividb;
+    if (isset($cividb)) {
+      return $cividb;
+    }
+
+    // Bootstrap CiviCRM.
+    $this->bootstrap_civicrm();
+
+    // Bail if we can't fetch database credentials.
+    if (!defined('CIVICRM_DSN')) {
+      WP_CLI::error('CIVICRM_DSN is not defined.');
+    }
+
+    // Let's use an instance of wpdb with CiviCRM credentials.
+    $dsn = DB::parseDSN(CIVICRM_DSN);
+    $cividb = new wpdb($dsn['username'], $dsn['password'], $dsn['database'], $dsn['hostspec']);
+
+    return $cividb;
+
+  }
+
+  /**
    * DSN parser.
    *
    * This is based on PEAR DB since we don't always have a bootstrapped environment that
