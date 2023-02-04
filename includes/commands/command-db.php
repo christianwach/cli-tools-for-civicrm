@@ -271,15 +271,34 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   /**
    * Export the whole CiviCRM database and print to STDOUT or save to a file.
    *
+   * By default, CiviCRM loads its tables into the WordPress database. It is also possible
+   * to configure CiviCRM to have its own database instead. This means there is a choice
+   * of what to export: either the entire database (if CiviCRM has its own database or if
+   * you want to export the WordPress tables as well) or just the CiviCRM tables.
+   *
    * ## OPTIONS
    *
+	 * [--tables=<tables>]
+	 * : The comma separated list of specific tables to export. Excluding this parameter will export all tables in the database.
+	 *
+   * [--civicrm-only]
+   * : Restrict the export to just the CiviCRM tables. Overrides --tables.
+   *
    * [--result-file=<result-file>]
-   * : The path to the saved file.
+   * : The path to the saved file. Excluding this parameter will export to STDOUT.
    *
    * ## EXAMPLES
    *
+   *     # Export database to STDOUT.
    *     $ wp civicrm db dump
+   *     -- MySQL dump 10.13  Distrib 5.7.34, for osx11.0 (x86_64)
+   *     --
+   *     -- Host: localhost    Database: civicrm_db
+   *     -- ------------------------------------------------------
+   *     -- Server version	5.7.34
+   *     ...
    *
+   *     # Export database to file.
    *     $ wp civicrm db dump --result-file=/tmp/civi-db.sql
    *     Success: Exported to /tmp/civi-db.sql
    *
@@ -290,23 +309,35 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    */
   public function dump($args, $assoc_args) {
 
-    // Bootstrap CiviCRM when not called as part of an upgrade.
-    if (!defined('CIVICRM_UPGRADE_ACTIVE')) {
-      $this->bootstrap_civicrm();
-    }
+    // Grab associative arguments.
+    $tables = \WP_CLI\Utils\get_flag_value($assoc_args, 'tables', FALSE);
+    $civicrm_only = \WP_CLI\Utils\get_flag_value($assoc_args, 'civicrm-only', FALSE);
 
-    if (!defined('CIVICRM_DSN') && !defined('CIVICRM_OLD_DSN')) {
-      WP_CLI::error('DSN is not defined.');
+    // Bootstrap CiviCRM.
+    $this->bootstrap_civicrm();
+
+    if (!defined('CIVICRM_DSN')) {
+      WP_CLI::error('CIVICRM_DSN is not defined.');
     }
 
     $mysqldump_binary = \WP_CLI\Utils\force_env_on_nix_systems('mysqldump');
-    $dsn = self::parseDSN(defined('CIVICRM_DSN') ? CIVICRM_DSN : CIVICRM_OLD_DSN);
+    $dsn = DB::parseDSN(CIVICRM_DSN);
 
-    // Build command and escaped shell arguments.
+    // Build command.
     $command = $mysqldump_binary . " --opt --triggers --routines --events --host={$dsn['hostspec']} --user={$dsn['username']} --password='{$dsn['password']}' %s";
+
+    // Build escaped shell arguments.
     $command_esc_args = [$dsn['database']];
-    if (isset($assoc_args['tables'])) {
-      $tables = explode(',', $assoc_args['tables']);
+    if (!empty($civicrm_only)) {
+      $options = ['launch' => FALSE, 'return' => TRUE];
+      $tables = WP_CLI::runcommand("civicrm db tables 'civicrm_*' 'log_civicrm_*' 'snap_civicrm_*' --format=csv", $options);
+      $tables = explode(',', $tables);
+    }
+    elseif (!empty($tables)) {
+      $tables = explode(',', $tables);
+    }
+    if (!empty($tables) && is_array($tables)) {
+      unset($assoc_args['civicrm-only']);
       unset($assoc_args['tables']);
       $command .= ' --tables';
       foreach ($tables as $table) {
@@ -581,152 +612,6 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     $cividb = new wpdb($dsn['username'], $dsn['password'], $dsn['database'], $dsn['hostspec']);
 
     return $cividb;
-
-  }
-
-  /**
-   * DSN parser.
-   *
-   * This is based on PEAR DB since we don't always have a bootstrapped environment that
-   * we can access this from, eg: when doing an upgrade.
-   *
-   * @since 1.0.0
-   *
-   * @param string|array $dsn The database connection details.
-   * @return array $parsed The array of parsed database connection details.
-   */
-  private static function parseDSN($dsn) {
-
-    $parsed = [
-      'phptype'  => FALSE,
-      'dbsyntax' => FALSE,
-      'username' => FALSE,
-      'password' => FALSE,
-      'protocol' => FALSE,
-      'hostspec' => FALSE,
-      'port'     => FALSE,
-      'socket'   => FALSE,
-      'database' => FALSE,
-    ];
-
-    // Process and return early when dsn is an array.
-    if (is_array($dsn)) {
-      $dsn = array_merge($parsed, $dsn);
-      if (!$dsn['dbsyntax']) {
-        $dsn['dbsyntax'] = $dsn['phptype'];
-      }
-      return $dsn;
-    }
-
-    // Find phptype and dbsyntax.
-    if (($pos = strpos($dsn, '://')) !== FALSE) {
-      $str = substr($dsn, 0, $pos);
-      $dsn = substr($dsn, $pos + 3);
-    }
-    else {
-      $str = $dsn;
-      $dsn = NULL;
-    }
-
-    /*
-     * Get phptype and dbsyntax.
-     * $str => phptype(dbsyntax)
-     */
-    if (preg_match('|^(.+?)\((.*?)\)$|', $str, $arr)) {
-      $parsed['phptype']  = $arr[1];
-      $parsed['dbsyntax'] = !$arr[2] ? $arr[1] : $arr[2];
-    }
-    else {
-      $parsed['phptype']  = $str;
-      $parsed['dbsyntax'] = $str;
-    }
-
-    if (empty($dsn)) {
-      return $parsed;
-    }
-
-    /*
-     * Get (if found): username and password.
-     * $dsn => username:password@protocol+hostspec/database
-     */
-    if (($at = strrpos($dsn, '@')) !== FALSE) {
-      $str = substr($dsn, 0, $at);
-      $dsn = substr($dsn, $at + 1);
-      if (($pos = strpos($str, ':')) !== FALSE) {
-        $parsed['username'] = rawurldecode(substr($str, 0, $pos));
-        $parsed['password'] = rawurldecode(substr($str, $pos + 1));
-      }
-      else {
-        $parsed['username'] = rawurldecode($str);
-      }
-    }
-
-    // Find protocol and hostspec.
-    if (preg_match('|^([^(]+)\((.*?)\)/?(.*?)$|', $dsn, $match)) {
-      // $dsn => proto(proto_opts)/database
-      $proto       = $match[1];
-      $proto_opts  = $match[2] ? $match[2] : FALSE;
-      $dsn         = $match[3];
-
-    }
-    else {
-      // $dsn => protocol+hostspec/database (old format)
-      if (strpos($dsn, '+') !== FALSE) {
-        list($proto, $dsn) = explode('+', $dsn, 2);
-      }
-      if (strpos($dsn, '/') !== FALSE) {
-        list($proto_opts, $dsn) = explode('/', $dsn, 2);
-      }
-      else {
-        $proto_opts = $dsn;
-        $dsn = NULL;
-      }
-    }
-
-    // Process the different protocol options.
-    $parsed['protocol'] = (!empty($proto)) ? $proto : 'tcp';
-    $proto_opts = rawurldecode($proto_opts);
-    if (strpos($proto_opts, ':') !== FALSE) {
-      list($proto_opts, $parsed['port']) = explode(':', $proto_opts);
-    }
-    if ('tcp' == $parsed['protocol']) {
-      $parsed['hostspec'] = $proto_opts;
-    }
-    elseif ('unix' == $parsed['protocol']) {
-      $parsed['socket'] = $proto_opts;
-    }
-
-    /*
-     * Get database if any.
-     * $dsn => database
-     */
-    if ($dsn) {
-      if (($pos = strpos($dsn, '?')) === FALSE) {
-        // /database
-        $parsed['database'] = rawurldecode($dsn);
-      }
-      else {
-        // /database?param1=value1&param2=value2
-        $parsed['database'] = rawurldecode(substr($dsn, 0, $pos));
-        $dsn = substr($dsn, $pos + 1);
-        if (strpos($dsn, '&') !== FALSE) {
-          $opts = explode('&', $dsn);
-        }
-        else {
-          // database?param1=value1
-          $opts = [$dsn];
-        }
-        foreach ($opts as $opt) {
-          list($key, $value) = explode('=', $opt);
-          if (!isset($parsed[$key])) {
-            // Don't allow params overwrite.
-            $parsed[$key] = rawurldecode($value);
-          }
-        }
-      }
-    }
-
-    return $parsed;
 
   }
 
