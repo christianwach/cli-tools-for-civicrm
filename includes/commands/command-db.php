@@ -235,7 +235,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     $dsn = self::parseDSN(defined('CIVICRM_DSN') ? CIVICRM_DSN : CIVICRM_OLD_DSN);
 
     // Build command and escaped shell arguments.
-    $command = $mysqldump_binary . " --no-defaults --host={$dsn['hostspec']} --user={$dsn['username']} --password='{$dsn['password']}' %s";
+    $command = $mysqldump_binary . " --opt --triggers --routines --events --host={$dsn['hostspec']} --user={$dsn['username']} --password='{$dsn['password']}' %s";
     $command_esc_args = [$dsn['database']];
     if (isset($assoc_args['tables'])) {
       $tables = explode(',', $assoc_args['tables']);
