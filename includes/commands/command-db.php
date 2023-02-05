@@ -284,7 +284,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *
    * ## OPTIONS
    *
-   * [--base-tables-only]
+   * [--tables-only]
    * : Drop only tables.
    *
    * [--views-only]
@@ -296,7 +296,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *     $ wp civicrm db drop-tables
    *
    *     # Drop just the CiviCRM tables.
-   *     $ wp civicrm db drop-tables --base-tables-only
+   *     $ wp civicrm db drop-tables --tables-only
    *
    *     # Drop just the CiviCRM views.
    *     $ wp civicrm db drop-tables --views-only
@@ -311,7 +311,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   public function drop_tables($args, $assoc_args) {
 
     // Grab associative arguments.
-    $base_tables_only = \WP_CLI\Utils\get_flag_value($assoc_args, 'base-tables-only');
+    $tables_only = \WP_CLI\Utils\get_flag_value($assoc_args, 'tables-only');
     $views_only = \WP_CLI\Utils\get_flag_value($assoc_args, 'views-only');
 
     // Get CiviCRM tables and views.
@@ -334,7 +334,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     }
 
     // Drop all the the CiviCRM database views.
-    if (empty($base_tables_only) && !empty($views)) {
+    if (empty($tables_only) && !empty($views)) {
       WP_CLI::log('Dropping CiviCRM database views...');
       foreach ($views as $view) {
         $query = 'DROP VIEW ' . \WP_CLI\Utils\esc_sql_ident($view);
@@ -683,7 +683,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    * [<table>...]
    * : List tables based on wildcard search, e.g. 'civicrm_*_group' or 'civicrm_event?'.
    *
-   * [--base-tables-only]
+   * [--tables-only]
    * : Restrict returned tables to those that are not views.
    *
    * [--views-only]
@@ -701,7 +701,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
-   *     $ wp civicrm db tables 'civicrm_*_group' --base-tables-only
+   *     $ wp civicrm db tables 'civicrm_*_group' --tables-only
    *     civicrm_campaign_group
    *     civicrm_custom_group
    *     civicrm_dedupe_rule_group
@@ -717,13 +717,13 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   public function tables($args, $assoc_args) {
 
     // Grab associative arguments.
-    $base_tables_only = \WP_CLI\Utils\get_flag_value($assoc_args, 'base-tables-only');
+    $tables_only = \WP_CLI\Utils\get_flag_value($assoc_args, 'tables-only');
     $views_only = \WP_CLI\Utils\get_flag_value($assoc_args, 'views-only');
     $format = \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'list');
 
     // Bail if incompatible args have been supplied.
-    if (!empty($base_tables_only) && !empty($views_only)) {
-      WP_CLI::error('You cannot supply --base-tables-only and --views-only at the same time.');
+    if (!empty($tables_only) && !empty($views_only)) {
+      WP_CLI::error('You cannot supply --tables-only and --views-only at the same time.');
     }
 
     // Let's use an instance of wpdb with CiviCRM credentials.
@@ -733,7 +733,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     $tables_sql = 'SHOW TABLES';
 
     // Override query with table type restriction if needed.
-    if (!empty($base_tables_only)) {
+    if (!empty($tables_only)) {
       $tables_sql = 'SHOW FULL TABLES WHERE Table_Type = "BASE TABLE"';
     }
     elseif (!empty($views_only)) {
@@ -884,7 +884,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   private function cividb_tables_get() {
 
     // Use "wp civicrm db tables" to find the CiviCRM database tables.
-    $command = "civicrm db tables 'civicrm_*' 'log_civicrm_*' 'snap_civicrm_*' --base-tables-only --format=json";
+    $command = "civicrm db tables 'civicrm_*' 'log_civicrm_*' 'snap_civicrm_*' --tables-only --format=json";
     $options = ['launch' => FALSE, 'return' => TRUE];
     $core_tables = WP_CLI::runcommand($command, $options);
 
