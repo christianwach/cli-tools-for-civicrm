@@ -1771,11 +1771,26 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *
    * This command can be useful when the CiviCRM site has been cloned or migrated.
    *
-   * ## OPTIONS
+   * The old version of this command tried to preserve webserver ownership of "templates_c"
+   * and "civicrm/upload" because (when running this command as something other than the
+   * web-user) `doSiteMove` clears and recreates these directories. The check took place
+   * *after* `doSiteMove` had run, however, so would only report back the current user and
+   * group ownership.
+   *
+   * If you run this command as something other than the web-user, it's up to you to assign
+   * correct user and group permissions for these directories.
    *
    * ## EXAMPLES
    *
    *     $ wp civicrm core update-cfg
+   *     Beginning site move process...
+   *     Template cache and upload directory have been cleared.
+   *     Database cache tables cleared.
+   *     Session has been reset.
+   *     Please make sure the following directories have the correct permissions:
+   *     /example.com/httpdocs/wp-content/uploads/civicrm/templates_c/
+   *     /example.com/httpdocs/wp-content/uploads/civicrm/upload/
+   *     Success: Config successfully updated.
    *
    * @subcommand update-cfg
    *
@@ -1789,42 +1804,33 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     // Bootstrap CiviCRM.
     $this->bootstrap_civicrm();
 
-    $default_values = [];
-    $states = ['old', 'new'];
+    // Do site move.
+    $result = CRM_Core_BAO_ConfigSetting::doSiteMove();
 
-    for ($i = 1; $i <= 3; $i++) {
-      foreach ($states as $state) {
-        $name = "{$state}Val_{$i}";
-        $value = \WP_CLI\Utils\get_flag_value($name, NULL);
-        if ($value) {
-          $default_values[$name] = $value;
-        }
-      }
-    }
-
-    $webserver_user = $this->web_server_user_get();
-    $webserver_group = $this->web_server_group_get();
-
-    require_once 'CRM/Core/I18n.php';
-    require_once 'CRM/Core/BAO/ConfigSetting.php';
-    $result = CRM_Core_BAO_ConfigSetting::doSiteMove($default_values);
-
-    if ($result) {
-
-      // Attempt to preserve webserver ownership of templates_c, civicrm/upload.
-      if ($webserver_user && $webserver_group) {
-        $upload_dir = wp_upload_dir();
-        $civicrm_files_dir = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'civicrm' . DIRECTORY_SEPARATOR;
-        system(sprintf('chown -R %s:%s %s/templates_c', $webserver_user, $webserver_group, $civicrm_files_dir));
-        system(sprintf('chown -R %s:%s %s/upload', $webserver_user, $webserver_group, $civicrm_files_dir));
-      }
-
-      WP_CLI::success('Config successfully updated.');
-
-    }
-    else {
+    // Bail on error.
+    if (empty($result)) {
       WP_CLI::error('Config update failed.');
     }
+
+    // Result is HTML, so format and show.
+    $results = explode('<br />', $result);
+    foreach ($results as $result) {
+      if (!empty($result)) {
+        WP_CLI::log($result);
+      }
+    }
+
+    // Show permissions reminder.
+    $config = CRM_Core_Config::singleton();
+    WP_CLI::log('Please make sure the following directories have the correct permissions:');
+    if (!empty($config->templateCompileDir)) {
+      WP_CLI::log(sprintf(WP_CLI::colorize('%y%s%n'), $config->templateCompileDir));
+    }
+    if (!empty($config->uploadDir)) {
+      WP_CLI::log(sprintf(WP_CLI::colorize('%y%s%n'), $config->uploadDir));
+    }
+
+    WP_CLI::success('Config successfully updated.');
 
   }
 
@@ -2108,71 +2114,6 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     $feedback = '%y' . $callback_info . '(' . $args_info . '%n)';
 
     return $feedback;
-
-  }
-
-  /**
-   * Get the group the webserver runs as - as above, but for group.
-   *
-   * @since 1.0.0
-   *
-   * @return string The group the webserver runs as. Empty string if not found.
-   */
-  private function web_server_group_get() {
-
-    $plugins_dir_root = WP_PLUGIN_DIR;
-    $upload_dir = wp_upload_dir();
-    $tpl_path = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'civicrm' . DIRECTORY_SEPARATOR . 'templates_c';
-    $legacy_tpl_path = $plugins_dir_root . '/files/civicrm/templates_c';
-
-    if (is_dir($legacy_tpl_path)) {
-      $group = posix_getgrgid(filegroup($legacy_tpl_path));
-      if (isset($group['name'])) {
-        return $group['name'];
-      }
-    }
-    elseif (is_dir($tpl_path)) {
-      $group = posix_getgrgid(filegroup($tpl_path));
-      if (isset($group['name'])) {
-        return $group['name'];
-      }
-    }
-
-    return '';
-
-  }
-
-  /**
-   * Get the user the web server runs as - used to preserve file permissions on
-   * templates_c, civicrm/upload etc when running as root. This is not a very
-   * good check, but is good enough for what we want to do, which is to preserve
-   * file permissions.
-   *
-   * @since 1.0.0
-   *
-   * @return string The user which owns templates_c. Empty string if not found.
-   */
-  private function web_server_user_get() {
-
-    $plugins_dir_root = WP_PLUGIN_DIR;
-    $upload_dir = wp_upload_dir();
-    $tpl_path = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'civicrm' . DIRECTORY_SEPARATOR . 'templates_c';
-    $legacy_tpl_path = $plugins_dir_root . '/files/civicrm/templates_c';
-
-    if (is_dir($legacy_tpl_path)) {
-      $owner = posix_getpwuid(fileowner($legacy_tpl_path));
-      if (isset($owner['name'])) {
-        return $owner['name'];
-      }
-    }
-    elseif (is_dir($tpl_path)) {
-      $owner = posix_getpwuid(fileowner($tpl_path));
-      if (isset($owner['name'])) {
-        return $owner['name'];
-      }
-    }
-
-    return '';
 
   }
 
