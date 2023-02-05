@@ -44,6 +44,10 @@ If you have cloned the code from GitHub, it is assumed that you know what you're
 
 This plugin loads the Command Line Tools in a multi-class structure that WP-CLI expects and which enables proper documentation of the `civicrm` command and all its sub-commands.
 
+### Dropped Commands
+
+* `wp civicrm rest`: Use [CiviCRM's WordPress REST API](https://github.com/civicrm/civicrm-wordpress/tree/master/wp-rest) or `wp civicrm api` instead.
+
 ### New Commands
 
 There is a new command `wp civicrm core <command>` which (sort of) mirrors the functionality in `wp core <command>`. It holds the commands that apply to CiviCRM as a whole.
@@ -84,9 +88,9 @@ There is a new command `wp civicrm db <command>` which (sort of) mirrors the fun
 
 Use `wp help civicrm db <command>` for full details and examples.
 
-### Commands that have been deprecated
+### Deprecated Commands
 
-All existing commands still exist for the time being. But because they were attached to the top-level `wp civicrm` namespace, it seems sensible to deprecate them in favour of sensibly namespaced new commands.
+All previous commands still exist for the time being. However, because they were attached to the top-level `wp civicrm` namespace, it seems sensible to deprecate them in favour of sensibly-namespaced new commands. The following table shows you replacement commands:
 
 | Old Command | New Command |
 | --- | --- |
@@ -104,16 +108,14 @@ All existing commands still exist for the time being. But because they were atta
 | `wp civicrm upgrade` | `wp civicrm core update` |
 | `wp civicrm upgrade-db` | `wp civicrm core update-db` |
 
+As above, use `wp help civicrm <command>` for full details and examples.
+
+### The `wp civicrm upgrade` Command
+
 A special case is `wp civicrm upgrade` which is a composite command - it actually calls the following sequence:
 
 1. `wp civicrm core backup`
 2. `wp civicrm core update`
 3. `wp civicrm core update-db`
 
-It might be better to call the new commands in the same sequence, but there may also be a case for a set of composite commands like this for common task sequences. I'm open to persuasion on this.
-
-As above, use `wp help civicrm <command>` for full details and examples.
-
-### Commands that have been dropped
-
-* `wp civicrm rest`: Use [CiviCRM's WordPress REST API](https://github.com/civicrm/civicrm-wordpress/tree/master/wp-rest) or `wp civicrm api` instead.
+It is preferable to call the new commands individually in the same sequence, but there may also be a case for a set of composite commands like this for common sequences of tasks. I'm open to persuasion on this.
