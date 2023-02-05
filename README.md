@@ -46,19 +46,18 @@ By default, this plugin will load the Command Line Tools in a multi-class struct
 
 ### New Commands
 
-There is a new command `wp civicrm core <command>` which (sort of) mirrors the functionality in `wp core <command>`. It  holds many of the commands you may be used to using most frequently.
+There is a new command `wp civicrm core <command>` which (sort of) mirrors the functionality in `wp core <command>`. It holds the commands that apply to CiviCRM as a whole.
 
 | Command | Description | Old Command |
 | --- | --- | --- |
+| `wp civicrm core activate` | Activates the CiviCRM plugin and loads the database. | New |
 | `wp civicrm core backup` | Back up the CiviCRM plugin, CiviCRM files and database. | New |
-| `wp civicrm core check-version` | Checks for a CiviCRM version or matching localization archive. | New |
 | `wp civicrm core check-update` | Checks for CiviCRM updates via Version Check API. | New |
+| `wp civicrm core check-version` | Checks for a CiviCRM version or matching localization archive. | New |
 | `wp civicrm core download` | Downloads core CiviCRM files. | New |
 | `wp civicrm core install` | Installs the CiviCRM plugin. | `wp civicrm install` but without activation |
-| `wp civicrm core activate` | Activates the CiviCRM plugin and loads the database. | New |
 | `wp civicrm core is-installed` | Checks if CiviCRM is installed. | Not implemented yet |
 | `wp civicrm core restore` | Restore the CiviCRM plugin, CiviCRM files and database from a backup. | Requires a backup made with `wp civicrm core backup` |
-| `wp civicrm core version` | Displays the CiviCRM version. | New |
 | `wp civicrm core update` | Updates CiviCRM to a newer version. | `wp civicrm upgrade` currently broken |
 | `wp civicrm core update-cfg` | Reset paths to correct config settings. | Untested copy of `wp civicrm update-cfg` |
 | `wp civicrm core update-db` | Runs the CiviCRM database update procedure. | `wp civicrm upgrade-db` |
@@ -67,7 +66,24 @@ There is a new command `wp civicrm core <command>` which (sort of) mirrors the f
 
 Use `wp help civicrm <command>` or `wp help civicrm core <command>` for full details and examples.
 
-### Commands that have changed
+There is a new command `wp civicrm db <command>` which (sort of) mirrors the functionality in `wp db <command>`. It holds the commands that apply to interaction with the CiviCRM database.
+
+| Command | Description | Old Command |
+| --- | --- | --- |
+| `wp civicrm db cli` | Quickly enter the MySQL command line. | `wp civicrm sql-cli` |
+| `wp civicrm db config` | Show the CiviCRM database connection details. | `wp civicrm sql-conf` |
+| `wp civicrm db connect` | Get a string which connects to the CiviCRM database. | `wp civicrm sql-connect` |
+| `wp civicrm db drop-tables` | Drop the CiviCRM tables from the database. | New |
+| `wp civicrm db dump` | Export the whole CiviCRM database and print to STDOUT or save to a file.| `wp civicrm sql-dump` |
+| `wp civicrm db load` | Loads a whole CiviCRM database. | New |
+| `wp civicrm db query` | Perform a query on the CiviCRM database. | `wp civicrm sql-query` |
+| `wp civicrm db tables` | Gets a set of CiviCRM tables in the database. | New |
+
+Use `wp help civicrm db <command>` for full details and examples.
+
+### Commands that have been deprecated
+
+All existing commands still exist for the time being. But because they were attached to the top-level `wp civicrm` namespace, it seems sensible to deprecate them in favour of sensibly namespaced new commands.
 
 | Old Command | New Command |
 | --- | --- |
@@ -81,6 +97,17 @@ Use `wp help civicrm <command>` or `wp help civicrm core <command>` for full det
 | `wp civicrm sql-cli` | `wp civicrm db cli` |
 | `wp civicrm sql-dump` | `wp civicrm db dump` |
 | `wp civicrm sql-query` | `wp civicrm db query` |
+| `wp civicrm update-cfg` | `wp civicrm core update-cfg` |
+| `wp civicrm upgrade` | `wp civicrm core update` |
+| `wp civicrm upgrade-db` | `wp civicrm core update-db` |
+
+A special case is `wp civicrm upgrade` which is a composite command - it actually calls the following sequence:
+
+1. `wp civicrm core backup`
+2. `wp civicrm core update`
+3. `wp civicrm core update-db`
+
+It might be better to call the new commands in the same sequence, but there may also be a case for a set of composite commands like this for common task sequences. I'm open to persuasion on this.
 
 As above, use `wp help civicrm <command>` for full details and examples.
 
