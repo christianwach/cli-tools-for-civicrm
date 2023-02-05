@@ -45,6 +45,79 @@
 class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
 
   /**
+   * Drop all CiviCRM tables, views, functions and stored procedures from the database.
+   *
+   * ## EXAMPLES
+   *
+   *     # Clear all CiviCRM entities from the database.
+   *     $ wp civicrm db clear
+   *
+   * @since 1.0.0
+   *
+   * @param array $args The WP-CLI positional arguments.
+   * @param array $assoc_args The WP-CLI associative arguments.
+   */
+  public function clear($args, $assoc_args) {
+
+    // Get all CiviCRM database entities.
+    $functions = $this->cividb_functions_get();
+    $procedures = $this->cividb_procedures_get();
+    $tables = $this->cividb_tables_get();
+    $views = $this->cividb_views_get();
+
+    // Get an instance of wpdb with CiviCRM credentials.
+    $cividb = $this->cividb_get();
+    $cividb->query('SET FOREIGN_KEY_CHECKS = 0');
+
+    // Drop all the CiviCRM database tables.
+    if (!empty($tables)) {
+      WP_CLI::log('Dropping CiviCRM database tables...');
+      foreach ($tables as $table) {
+        $query = 'DROP TABLE IF EXISTS ' . \WP_CLI\Utils\esc_sql_ident($table);
+        WP_CLI::debug($query);
+        $cividb->query($query);
+      }
+      WP_CLI::success('CiviCRM database tables dropped.');
+    }
+
+    // Drop all the the CiviCRM database views.
+    if (!empty($views)) {
+      WP_CLI::log('Dropping CiviCRM database views...');
+      foreach ($views as $view) {
+        $query = 'DROP VIEW IF EXISTS ' . \WP_CLI\Utils\esc_sql_ident($view);
+        WP_CLI::debug($query);
+        $cividb->query($query);
+      }
+      WP_CLI::success('CiviCRM database views dropped.');
+    }
+
+    // Drop all the the CiviCRM database functions.
+    if (!empty($functions)) {
+      WP_CLI::log('Dropping CiviCRM database functions...');
+      foreach ($functions as $function) {
+        $query = 'DROP FUNCTION IF EXISTS ' . \WP_CLI\Utils\esc_sql_ident($function);
+        WP_CLI::debug($query);
+        $cividb->query($query);
+      }
+      WP_CLI::success('CiviCRM database functions dropped.');
+    }
+
+    // Drop all the the CiviCRM database procedures.
+    if (!empty($procedures)) {
+      WP_CLI::log('Dropping CiviCRM database procedures...');
+      foreach ($procedures as $procedure) {
+        $query = 'DROP PROCEDURE IF EXISTS ' . \WP_CLI\Utils\esc_sql_ident($procedure);
+        WP_CLI::debug($query);
+        $cividb->query($query);
+      }
+      WP_CLI::success('CiviCRM database procedures dropped.');
+    }
+
+    $cividb->query('SET FOREIGN_KEY_CHECKS = 1');
+
+  }
+
+  /**
    * Quickly enter the MySQL command line.
    *
    * ## EXAMPLES
@@ -197,79 +270,6 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     }
 
     WP_CLI::log($command);
-
-  }
-
-  /**
-   * Drop all CiviCRM tables, views, functions and stored procedures from the database.
-   *
-   * ## EXAMPLES
-   *
-   *     # Clear all CiviCRM entities from the database.
-   *     $ wp civicrm db clear
-   *
-   * @since 1.0.0
-   *
-   * @param array $args The WP-CLI positional arguments.
-   * @param array $assoc_args The WP-CLI associative arguments.
-   */
-  public function clear($args, $assoc_args) {
-
-    // Get all CiviCRM database entities.
-    $functions = $this->cividb_functions_get();
-    $procedures = $this->cividb_procedures_get();
-    $tables = $this->cividb_tables_get();
-    $views = $this->cividb_views_get();
-
-    // Get an instance of wpdb with CiviCRM credentials.
-    $cividb = $this->cividb_get();
-    $cividb->query('SET FOREIGN_KEY_CHECKS = 0');
-
-    // Drop all the CiviCRM database tables.
-    if (!empty($tables)) {
-      WP_CLI::log('Dropping CiviCRM database tables...');
-      foreach ($tables as $table) {
-        $query = 'DROP TABLE IF EXISTS ' . \WP_CLI\Utils\esc_sql_ident($table);
-        WP_CLI::debug($query);
-        $cividb->query($query);
-      }
-      WP_CLI::success('CiviCRM database tables dropped.');
-    }
-
-    // Drop all the the CiviCRM database views.
-    if (!empty($views)) {
-      WP_CLI::log('Dropping CiviCRM database views...');
-      foreach ($views as $view) {
-        $query = 'DROP VIEW IF EXISTS ' . \WP_CLI\Utils\esc_sql_ident($view);
-        WP_CLI::debug($query);
-        $cividb->query($query);
-      }
-      WP_CLI::success('CiviCRM database views dropped.');
-    }
-
-    // Drop all the the CiviCRM database functions.
-    if (!empty($functions)) {
-      WP_CLI::log('Dropping CiviCRM database functions...');
-      foreach ($functions as $function) {
-        $query = 'DROP FUNCTION IF EXISTS ' . \WP_CLI\Utils\esc_sql_ident($function);
-        WP_CLI::debug($query);
-        $cividb->query($query);
-      }
-      WP_CLI::success('CiviCRM database functions dropped.');
-    }
-
-    // Drop all the the CiviCRM database procedures.
-    if (!empty($procedures)) {
-      WP_CLI::log('Dropping CiviCRM database procedures...');
-      foreach ($procedures as $procedure) {
-        $query = 'DROP PROCEDURE IF EXISTS ' . \WP_CLI\Utils\esc_sql_ident($procedure);
-        WP_CLI::debug($query);
-        $cividb->query($query);
-      }
-      WP_CLI::success('CiviCRM database procedures dropped.');
-    }
-
-    $cividb->query('SET FOREIGN_KEY_CHECKS = 1');
 
   }
 
