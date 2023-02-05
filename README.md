@@ -42,7 +42,7 @@ If you have cloned the code from GitHub, it is assumed that you know what you're
 
 ## Development
 
-By default, this plugin will load the Command Line Tools in a multi-class structure that WP-CLI expects and which enables proper documentation of the `civicrm` command and all its sub-commands. It is not, however, complete yet.
+This plugin loads the Command Line Tools in a multi-class structure that WP-CLI expects and which enables proper documentation of the `civicrm` command and all its sub-commands.
 
 ### New Commands
 
