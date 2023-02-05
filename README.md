@@ -114,14 +114,6 @@ It might be better to call the new commands in the same sequence, but there may 
 
 As above, use `wp help civicrm <command>` for full details and examples.
 
-### Commands that have not been updated yet
-
-The following commands exist in this repo, but their code has simply been copied across from CiviCRM:
-
-* `wp civicrm core update-cfg`
-
-PRs would be welcome if you want to start improving (or fixing) them.
-
 ### Commands that have been dropped
 
 * `wp civicrm rest`: Use [CiviCRM's WordPress REST API](https://github.com/civicrm/civicrm-wordpress/tree/master/wp-rest) or `wp civicrm api` instead.
