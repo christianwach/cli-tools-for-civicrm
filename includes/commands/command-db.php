@@ -277,9 +277,9 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *
    * ## OPTIONS
    *
-	 * [--tables=<tables>]
-	 * : The comma separated list of specific tables to export. Excluding this parameter will export all tables in the database.
-	 *
+   * [--tables=<tables>]
+   * : The comma separated list of specific tables to export. Excluding this parameter will export all tables in the database.
+   *
    * [--result-file=<result-file>]
    * : The path to the saved file. Excluding this parameter will export to STDOUT.
    *
@@ -291,7 +291,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *     --
    *     -- Host: localhost    Database: civicrm_db
    *     -- ------------------------------------------------------
-   *     -- Server version	5.7.34
+   *     -- Server version  5.7.34
    *     ...
    *
    *     # Export database to file.
