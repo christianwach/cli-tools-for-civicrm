@@ -70,6 +70,9 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    * [--backup-dir=<backup-dir>]
    * : Path to your CiviCRM backup directory. Default is one level above ABSPATH.
    *
+   * [--yes]
+   * : Answer yes to the confirmation message.
+   *
    * ## EXAMPLES
    *
    *     $ wp civicrm core backup
@@ -897,6 +900,9 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    * [--site-url=<site-url>]
    * : Domain for your website, e.g. 'mysite.com'.
    *
+   * [--yes]
+   * : Answer yes to the confirmation message.
+   *
    * ## EXAMPLES
    *
    *     # Activate the CiviCRM plugin.
@@ -1116,6 +1122,9 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *
    * [--backup-dir=<backup-dir>]
    * : Path to your CiviCRM backup directory. Default is one level above ABSPATH.
+   *
+   * [--yes]
+   * : Answer yes to the confirmation message.
    *
    * ## EXAMPLES
    *
@@ -1366,7 +1375,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     if (defined('CIVICRM_DSN') && file_exists($backup_dir . '/civicrm-db.sql')) {
       WP_CLI::log('');
       WP_CLI::log(WP_CLI::colorize('%GRestoring database...%n'));
-      $command = 'civicrm db drop-tables'; // . ' --quiet';
+      $command = 'civicrm db drop-tables';
       $options = ['launch' => FALSE, 'return' => FALSE];
       WP_CLI::runcommand($command, $options);
       $command = 'civicrm db load --load-file=' . $backup_dir . '/civicrm-db.sql';
@@ -1393,6 +1402,9 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *
    * [--l10n-tarfile=<l10n-tarfile>]
    * : Path to your l10n tar.gz file. If specified --l10n is ignored.
+   *
+   * [--yes]
+   * : Answer yes to the confirmation message.
    *
    * ## EXAMPLES
    *
@@ -1516,6 +1528,9 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *
    * [--vv]
    * : Run the upgrade queue with extra verbose output.
+   *
+   * [--yes]
+   * : Answer yes to the confirmation messages. Does not apply to step messages.
    *
    * ## EXAMPLES
    *

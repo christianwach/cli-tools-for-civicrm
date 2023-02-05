@@ -31,6 +31,9 @@ class CLI_Tools_CiviCRM_Command_Upgrade extends CLI_Tools_CiviCRM_Command {
    * [--vv]
    * : Run the upgrade queue with extra verbose output.
    *
+   * [--yes]
+   * : Answer yes to the confirmation messages.
+   *
    * ## EXAMPLES
    *
    *     # Update to the version of CiviCRM in the supplied archive.
@@ -51,6 +54,7 @@ class CLI_Tools_CiviCRM_Command_Upgrade extends CLI_Tools_CiviCRM_Command {
     $backup_dir = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'backup-dir', '');
     $v = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'v', FALSE);
     $vv = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'vv', FALSE);
+    $yes = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'yes', FALSE);
 
     // Bail when .tar.gz archive is specified.
     if (!empty($tarfile)) {
@@ -63,17 +67,17 @@ class CLI_Tools_CiviCRM_Command_Upgrade extends CLI_Tools_CiviCRM_Command {
     }
 
     // Use "wp civicrm core backup" to backup the CiviCRM installation.
-    $command = 'civicrm core backup' . (empty($backup_dir) ? '' : ' --backup-dir=' . $backup_dir);
+    $command = 'civicrm core backup' . (empty($backup_dir) ? '' : ' --backup-dir=' . $backup_dir) . (empty($yes) ? '' : ' --yes');
     $options = ['launch' => FALSE, 'return' => FALSE];
     WP_CLI::runcommand($command, $options);
 
     // Use "wp civicrm core update" to upgrade CiviCRM.
-    $command = 'civicrm core update' . (empty($zipfile) ? '' : ' --zipfile=' . $zipfile);
+    $command = 'civicrm core update' . (empty($zipfile) ? '' : ' --zipfile=' . $zipfile) . (empty($yes) ? '' : ' --yes');
     $options = ['launch' => FALSE, 'return' => FALSE];
     WP_CLI::runcommand($command, $options);
 
     // Use "wp civicrm core update-db" to upgrade the CiviCRM database.
-    $command = 'civicrm core update-db' . (empty($v) ? '' : ' --v') . (empty($vv) ? '' : ' --vv');
+    $command = 'civicrm core update-db' . (empty($v) ? '' : ' --v') . (empty($vv) ? '' : ' --vv') . (empty($yes) ? '' : ' --yes');
     $options = ['launch' => TRUE, 'return' => FALSE];
     WP_CLI::runcommand($command, $options);
 

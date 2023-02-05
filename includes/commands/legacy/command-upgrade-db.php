@@ -34,6 +34,9 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
    * [--vv]
    * : Run the upgrade queue with extra verbose output.
    *
+   * [--yes]
+   * : Answer yes to the confirmation message. Does not apply to step messages.
+   *
    * ## EXAMPLES
    *
    *     $ wp civicrm upgrade-db --dry-run --v
@@ -75,6 +78,7 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
     $step = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'step', FALSE);
     $v = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'v', FALSE);
     $vv = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'vv', FALSE);
+    $yes = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'yes', FALSE);
 
     // Build command.
     $command = 'civicrm core update-db' .
@@ -83,7 +87,8 @@ class CLI_Tools_CiviCRM_Command_Upgrade_DB extends CLI_Tools_CiviCRM_Command {
       (empty($skip) ? '' : ' --skip') .
       (empty($step) ? '' : ' --step') .
       (empty($v) ? '' : ' --v') .
-      (empty($vv) ? '' : ' --vv');
+      (empty($vv) ? '' : ' --vv') .
+      (empty($yes) ? '' : ' --yes');
 
     // Pass on to "wp civicrm core update-db".
     $options = ['launch' => FALSE, 'return' => FALSE];

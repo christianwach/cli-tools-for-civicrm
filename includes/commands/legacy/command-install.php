@@ -45,6 +45,9 @@ class CLI_Tools_CiviCRM_Command_Install extends CLI_Tools_CiviCRM_Command {
    * [--site_url=<site_url>]
    * : Domain for your website, e.g. 'mysite.com'.
    *
+   * [--yes]
+   * : Answer yes to the confirmation message.
+   *
    * ## EXAMPLES
    *
    *     $ wp civicrm install --zipfile=~/civicrm-5.57.1-wordpress.zip
@@ -70,6 +73,7 @@ class CLI_Tools_CiviCRM_Command_Install extends CLI_Tools_CiviCRM_Command {
     $langtarfile = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'langtarfile', '');
     $ssl = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'ssl', '');
     $site_url = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'site_url', '');
+    $yes = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'yes', FALSE);
 
     // Bail when .tar.gz archive is specified.
     if (!empty($tarfile)) {
@@ -93,7 +97,8 @@ class CLI_Tools_CiviCRM_Command_Install extends CLI_Tools_CiviCRM_Command {
       (empty($dbname) ? '' : ' --dbname=' . $dbname) .
       (empty($lang) ? '' : ' --locale=' . $lang) .
       (empty($ssl) ? '' : ' --ssl=' . $ssl) .
-      (empty($site_url) ? '' : ' --site-url=' . $site_url);
+      (empty($site_url) ? '' : ' --site-url=' . $site_url) .
+      (empty($yes) ? '' : ' --yes');
 
     // Run "wp civicrm core activate".
     $options = ['launch' => FALSE, 'return' => FALSE];
