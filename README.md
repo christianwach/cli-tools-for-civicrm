@@ -40,7 +40,7 @@ If you have downloaded *Command Line Tools for CiviCRM* as a ZIP file from the G
 
 If you have cloned the code from GitHub, it is assumed that you know what you're doing.
 
-## Development
+## Documentation
 
 This plugin loads the Command Line Tools in a multi-class structure that WP-CLI expects and which enables proper documentation of the `civicrm` command and all its sub-commands.
 
