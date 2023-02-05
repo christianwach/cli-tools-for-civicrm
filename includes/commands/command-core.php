@@ -231,7 +231,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     // Use "wp civicrm db dump" to export the CiviCRM database tables.
     WP_CLI::log('');
     WP_CLI::log(WP_CLI::colorize('%GExporting database...%n'));
-    $command = 'civicrm db dump --civicrm-only --result-file=' . $backup_dir . '/civicrm-db.sql';
+    $command = 'civicrm db dump --result-file=' . $backup_dir . '/civicrm-db.sql';
     $options = ['launch' => FALSE, 'return' => FALSE];
     WP_CLI::runcommand($command, $options);
     WP_CLI::success("Database exported.");
