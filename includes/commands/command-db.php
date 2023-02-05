@@ -526,15 +526,13 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     // Perform query
     $tables = $cividb->get_col($tables_sql, 0);
 
-    // Maybe pre-filter with CiviCRM tables and views only.
-    if (!empty($civicrm_only)) {
-      $pre_filter = [
-        'civicrm_*',
-        'log_civicrm_*',
-        'snap_civicrm_*',
-      ];
-      $tables = $this->tables_filter($args, $tables);
-    }
+    // Pre-filter with CiviCRM tables and views only.
+    $pre_filter = [
+      'civicrm_*',
+      'log_civicrm_*',
+      'snap_civicrm_*',
+    ];
+    $tables = $this->tables_filter($pre_filter, $tables);
 
     // Filter by `$args` wildcards.
     if ($args) {
