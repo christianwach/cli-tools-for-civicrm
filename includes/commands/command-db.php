@@ -360,7 +360,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    * ## EXAMPLES
    *
    *     # Export database to STDOUT.
-   *     $ wp civicrm db dump
+   *     $ wp civicrm db export
    *     -- MySQL dump 10.13  Distrib 5.7.34, for osx11.0 (x86_64)
    *     --
    *     -- Host: localhost    Database: civicrm_db
@@ -369,15 +369,17 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *     ...
    *
    *     # Export database to file.
-   *     $ wp civicrm db dump --result-file=/tmp/civi-db.sql
+   *     $ wp civicrm db export --result-file=/tmp/civi-db.sql
    *     Success: Exported to /tmp/civi-db.sql
+   *
+   * @alias dump
    *
    * @since 1.0.0
    *
    * @param array $args The WP-CLI positional arguments.
    * @param array $assoc_args The WP-CLI associative arguments.
    */
-  public function dump($args, $assoc_args) {
+  public function export($args, $assoc_args) {
 
     // Grab associative arguments.
     $tables = \WP_CLI\Utils\get_flag_value($assoc_args, 'tables', FALSE);
@@ -512,14 +514,16 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
-   *     $ wp civicrm db load /tmp/civicrm.sql
+   *     $ wp civicrm db import /tmp/civicrm.sql
+   *
+   * @alias load
    *
    * @since 1.0.0
    *
    * @param array $args The WP-CLI positional arguments.
    * @param array $assoc_args The WP-CLI associative arguments.
    */
-  public function load($args, $assoc_args) {
+  public function import($args, $assoc_args) {
 
     // Grab associative arguments.
     $load_file = \WP_CLI\Utils\get_flag_value($assoc_args, 'load-file', FALSE);

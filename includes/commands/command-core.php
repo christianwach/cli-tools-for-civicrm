@@ -231,10 +231,10 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     // Backup procedure.
     // ----------------------------------------------------------------------------
 
-    // Use "wp civicrm db dump" to export the CiviCRM database tables.
+    // Use "wp civicrm db export" to export the CiviCRM database tables.
     WP_CLI::log('');
     WP_CLI::log(WP_CLI::colorize('%GExporting database...%n'));
-    $command = 'civicrm db dump --result-file=' . $backup_dir . '/civicrm-db.sql';
+    $command = 'civicrm db export --result-file=' . $backup_dir . '/civicrm-db.sql';
     $options = ['launch' => FALSE, 'return' => FALSE];
     WP_CLI::runcommand($command, $options);
     WP_CLI::success("Database exported.");
@@ -1371,14 +1371,14 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
       WP_CLI::success("Plugin directory restored.");
     }
 
-    // Use "wp civicrm db drop-tables" and "wp civicrm db load" to restore database.
+    // Use "wp civicrm db drop-tables" and "wp civicrm db import" to restore database.
     if (defined('CIVICRM_DSN') && file_exists($backup_dir . '/civicrm-db.sql')) {
       WP_CLI::log('');
       WP_CLI::log(WP_CLI::colorize('%GRestoring database...%n'));
       $command = 'civicrm db drop-tables';
       $options = ['launch' => FALSE, 'return' => FALSE];
       WP_CLI::runcommand($command, $options);
-      $command = 'civicrm db load --load-file=' . $backup_dir . '/civicrm-db.sql';
+      $command = 'civicrm db import --load-file=' . $backup_dir . '/civicrm-db.sql';
       $options = ['launch' => FALSE, 'return' => FALSE];
       WP_CLI::runcommand($command, $options);
       WP_CLI::success("Database restored.");

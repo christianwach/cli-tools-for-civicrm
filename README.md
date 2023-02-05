@@ -70,12 +70,15 @@ There is a new command `wp civicrm db <command>` which (sort of) mirrors the fun
 
 | Command | Description | Old Command |
 | --- | --- | --- |
+| `wp civicrm db clear` | Drop all CiviCRM tables, views, functions and stored procedures from the database. | New |
 | `wp civicrm db cli` | Quickly enter the MySQL command line. | `wp civicrm sql-cli` |
 | `wp civicrm db config` | Show the CiviCRM database connection details. | `wp civicrm sql-conf` |
 | `wp civicrm db connect` | Get a string which connects to the CiviCRM database. | `wp civicrm sql-connect` |
 | `wp civicrm db drop-tables` | Drop the CiviCRM tables from the database. | New |
-| `wp civicrm db dump` | Export the whole CiviCRM database and print to STDOUT or save to a file.| `wp civicrm sql-dump` |
-| `wp civicrm db load` | Loads a whole CiviCRM database. | New |
+| `wp civicrm db export` | Export the whole CiviCRM database and print to STDOUT or save to a file.| `wp civicrm sql-dump` |
+| `wp civicrm db functions` | Get the list of CiviCRM functions in the database. | New |
+| `wp civicrm db import` | Loads a whole CiviCRM database. | New |
+| `wp civicrm db procedures` | Get the list of CiviCRM procedures in the database. | New |
 | `wp civicrm db query` | Perform a query on the CiviCRM database. | `wp civicrm sql-query` |
 | `wp civicrm db tables` | Gets a set of CiviCRM tables in the database. | New |
 
@@ -95,7 +98,7 @@ All existing commands still exist for the time being. But because they were atta
 | `wp civicrm sql-conf` | `wp civicrm db config` or `wp civicrm db conf` |
 | `wp civicrm sql-connect` | `wp civicrm db connect` |
 | `wp civicrm sql-cli` | `wp civicrm db cli` |
-| `wp civicrm sql-dump` | `wp civicrm db dump` |
+| `wp civicrm sql-dump` | `wp civicrm db export` |
 | `wp civicrm sql-query` | `wp civicrm db query` |
 | `wp civicrm update-cfg` | `wp civicrm core update-cfg` |
 | `wp civicrm upgrade` | `wp civicrm core update` |

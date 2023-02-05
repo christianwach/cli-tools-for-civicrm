@@ -11,7 +11,7 @@
 class CLI_Tools_CiviCRM_Command_SQL_Dump extends CLI_Tools_CiviCRM_Command {
 
   /**
-   * Export the whole CiviCRM database and print to STDOUT or save to a file. Deprecated: use `wp civicrm db dump` instead.
+   * Export the whole CiviCRM database and print to STDOUT or save to a file. Deprecated: use `wp civicrm db export` instead.
    *
    * ## OPTIONS
    *
@@ -32,14 +32,14 @@ class CLI_Tools_CiviCRM_Command_SQL_Dump extends CLI_Tools_CiviCRM_Command {
    */
   public function __invoke($args, $assoc_args) {
 
-    WP_CLI::log(WP_CLI::colorize('%CDeprecated command:%n %cuse `wp civicrm db dump` instead.%n'));
+    WP_CLI::log(WP_CLI::colorize('%CDeprecated command:%n %cuse `wp civicrm db export` instead.%n'));
 
     // Grab associative arguments.
     $result_file = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'result-file', '');
 
-    // Pass on to "wp civicrm db dump".
+    // Pass on to "wp civicrm db export".
     $options = ['launch' => FALSE, 'return' => FALSE];
-    $command = 'civicrm db dump' . (empty($result_file) ? '' : ' --result-file=' . $result_file);
+    $command = 'civicrm db export' . (empty($result_file) ? '' : ' --result-file=' . $result_file);
     WP_CLI::runcommand($command, $options);
 
   }
