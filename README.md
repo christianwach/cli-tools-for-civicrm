@@ -97,7 +97,7 @@ All previous commands still exist for the time being. However, because they were
 | `wp civicrm cache-clear` | `wp civicrm cache flush` |
 | `wp civicrm disable-debug` | `wp civicrm debug disable` |
 | `wp civicrm enable-debug` | `wp civicrm debug enable` |
-| `wp civicrm install` | `wp civicrm core install` then `wp civicrm core activate` |
+| `wp civicrm install` | See Composite Commands below |
 | `wp civicrm member-records` | `wp civicrm job member-records` or `wp civicrm job membership` |
 | `wp civicrm process-mail-queue` | `wp civicrm job process-mail-queue` or `wp civicrm job mailing` |
 | `wp civicrm sql-conf` | `wp civicrm db config` or `wp civicrm db conf` |
@@ -106,7 +106,7 @@ All previous commands still exist for the time being. However, because they were
 | `wp civicrm sql-dump` | `wp civicrm db export` |
 | `wp civicrm sql-query` | `wp civicrm db query` |
 | `wp civicrm update-cfg` | `wp civicrm core update-cfg` |
-| `wp civicrm upgrade` | `wp civicrm core update` |
+| `wp civicrm upgrade` | See Composite Commands below |
 | `wp civicrm upgrade-db` | `wp civicrm core update-db` |
 
 As above, use `wp help civicrm <command>` for full details and examples.
@@ -131,4 +131,4 @@ The `wp civicrm upgrade` command calls the following sequence:
 2. `wp civicrm core update`
 3. `wp civicrm core update-db`
 
-In my view it is preferable to call the new commands individually in the same sequence - but there may also be a case for a set of composite commands like these for common sequences of tasks. I'm open to persuasion on this, but would like to hear a good reason to keep them in the long term.
+In my view it is preferable to call the new commands individually in the same sequence - but there may also be a case for a set of composite commands like these for commonly used sequences. I'm open to persuasion on this, but would like to hear some good reasons to keep them in the long term.
