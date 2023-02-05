@@ -51,6 +51,12 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *
    *     # Clear all CiviCRM entities from the database.
    *     $ wp civicrm db clear
+   *     Dropping CiviCRM database tables...
+   *     Success: CiviCRM database tables dropped.
+   *     Dropping CiviCRM database views...
+   *     Success: CiviCRM database views dropped.
+   *     Dropping CiviCRM database functions...
+   *     Success: CiviCRM database functions dropped.
    *
    * @since 1.0.0
    *
