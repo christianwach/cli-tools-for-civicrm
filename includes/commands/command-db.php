@@ -271,19 +271,15 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   /**
    * Export the whole CiviCRM database and print to STDOUT or save to a file.
    *
-   * By default, CiviCRM loads its tables into the WordPress database. It is also possible
-   * to configure CiviCRM to have its own database instead. This means there is a choice
-   * of what to export: either the entire database (if CiviCRM has its own database or if
-   * you want to export the WordPress tables as well) or just the CiviCRM tables.
+   * By default, CiviCRM loads its tables into the WordPress database but it is also possible
+   * to configure CiviCRM to have its own database. To keep things contained, this command
+   * only exports the tables, views, triggers, routines and events that are part of CiviCRM.
    *
    * ## OPTIONS
    *
 	 * [--tables=<tables>]
 	 * : The comma separated list of specific tables to export. Excluding this parameter will export all tables in the database.
 	 *
-   * [--civicrm-only]
-   * : Restrict the export to just the CiviCRM tables. Overrides --tables.
-   *
    * [--result-file=<result-file>]
    * : The path to the saved file. Excluding this parameter will export to STDOUT.
    *
@@ -311,7 +307,6 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
 
     // Grab associative arguments.
     $tables = \WP_CLI\Utils\get_flag_value($assoc_args, 'tables', FALSE);
-    $civicrm_only = \WP_CLI\Utils\get_flag_value($assoc_args, 'civicrm-only', FALSE);
 
     // Bootstrap CiviCRM.
     $this->bootstrap_civicrm();
@@ -323,27 +318,28 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     $mysqldump_binary = \WP_CLI\Utils\force_env_on_nix_systems('mysqldump');
     $dsn = DB::parseDSN(CIVICRM_DSN);
 
-    // Build command.
-    $command = $mysqldump_binary . " --opt --triggers --routines --events --host={$dsn['hostspec']} --user={$dsn['username']} --password='{$dsn['password']}' %s";
-
-    // Build escaped shell arguments.
-    $command_esc_args = [$dsn['database']];
-    if (!empty($civicrm_only)) {
-      $options = ['launch' => FALSE, 'return' => TRUE];
-      $tables = WP_CLI::runcommand("civicrm db tables 'civicrm_*' 'log_civicrm_*' 'snap_civicrm_*' --format=csv", $options);
-      $tables = explode(',', $tables);
-    }
-    elseif (!empty($tables)) {
-      $tables = explode(',', $tables);
-    }
-    if (!empty($tables) && is_array($tables)) {
-      unset($assoc_args['civicrm-only']);
-      unset($assoc_args['tables']);
-      $command .= ' --tables';
-      foreach ($tables as $table) {
-        $command .= ' %s';
-        $command_esc_args[] = trim($table);
+    // Do we want only certain CiviCRM tables?
+    $runcommand_args = '';
+    if (!empty($tables)) {
+      $requested_tables = explode(',', $tables);
+      foreach ($requested_tables as $table) {
+        $runcommand_args .= " '" . trim($table) . "'";
       }
+      unset($assoc_args['tables']);
+    }
+
+    // Get the list of tables.
+    $options = ['launch' => FALSE, 'return' => TRUE];
+    $tables = WP_CLI::runcommand("civicrm db tables{$runcommand_args} --format=csv", $options);
+    $tables = explode(',', $tables);
+
+    // Build command and escaped shell arguments.
+    $command = $mysqldump_binary . " --opt --triggers --routines --events --host={$dsn['hostspec']} --user={$dsn['username']} --password='{$dsn['password']}' %s";
+    $command_esc_args = [$dsn['database']];
+    $command .= ' --tables';
+    foreach ($tables as $table) {
+      $command .= ' %s';
+      $command_esc_args[] = trim($table);
     }
 
     // Process command and escaped shell arguments.
@@ -530,35 +526,19 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     // Perform query
     $tables = $cividb->get_col($tables_sql, 0);
 
-    // Filter by `$args` wildcard.
+    // Maybe pre-filter with CiviCRM tables and views only.
+    if (!empty($civicrm_only)) {
+      $pre_filter = [
+        'civicrm_*',
+        'log_civicrm_*',
+        'snap_civicrm_*',
+      ];
+      $tables = $this->tables_filter($args, $tables);
+    }
+
+    // Filter by `$args` wildcards.
     if ($args) {
-
-      // Build filtered array.
-      $args_tables = [];
-      foreach ($args as $arg) {
-        if (FALSE !== strpos($arg, '*') || FALSE !== strpos($arg, '?')) {
-          $args_tables = array_merge(
-            $args_tables,
-            array_filter(
-              $tables,
-              function ($v) use ($arg) {
-                // WP-CLI itself uses fnmatch() so ignore the civilint warning.
-                // phpcs:disable
-                return fnmatch($arg, $v);
-                // phpcs:enable
-              }
-            )
-          );
-        }
-        else {
-          $args_tables[] = $arg;
-        }
-      }
-
-      // Clean up.
-      $args_tables = array_values(array_unique($args_tables));
-      $tables = array_values(array_intersect($tables, $args_tables));
-
+      $tables = $this->tables_filter($args, $tables);
     }
 
     // Render output.
@@ -612,6 +592,47 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     $cividb = new wpdb($dsn['username'], $dsn['password'], $dsn['database'], $dsn['hostspec']);
 
     return $cividb;
+
+  }
+
+  /**
+   * Filters an array of CiviCRM table names.
+   *
+   * @since 1.0.0
+   *
+   * @param array $wildcards The array of wildcards.
+   * @param array $tables The array of CiviCRM table names.
+   * @return array $filtered The filtered array of CiviCRM table names.
+   */
+  private function tables_filter($wildcards, $tables) {
+
+    // Build filtered array.
+    $args_tables = [];
+    foreach ($wildcards as $wildcard) {
+      if (FALSE !== strpos($wildcard, '*') || FALSE !== strpos($wildcard, '?')) {
+        $args_tables = array_merge(
+          $args_tables,
+          array_filter(
+            $tables,
+            function ($v) use ($wildcard) {
+              // WP-CLI itself uses fnmatch() so ignore the civilint warning.
+              // phpcs:disable
+              return fnmatch($wildcard, $v);
+              // phpcs:enable
+            }
+          )
+        );
+      }
+      else {
+        $args_tables[] = $wildcard;
+      }
+    }
+
+    // Clean up.
+    $args_tables = array_values(array_unique($args_tables));
+    $filtered = array_values(array_intersect($tables, $args_tables));
+
+    return $filtered;
 
   }
 
