@@ -362,6 +362,73 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   }
 
   /**
+   * Get the list of CiviCRM functions in the database.
+   *
+   * ## OPTIONS
+   *
+   * [<function>...]
+   * : List functions based on wildcard search, e.g. 'civicrm_*' or 'civicrm_event?'.
+   *
+   * [--format=<format>]
+   * : Render output in a particular format.
+   * ---
+   * default: list
+   * options:
+   *   - list
+   *   - json
+   *   - csv
+   * ---
+   *
+   * ## EXAMPLES
+   *
+   *     $ wp civicrm db functions
+   *     civicrm_strip_non_numeric
+   *
+   * @since 1.0.0
+   *
+   * @param array $args The WP-CLI positional arguments.
+   * @param array $assoc_args The WP-CLI associative arguments.
+   */
+  public function functions($args, $assoc_args) {
+
+    // Grab associative arguments.
+    $format = \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'list');
+
+    // Let's use an instance of wpdb with CiviCRM credentials.
+    $cividb = $this->cividb_get();
+
+    // Default query.
+    $dsn = $this->cividb_dsn_get();
+    $functions_sql = "SHOW FUNCTION STATUS WHERE db = '{$dsn['database']}'";
+
+    // Perform query.
+    $functions = $cividb->get_col($functions_sql, 1);
+
+    // Filter by `$args` wildcards.
+    if ($args) {
+      $functions = $this->names_filter($args, $functions);
+    }
+
+    // Render output.
+    if ('csv' === $format) {
+      WP_CLI::log(implode(',', $functions));
+    }
+    elseif ('json' === $format) {
+      $json = json_encode($functions);
+      if (JSON_ERROR_NONE !== json_last_error()) {
+        WP_CLI::error(sprintf(WP_CLI::colorize('Failed to encode JSON: %Y%s.%n'), json_last_error_msg()));
+      }
+      echo $json . "\n";
+    }
+    else {
+      foreach ($functions as $function) {
+        WP_CLI::log($function);
+      }
+    }
+
+  }
+
+  /**
    * Loads a whole CiviCRM database.
    *
    * ## OPTIONS
@@ -523,7 +590,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
       $tables_sql = 'SHOW FULL TABLES WHERE Table_Type = "VIEW"';
     }
 
-    // Perform query
+    // Perform query.
     $tables = $cividb->get_col($tables_sql, 0);
 
     // Pre-filter with CiviCRM tables and views only.
@@ -532,11 +599,11 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
       'log_civicrm_*',
       'snap_civicrm_*',
     ];
-    $tables = $this->tables_filter($pre_filter, $tables);
+    $tables = $this->names_filter($pre_filter, $tables);
 
     // Filter by `$args` wildcards.
     if ($args) {
-      $tables = $this->tables_filter($args, $tables);
+      $tables = $this->names_filter($args, $tables);
     }
 
     // Render output.
@@ -577,6 +644,23 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
       return $cividb;
     }
 
+    // Let's use an instance of wpdb with CiviCRM credentials.
+    $dsn = $this->cividb_dsn_get();
+    $cividb = new wpdb($dsn['username'], $dsn['password'], $dsn['database'], $dsn['hostspec']);
+
+    return $cividb;
+
+  }
+
+  /**
+   * Gets the CiviCRM database credentials.
+   *
+   * @since 1.0.0
+   *
+   * @return array $dsn The array of CiviCRM database credentials.
+   */
+  private function cividb_dsn_get() {
+
     // Bootstrap CiviCRM.
     $this->bootstrap_civicrm();
 
@@ -585,16 +669,15 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
       WP_CLI::error('CIVICRM_DSN is not defined.');
     }
 
-    // Let's use an instance of wpdb with CiviCRM credentials.
+    // Parse the CiviCRM credentials.
     $dsn = DB::parseDSN(CIVICRM_DSN);
-    $cividb = new wpdb($dsn['username'], $dsn['password'], $dsn['database'], $dsn['hostspec']);
 
-    return $cividb;
+    return $dsn;
 
   }
 
   /**
-   * Filters an array of CiviCRM table names.
+   * Filters an array of CiviCRM database entity names.
    *
    * @since 1.0.0
    *
@@ -602,7 +685,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    * @param array $tables The array of CiviCRM table names.
    * @return array $filtered The filtered array of CiviCRM table names.
    */
-  private function tables_filter($wildcards, $tables) {
+  private function names_filter($wildcards, $tables) {
 
     // Build filtered array.
     $args_tables = [];
