@@ -25,6 +25,8 @@ Manage CiviCRM through the command line.
 define( 'CIVICRM_WPCLI_LOADED', 1 );
 ```
 
+For convenience, there is a "Must Use" plugin included in the `mu-plugin` directory in this plugin. Simply copy the `cli-tools-mu-plugin.php` file to your `/wp-content/mu-plugins` directory. If you don't have a `/wp-content/mu-plugins` directory, just create it before you copy the file.
+
 There are two ways to install from GitHub:
 
 ### ZIP Download
@@ -32,7 +34,7 @@ There are two ways to install from GitHub:
 If you have downloaded *Command Line Tools for CiviCRM* as a ZIP file from the GitHub repository, do the following to install and activate the plugin:
 
 1. Unzip the .zip file and, if needed, rename the enclosing folder so that the plugin's files are located directly inside `/wp-content/plugins/cli-tools-for-civicrm`
-2. Ensure CiviCRM does not load its wp-cli tools using the code above.
+2. Ensure CiviCRM does not load its wp-cli tools using the code above or the "Must Use" plugin.
 3. Activate the plugin.
 4. You are done.
 
