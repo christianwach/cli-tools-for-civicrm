@@ -751,6 +751,16 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     ];
     $tables = $this->names_filter($pre_filter, $tables);
 
+    // When tables are part of the query, add tables that are present in civicrm tables.
+    if (empty($views_only)) {
+      $civicrm_tables = array_keys(CRM_Core_DAO_AllCoreTables::tables());
+      foreach ($civicrm_tables as $table) {
+        if (!in_array($table, $tables)) {
+          $tables[] = $table;
+        }
+      }
+    }
+
     // Filter by `$args` wildcards.
     if ($args) {
       $tables = $this->names_filter($args, $tables);
@@ -836,7 +846,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   private function cividb_functions_get() {
 
     // Use "wp civicrm db functions" to find the CiviCRM database functions.
-    $command = "civicrm db functions --format=json";
+    $command = "civicrm db functions 'civicrm_*' --format=json";
     $options = ['launch' => FALSE, 'return' => TRUE];
     $core_functions = WP_CLI::runcommand($command, $options);
 
@@ -884,7 +894,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   private function cividb_tables_get() {
 
     // Use "wp civicrm db tables" to find the CiviCRM database tables.
-    $command = "civicrm db tables 'civicrm_*' 'log_civicrm_*' 'snap_civicrm_*' --tables-only --format=json";
+    $command = "civicrm db tables --tables-only --format=json";
     $options = ['launch' => FALSE, 'return' => TRUE];
     $core_tables = WP_CLI::runcommand($command, $options);
 
@@ -908,7 +918,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   private function cividb_views_get() {
 
     // Use "wp civicrm db tables" to find the CiviCRM database views.
-    $command = "civicrm db tables 'civicrm_*' 'log_civicrm_*' 'snap_civicrm_*' --views-only --format=json";
+    $command = "civicrm db tables 'civicrm_*' --views-only --format=json";
     $options = ['launch' => FALSE, 'return' => TRUE];
     $core_views = WP_CLI::runcommand($command, $options);
 
