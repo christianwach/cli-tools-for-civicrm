@@ -70,11 +70,15 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    * [--backup-dir=<backup-dir>]
    * : Path to your CiviCRM backup directory. Default is one level above ABSPATH.
    *
+   * [--also-include=<also-include>]
+   * : Comma separated list of additional tables to back up based on wildcard search.
+   *
    * [--yes]
    * : Answer yes to the confirmation message.
    *
    * ## EXAMPLES
    *
+   *     # Standard backup.
    *     $ wp civicrm core backup
    *     Gathering system information.
    *     +------------------------+-----------------------------------------------------------------------+
@@ -99,6 +103,11 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *     +------------------------+-----------------------------------------------------------------------+
    *     Do you want to continue? [y/n] y
    *
+   *     # Also back up tables not registered with CiviCRM.
+   *     # In this case, also exports tables for the "Canadian Tax Receipts" extension.
+   *     $ wp civicrm core backup --also-include='cdntaxreceipts_*'
+   *     ...
+   *
    * @since 1.0.0
    *
    * @param array $args The WP-CLI positional arguments.
@@ -108,6 +117,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
 
     // Grab associative arguments.
     $backup_dir = \WP_CLI\Utils\get_flag_value($assoc_args, 'backup-dir', trailingslashit(dirname(ABSPATH)) . 'civicrm-backup');
+    $also_include = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'also-include', '');
 
     // ----------------------------------------------------------------------------
     // Build feedback table.
@@ -231,10 +241,16 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     // Backup procedure.
     // ----------------------------------------------------------------------------
 
+    // Maybe add extra filters.
+    $also_include_args = '';
+    if (!empty($also_include)) {
+      $also_include_args = " --also-include={$also_include}";
+    }
+
     // Use "wp civicrm db export" to export the CiviCRM database tables.
     WP_CLI::log('');
     WP_CLI::log(WP_CLI::colorize('%GExporting database...%n'));
-    $command = 'civicrm db export --result-file=' . $backup_dir . '/civicrm-db.sql';
+    $command = 'civicrm db export' . $also_include_args . ' --result-file=' . $backup_dir . '/civicrm-db.sql';
     $options = ['launch' => FALSE, 'return' => FALSE];
     WP_CLI::runcommand($command, $options);
     WP_CLI::success("Database exported.");
@@ -1123,11 +1139,15 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    * [--backup-dir=<backup-dir>]
    * : Path to your CiviCRM backup directory. Default is one level above ABSPATH.
    *
+   * [--also-include=<also-include>]
+   * : Comma separated list of additional tables to restore based on wildcard search. Ensures existing tables are cleared.
+   *
    * [--yes]
    * : Answer yes to the confirmation message.
    *
    * ## EXAMPLES
    *
+   *     # Standard restore.
    *     $ wp civicrm core restore
    *     Gathering system information.
    *     +------------------------+-----------------------------------------------------------------------+
@@ -1152,6 +1172,11 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *     +------------------------+-----------------------------------------------------------------------+
    *     Do you want to continue? [y/n] y
    *
+   *     # Also restore tables not registered with CiviCRM.
+   *     # In this case, also correctly restores tables for the "Canadian Tax Receipts" extension.
+   *     $ wp civicrm core restore --also-include='cdntaxreceipts_*'
+   *     ...
+   *
    * @since 1.0.0
    *
    * @param array $args The WP-CLI positional arguments.
@@ -1161,6 +1186,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
 
     // Grab associative arguments.
     $backup_dir = \WP_CLI\Utils\get_flag_value($assoc_args, 'backup-dir', trailingslashit(dirname(ABSPATH)) . 'civicrm-backup');
+    $also_include = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'also-include', '');
 
     // ----------------------------------------------------------------------------
     // Build feedback table.
@@ -1371,17 +1397,30 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
       WP_CLI::success("Plugin directory restored.");
     }
 
-    // Use "wp civicrm db drop-tables" and "wp civicrm db import" to restore database.
+    // Use "wp civicrm db clear" and "wp civicrm db import" to restore database.
     if (defined('CIVICRM_DSN') && file_exists($backup_dir . '/civicrm-db.sql')) {
+
       WP_CLI::log('');
       WP_CLI::log(WP_CLI::colorize('%GRestoring database...%n'));
-      $command = 'civicrm db drop-tables';
+
+      // Maybe add extra filters.
+      $also_include_args = '';
+      if (!empty($also_include)) {
+        $also_include_args = " --also-include={$also_include}";
+      }
+
+      // Clear existing tables.
+      $command = 'civicrm db clear' . $also_include_args;
       $options = ['launch' => FALSE, 'return' => FALSE];
       WP_CLI::runcommand($command, $options);
+
+      // Load backup tables.
       $command = 'civicrm db import --load-file=' . $backup_dir . '/civicrm-db.sql';
       $options = ['launch' => FALSE, 'return' => FALSE];
       WP_CLI::runcommand($command, $options);
+
       WP_CLI::success("Database restored.");
+
     }
 
   }
