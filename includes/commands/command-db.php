@@ -311,8 +311,8 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   public function drop_tables($args, $assoc_args) {
 
     // Grab associative arguments.
-    $tables_only = \WP_CLI\Utils\get_flag_value($assoc_args, 'tables-only');
-    $views_only = \WP_CLI\Utils\get_flag_value($assoc_args, 'views-only');
+    $tables_only = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'tables-only', FALSE);
+    $views_only = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'views-only', FALSE);
 
     // Get CiviCRM tables and views.
     $tables = $this->cividb_tables_get();
@@ -323,7 +323,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     $cividb->query('SET FOREIGN_KEY_CHECKS = 0');
 
     // Drop all the CiviCRM database tables.
-    if (empty($views_only) && !empty($tables)) {
+    if (empty($views_only)) {
       WP_CLI::log('Dropping CiviCRM database tables...');
       foreach ($tables as $table) {
         $query = 'DROP TABLE IF EXISTS ' . \WP_CLI\Utils\esc_sql_ident($table);
@@ -334,7 +334,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     }
 
     // Drop all the the CiviCRM database views.
-    if (empty($tables_only) && !empty($views)) {
+    if (empty($tables_only)) {
       WP_CLI::log('Dropping CiviCRM database views...');
       foreach ($views as $view) {
         $query = 'DROP VIEW ' . \WP_CLI\Utils\esc_sql_ident($view);
