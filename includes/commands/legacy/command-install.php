@@ -86,7 +86,7 @@ class CLI_Tools_CiviCRM_Command_Install extends CLI_Tools_CiviCRM_Command {
     }
 
     // Build install command.
-    $command = 'civicrm core install --zipfile=' . $zipfile) .
+    $command = 'civicrm core install --zipfile=' . $zipfile .
       (empty($langtarfile) ? '' : ' --l10n-tarfile=' . $langtarfile);
 
     // Run "wp civicrm core install".
