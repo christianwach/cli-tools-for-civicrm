@@ -49,7 +49,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *
    * ## OPTIONS
    *
-   * [--extra-filters=<extra-filters>]
+   * [--also-include=<also-include>]
    * : A comma separated list of additional tables to drop based on wildcard search.
    *
    * [--yes]
@@ -64,7 +64,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *
    *     # Use an extra wildcard when some table names are not registered with CiviCRM.
    *     # In this case, also clear tables for the "Canadian Tax Receipts" extension.
-   *     $ wp civicrm db clear --extra-filters='cdntaxreceipts_*'
+   *     $ wp civicrm db clear --also-include='cdntaxreceipts_*'
    *     Dropping CiviCRM database tables...
    *     ...
    *
@@ -285,7 +285,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    * [--views-only]
    * : Drop only views.
    *
-   * [--extra-filters=<extra-filters>]
+   * [--also-include=<also-include>]
    * : A comma separated list of additional tables to drop based on wildcard search.
    *
    * [--yes]
@@ -304,7 +304,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *
    *     # Use an extra wildcard when some table names are not registered with CiviCRM.
    *     # In this case, also drop tables for the "Canadian Tax Receipts" extension.
-   *     $ wp civicrm db drop-tables --extra-filters='cdntaxreceipts_*' --tables-only
+   *     $ wp civicrm db drop-tables --also-include='cdntaxreceipts_*' --tables-only
    *
    * @subcommand drop-tables
    *
@@ -375,10 +375,13 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    * ## OPTIONS
    *
    * [--tables=<tables>]
-   * : The comma separated list of specific tables to export. Excluding this parameter will export all CiviCRM tables in the database.
+   * : Comma separated list of tables to export based on wildcard search. Excluding this parameter will export all CiviCRM tables in the database.
    *
    * [--result-file=<result-file>]
    * : The path to the saved file. Excluding this parameter will export to STDOUT.
+   *
+   * [--also-include=<also-include>]
+   * : A comma separated list of additional wildcards to search.
    *
    * ## EXAMPLES
    *
@@ -395,6 +398,16 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *     $ wp civicrm db export --result-file=/tmp/civi-db.sql
    *     Success: Exported to /tmp/civi-db.sql
    *
+   *     # Use an extra wildcard when some table names are not registered with CiviCRM.
+   *     $ wp civicrm db export --also-include='cdntaxreceipts_*' --result-file=/tmp/civi-db.sql
+   *     Success: Exported to /tmp/civi-db.sql
+   *
+   *     # Restrict the exported tables using a wildcard argument as a filter.
+   *     # Also uses an extra wildcard when some table names are not registered with CiviCRM.
+   *     # In this case, also exports tables for the "Canadian Tax Receipts" extension.
+   *     $ wp civicrm db export --tables='*_log' --also-include='cdn*' --result-file=/tmp/civi-db.sql
+   *     Success: Exported to /tmp/civi-db.sql
+   *
    * @alias dump
    *
    * @since 1.0.0
@@ -406,23 +419,33 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
 
     // Grab associative arguments.
     $tables = \WP_CLI\Utils\get_flag_value($assoc_args, 'tables', FALSE);
+    $also_include = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'also-include', '');
 
     // Get CiviCRM credentials.
     $dsn = $this->cividb_dsn_get();
 
     // Do we want only certain CiviCRM tables?
-    $runcommand_args = '';
+    $table_args = '';
     if (!empty($tables)) {
       $requested_tables = explode(',', $tables);
       foreach ($requested_tables as $table) {
-        $runcommand_args .= " '" . trim($table) . "'";
+        $table_args .= ' ' . trim($table);
       }
       unset($assoc_args['tables']);
     }
 
+    // Maybe add extra filters.
+    $also_include_args = '';
+    if (!empty($also_include)) {
+      $also_include_args = " --also-include={$also_include}";
+      unset($assoc_args['also-include']);
+    }
+
     // Get the list of tables.
+    $tables_command = "civicrm db tables{$table_args}{$also_include_args} --format=csv";
+    WP_CLI::debug('Tables Command: ' . $tables_command, 'civicrm');
     $options = ['launch' => FALSE, 'return' => TRUE];
-    $tables = WP_CLI::runcommand("civicrm db tables{$runcommand_args} --format=csv", $options);
+    $tables = WP_CLI::runcommand($tables_command, $options);
     $tables = explode(',', $tables);
 
     // Build command and escaped shell arguments.
@@ -444,6 +467,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
       )
     );
 
+    WP_CLI::debug('Final "mysqldump" Command: ' . $escaped_command, 'civicrm');
     \WP_CLI\Utils\run_mysql_command($escaped_command, $assoc_args);
 
     // Maybe show some feedback.
@@ -741,7 +765,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    * [--views-only]
    * : Restrict returned tables to those that are views.
    *
-   * [--extra-filters=<extra-filters>]
+   * [--also-include=<also-include>]
    * : A comma separated list of additional wildcards to search.
    *
    * [--format=<format>]
@@ -776,7 +800,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *
    *     # Use an extra wildcard when some table names are not registered with CiviCRM.
    *     # In this case, include tables for the "Canadian Tax Receipts" extension.
-   *     $ wp civicrm db tables '*_log' --extra-filters='cdntaxreceipts_*' --tables-only
+   *     $ wp civicrm db tables '*_log' --also-include='cdntaxreceipts_*' --tables-only
    *     cdntaxreceipts_log
    *     civicrm_action_log
    *     civicrm_job_log
@@ -787,7 +811,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *
    *     # When CiviCRM shares a database with WordPress, use an extra wildcard to include
    *     # WordPress tables in a query. Here `$wpdb->prefix` is set to the default 'wp_'.
-   *     % wp civicrm db tables '*_user*' --extra-filters='wp_*' --tables-only
+   *     % wp civicrm db tables '*_user*' --also-include='wp_*' --tables-only
    *     civicrm_user_job
    *     log_civicrm_user_job
    *     wp_usermeta
@@ -803,7 +827,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     // Grab associative arguments.
     $tables_only = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'tables-only', FALSE);
     $views_only = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'views-only', FALSE);
-    $extra_filters = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'extra-filters', '');
+    $also_include = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'also-include', '');
     $format = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'list');
 
     // Bail if incompatible args have been supplied.
@@ -836,8 +860,8 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     ];
 
     // Add in any extra wildcard filters.
-    if (!empty($extra_filters)) {
-      $wildcards = explode(',', $extra_filters);
+    if (!empty($also_include)) {
+      $wildcards = explode(',', $also_include);
       foreach ($wildcards as $wildcard) {
         $pre_filter[] = trim($wildcard);
       }
@@ -990,14 +1014,14 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   private function cividb_tables_get($assoc_args) {
 
     // Maybe add extra filters.
-    $extra_filters = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'extra-filters', '');
-    $runcommand_args = '';
-    if (!empty($extra_filters)) {
-      $runcommand_args = " --extra-filters={$extra_filters}";
+    $also_include = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'also-include', '');
+    $also_include_args = '';
+    if (!empty($also_include)) {
+      $also_include_args = " --also-include={$also_include}";
     }
 
     // Use "wp civicrm db tables" to find the CiviCRM database tables.
-    $command = "civicrm db tables{$runcommand_args} --tables-only --format=json";
+    $command = "civicrm db tables{$also_include_args} --tables-only --format=json";
     $options = ['launch' => FALSE, 'return' => TRUE];
     $core_tables = WP_CLI::runcommand($command, $options);
 
@@ -1022,14 +1046,14 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   private function cividb_views_get($assoc_args) {
 
     // Maybe add extra filters.
-    $extra_filters = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'extra-filters', '');
-    $runcommand_args = '';
-    if (!empty($extra_filters)) {
-      $runcommand_args = " --extra-filters={$extra_filters}";
+    $also_include = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'also-include', '');
+    $also_include_args = '';
+    if (!empty($also_include)) {
+      $also_include_args = " --also-include={$also_include}";
     }
 
     // Use "wp civicrm db tables" to find the CiviCRM database views.
-    $command = "civicrm db tables 'civicrm_*'{$runcommand_args} --views-only --format=json";
+    $command = "civicrm db tables 'civicrm_*'{$also_include_args} --views-only --format=json";
     $options = ['launch' => FALSE, 'return' => TRUE];
     $core_views = WP_CLI::runcommand($command, $options);
 
