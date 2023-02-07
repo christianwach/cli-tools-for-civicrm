@@ -80,9 +80,13 @@ class CLI_Tools_CiviCRM_Command_Install extends CLI_Tools_CiviCRM_Command {
       WP_CLI::error('CiviCRM .tar.gz archives are not supported.');
     }
 
+    // Bail when no .zip archive is specified.
+    if (empty($zipfile)) {
+      WP_CLI::error('You must supply a CiviCRM zip archive.');
+    }
+
     // Build install command.
-    $command = 'civicrm core install' .
-      (empty($zipfile) ? '' : ' --zipfile=' . $zipfile) .
+    $command = 'civicrm core install --zipfile=' . $zipfile) .
       (empty($langtarfile) ? '' : ' --l10n-tarfile=' . $langtarfile);
 
     // Run "wp civicrm core install".
