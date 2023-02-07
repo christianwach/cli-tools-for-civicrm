@@ -26,7 +26,7 @@ class CLI_Tools_CiviCRM_Zip_Extractor extends WP_Upgrader {
   public $bulk = FALSE;
 
   /**
-   * Initialize the extract strings.
+   * Initializes the extract strings.
    *
    * @since 1.0.0
    */
@@ -40,25 +40,33 @@ class CLI_Tools_CiviCRM_Zip_Extractor extends WP_Upgrader {
   }
 
   /**
-   * Extract zip archive to a directory.
+   * Extracts a zip archive to a directory.
    *
    * @since 1.0.0
    *
    * @param string $zipfile The path to the zipfile.
    * @param string $destination The directory name to extract to.
+   * @param array $settings The array of extraction settings.
    * @return array|false|WP_Error The result on success, otherwise a WP_Error, or false if unable to connect to the filesystem.
    */
-  public function extract($zipfile, $destination) {
+  public function extract($zipfile, $destination, $settings) {
 
     $this->extract_strings();
 
-    $options = [
+		$options = [
       'package' => $zipfile,
       'destination' => untrailingslashit($destination),
+    ];
+
+		$defaults = [
       'clear_destination' => TRUE,
       'clear_working' => TRUE,
       'abort_if_destination_exists' => FALSE,
-    ];
+		];
+
+		$settings = wp_parse_args($settings, $defaults);
+
+		$options = $options + $settings;
 
     return $this->run($options);
 

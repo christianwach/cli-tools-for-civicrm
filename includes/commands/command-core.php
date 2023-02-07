@@ -1077,21 +1077,19 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
       }
       elseif (!empty($zipfile)) {
 
-        // If forcing, remove existing CiviCRM plugin directory.
+        // Default extraction options.
+        $extract_options = [
+          'clear_destination' => FALSE,
+          'clear_working' => FALSE,
+        ];
+
+        // If forcing, overwrite existing CiviCRM plugin directory.
         if (!empty($force)) {
-          $cmd = 'rm -r ' . $plugin_path . '/civicrm';
-          $process_run = WP_CLI::launch($cmd, $exit_on_error, $return_detailed);
-          if (0 !== $process_run->return_code) {
-            WP_CLI::error(sprintf(WP_CLI::colorize('Failed to delete existing CiviCRM plugin: %y%s.%n'), $this->tar_error_msg($process_run)));
-          }
+          $extract_options['clear_destination'] = TRUE;
         }
 
-        // Extract to plugin directory.
-        WP_CLI::log(sprintf(WP_CLI::colorize('Extracting plugin archive to: %y%s%n'), $plugin_path));
-        if (!$this->unzip($zipfile, $plugins_dir)) {
-          WP_CLI::error('Could not extract plugin archive.');
-        }
-        WP_CLI::success(sprintf(WP_CLI::colorize('CiviCRM plugin extracted to: %Y%s%n'), $plugin_path));
+        // Let's do it.
+        $this->zip_extract($zipfile, $plugin_path, $extract_options);
 
       }
 

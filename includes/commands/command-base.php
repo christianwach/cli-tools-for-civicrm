@@ -327,23 +327,24 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
    * This is useful if we want to extract a zip archive and know the name we want to give
    * the enclosing directory. It's better to use `self::unzip()` if we want to leave the
    * enclosing directory with its given directory name, e.g. when extracting the CiviCRM
-   * plugin archive.
+   * plugin archive somewhere other than the WordPress plugins directory.
    *
    * @since 1.0.0
    *
    * @param string $zipfile The path to the zipfile.
    * @param string $destination The directory name to extract to.
+   * @param array $options The array of extraction options.
    * @return bool True if successful, false otherwise.
    */
-  protected function zip_extract($zipfile, $destination) {
+  protected function zip_extract($zipfile, $destination, $options = []) {
 
     // Let's use a custom WP_Upgrader object.
     require_once __DIR__ . '/utilities/class-zip-extractor.php';
     $extractor = \WP_CLI\Utils\get_upgrader('CLI_Tools_CiviCRM_Zip_Extractor');
 
-    // Go ahead and restore from backup.
+    // Go ahead and extract the archive.
     $extractor->init();
-    $result = $extractor->extract($zipfile, $destination);
+    $result = $extractor->extract($zipfile, $destination, $options);
 
     // Trap any problems.
     if ($result === FALSE) {
