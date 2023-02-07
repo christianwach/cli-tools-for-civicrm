@@ -63,6 +63,247 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
   private $google_download_url = 'https://storage.googleapis.com/civicrm/';
 
   /**
+   * Activates the CiviCRM plugin and loads the database.
+   *
+   * ## OPTIONS
+   *
+   * [--dbname=<dbname>]
+   * : MySQL database name of your CiviCRM database. Defaults to the WordPress database name.
+   *
+   * [--dbpass=<dbpass>]
+   * : MySQL password for your CiviCRM database. Defaults to the WordPress MySQL database password.
+   *
+   * [--dbuser=<dbuser>]
+   * : MySQL username for your CiviCRM database. Defaults to the WordPress MySQL database username.
+   *
+   * [--dbhost=<dbhost>]
+   * : MySQL host for your CiviCRM database. Defaults to the WordPress MySQL host.
+   *
+   * [--locale=<locale>]
+   * : Locale to use for installation. Defaults to "en_US".
+   *
+   * [--ssl=<ssl>]
+   * : The SSL setting for your website, e.g. '--ssl=on'. Defaults to "on".
+   *
+   * [--site-url=<site-url>]
+   * : Domain for your website, e.g. 'mysite.com'.
+   *
+   * [--yes]
+   * : Answer yes to the confirmation message.
+   *
+   * ## EXAMPLES
+   *
+   *     # Activate the CiviCRM plugin.
+   *     $ wp civicrm core activate
+   *     CiviCRM database credentials:
+   *     +----------+-----------------------+
+   *     | Field    | Value                 |
+   *     +----------+-----------------------+
+   *     | Database | civicrm_database_name |
+   *     | Username | foo                   |
+   *     | Password | dbpassword            |
+   *     | Host     | localhost             |
+   *     | Locale   | en_US                 |
+   *     | SSL      | on                    |
+   *     +----------+-----------------------+
+   *     Do you want to continue? [y/n] y
+   *     Creating file /httpdocs/wp-content/uploads/civicrm/civicrm.settings.php
+   *     Success: CiviCRM data files initialized.
+   *     Creating civicrm_* database tables in civicrm_database_name
+   *     Success: CiviCRM database loaded.
+   *     Plugin 'civicrm' activated.
+   *     Success: Activated 1 of 1 plugins.
+   *
+   * @since 1.0.0
+   *
+   * @param array $args The WP-CLI positional arguments.
+   * @param array $assoc_args The WP-CLI associative arguments.
+   */
+  public function activate($args, $assoc_args) {
+
+    // Only install plugin if not already installed.
+    $fetcher = new \WP_CLI\Fetchers\Plugin();
+    $plugin_installed = $fetcher->get('civicrm');
+    if (!$plugin_installed) {
+      WP_CLI::error('You need to install CiviCRM first.');
+    }
+
+    // Get the path to the CiviCRM plugin directory.
+    $plugin_path = $this->plugin_path_get();
+
+    /*
+     * Check for the presence of the CiviCRM core codebase.
+     *
+     * NOTE: This is *not* the CiviCRM plugin - it is the directory where the common
+     * CiviCRM code lives. It always lives in a sub-directory of the plugin directory
+     * called "civicrm".
+     */
+    global $crmPath;
+    $crmPath = trailingslashit($plugin_path) . 'civicrm';
+    if (!is_dir($crmPath)) {
+      WP_CLI::error('CiviCRM core files are missing.');
+    }
+
+    // We need the CiviCRM classloader so that we can run `Civi\Setup`.
+    $classLoaderPath = "$crmPath/CRM/Core/ClassLoader.php";
+    if (!file_exists($classLoaderPath)) {
+      WP_CLI::error('CiviCRM installer helper file is missing.');
+    }
+
+    // Grab associative arguments.
+    $dbuser = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'dbuser', (defined('DB_USER') ? DB_USER : ''));
+    $dbpass = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'dbpass', (defined('DB_PASSWORD') ? DB_PASSWORD : ''));
+    $dbhost = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'dbhost', (defined('DB_HOST') ? DB_HOST : ''));
+    $dbname = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'dbname', (defined('DB_NAME') ? DB_NAME : ''));
+    $locale = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'locale', 'en_US');
+    $ssl = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'ssl', 'on');
+    $base_url = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'site-url', '');
+
+    // Show database parameters.
+    WP_CLI::log(WP_CLI::colorize('%GCiviCRM database credentials:%n'));
+    $assoc_args['format'] = 'table';
+    $feedback = [
+      'Database' => $dbname,
+      'Username' => $dbuser,
+      'Password' => $dbpass,
+      'Host' => $dbhost,
+      'Locale' => $locale,
+      'SSL' => $ssl,
+    ];
+    $assoc_args['fields'] = array_keys($feedback);
+    $formatter = $this->formatter_get($assoc_args);
+    $formatter->display_item($feedback);
+
+    // Let's give folks a chance to exit now.
+    WP_CLI::confirm(WP_CLI::colorize('%GDo you want to continue?%n'), $assoc_args);
+
+    // ----------------------------------------------------------------------------
+    // Activation and installation.
+    // ----------------------------------------------------------------------------
+
+    // Set some constants that CiviCRM requires.
+    if (!defined('CIVICRM_PLUGIN_DIR')) {
+      define('CIVICRM_PLUGIN_DIR', \WP_CLI\Utils\trailingslashit($plugin_path));
+    }
+    if (!defined('CIVICRM_PLUGIN_URL')) {
+      define('CIVICRM_PLUGIN_URL', plugin_dir_url(CIVICRM_PLUGIN_DIR));
+    }
+
+    // Maybe set SSL.
+    if ('on' === $ssl) {
+      $_SERVER['HTTPS'] = 'on';
+    }
+
+    // Initialize civicrm-setup.
+    require_once $classLoaderPath;
+    CRM_Core_ClassLoader::singleton()->register();
+    \Civi\Setup::assertProtocolCompatibility(1.0);
+    \Civi\Setup::init(['cms' => 'WordPress', 'srcPath' => $crmPath]);
+    $setup = \Civi\Setup::instance();
+
+    // Apply essential arguments.
+    $setup->getModel()->db = ['server' => $dbhost, 'username' => $dbuser, 'password' => $dbpass, 'database' => $dbname];
+    $setup->getModel()->lang = $locale;
+
+    /*
+     * The "base URL" should already be known, either by:
+     *
+     * * The "site_url()" setting in WordPress standalone
+     * * The URL flag in WordPress Multisite: --url=https://my-domain.com
+     *
+     * TODO: This means that the `--site_url` flag is basically redundant.
+     */
+    if (!empty($base_url)) {
+      $protocol = ('on' == $ssl ? 'https' : 'http');
+      $base_url = $protocol . '://' . $base_url;
+      $setup->getModel()->cmsBaseUrl = trailingslashit($base_url);
+    }
+
+    // Validate system requirements.
+    $reqs = $setup->checkRequirements();
+    foreach ($reqs->getWarnings() as $msg) {
+      WP_CLI::log(sprintf(WP_CLI::colorize('%YWARNING:%n %y(%s) %s:%n %s'), $msg['section'], $msg['name'], $msg['message']));
+    }
+    $errors = $reqs->getErrors();
+    if ($errors) {
+      foreach ($errors as $msg) {
+        WP_CLI::log(sprintf(WP_CLI::colorize('%RERROR:%n %r(%s) %s:%n %s'), $msg['section'], $msg['name'], $msg['message']));
+      }
+      WP_CLI::error('Requirements check failed.');
+    }
+
+    // Install data files.
+    $installed = $setup->checkInstalled();
+    if (!$installed->isSettingInstalled()) {
+      WP_CLI::log(sprintf(WP_CLI::colorize('%GCreating file%n %Y%s%n'), $setup->getModel()->settingsPath));
+      $setup->installFiles();
+    }
+    else {
+      WP_CLI::log(sprintf(WP_CLI::colorize('%gFound existing%n %Y%s%n %Gin%n %Y%s%n'), basename($setup->getModel()->settingsPath), dirname($setup->getModel()->settingsPath)));
+      switch ($this->conflict_action_pick('civicrm.settings.php')) {
+        case 'abort':
+          WP_CLI::log(WP_CLI::colorize('%CAborted%n'));
+          WP_CLI::halt(0);
+
+        case 'overwrite':
+          WP_CLI::log(sprintf(WP_CLI::colorize('%GRemoving%n %Y%s%n %Gfrom%n %Y%s%n'), basename($setup->getModel()->settingsPath), dirname($setup->getModel()->settingsPath)));
+          $setup->uninstallFiles();
+          WP_CLI::log(sprintf(WP_CLI::colorize('%GCreating%n %Y%s%n %Gin%n %Y%s%n'), basename($setup->getModel()->settingsPath), dirname($setup->getModel()->settingsPath)));
+          $setup->installFiles();
+          break;
+
+        case 'keep':
+          break;
+
+        default:
+          WP_CLI::error('Unrecognized action');
+      }
+    }
+
+    WP_CLI::success('CiviCRM data files initialized.');
+
+    // Clean the "templates_c" directory to avoid fatal error when overwriting the database.
+    if (function_exists('civicrm_initialize')) {
+      $this->bootstrap_civicrm();
+      $config = CRM_Core_Config::singleton();
+      $config->cleanup(1, FALSE);
+    }
+
+    // Install database.
+    if (!$installed->isDatabaseInstalled()) {
+      WP_CLI::log(sprintf(WP_CLI::colorize('%GCreating%n %Ycivicrm_*%n %Gdatabase tables in%n %Y%s%n'), $setup->getModel()->db['database']));
+      $setup->installDatabase();
+    }
+    else {
+      WP_CLI::log(sprintf(WP_CLI::colorize('%GFound existing%n %Ycivicrm_*%n database tables in%n %Y%s%n'), $setup->getModel()->db['database']));
+      switch ($this->conflict_action_pick('database tables')) {
+        case 'abort':
+          WP_CLI::log(WP_CLI::colorize('%CAborted%n'));
+          WP_CLI::halt(0);
+
+        case 'overwrite':
+          WP_CLI::log(sprintf(WP_CLI::colorize('%GRemoving%n %Ycivicrm_*%n database tables in%n %Y%s%n'), $setup->getModel()->db['database']));
+          $setup->uninstallDatabase();
+          WP_CLI::log(sprintf(WP_CLI::colorize('%GCreating%n %Ycivicrm_*%n database tables in%n %Y%s%n'), $setup->getModel()->db['database']));
+          $setup->installDatabase();
+          break;
+
+        case 'keep':
+          break;
+
+        default:
+          WP_CLI::error('Unrecognized action');
+      }
+    }
+
+    WP_CLI::success('CiviCRM database loaded.');
+
+    // Looking good, let's activate the CiviCRM plugin.
+    WP_CLI::run_command(['plugin', 'activate', 'civicrm'], []);
+
+  }
+
+  /**
    * Back up the CiviCRM plugin files and database.
    *
    * ## OPTIONS
@@ -887,247 +1128,6 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
       WP_CLI::success(sprintf(WP_CLI::colorize('CiviCRM localization files extracted to: %Y%s%n'), $plugin_path));
 
     }
-
-  }
-
-  /**
-   * Activates the CiviCRM plugin and loads the database.
-   *
-   * ## OPTIONS
-   *
-   * [--dbname=<dbname>]
-   * : MySQL database name of your CiviCRM database. Defaults to the WordPress database name.
-   *
-   * [--dbpass=<dbpass>]
-   * : MySQL password for your CiviCRM database. Defaults to the WordPress MySQL database password.
-   *
-   * [--dbuser=<dbuser>]
-   * : MySQL username for your CiviCRM database. Defaults to the WordPress MySQL database username.
-   *
-   * [--dbhost=<dbhost>]
-   * : MySQL host for your CiviCRM database. Defaults to the WordPress MySQL host.
-   *
-   * [--locale=<locale>]
-   * : Locale to use for installation. Defaults to "en_US".
-   *
-   * [--ssl=<ssl>]
-   * : The SSL setting for your website, e.g. '--ssl=on'. Defaults to "on".
-   *
-   * [--site-url=<site-url>]
-   * : Domain for your website, e.g. 'mysite.com'.
-   *
-   * [--yes]
-   * : Answer yes to the confirmation message.
-   *
-   * ## EXAMPLES
-   *
-   *     # Activate the CiviCRM plugin.
-   *     $ wp civicrm core activate
-   *     CiviCRM database credentials:
-   *     +----------+-----------------------+
-   *     | Field    | Value                 |
-   *     +----------+-----------------------+
-   *     | Database | civicrm_database_name |
-   *     | Username | foo                   |
-   *     | Password | dbpassword            |
-   *     | Host     | localhost             |
-   *     | Locale   | en_US                 |
-   *     | SSL      | on                    |
-   *     +----------+-----------------------+
-   *     Do you want to continue? [y/n] y
-   *     Creating file /httpdocs/wp-content/uploads/civicrm/civicrm.settings.php
-   *     Success: CiviCRM data files initialized.
-   *     Creating civicrm_* database tables in civicrm_database_name
-   *     Success: CiviCRM database loaded.
-   *     Plugin 'civicrm' activated.
-   *     Success: Activated 1 of 1 plugins.
-   *
-   * @since 1.0.0
-   *
-   * @param array $args The WP-CLI positional arguments.
-   * @param array $assoc_args The WP-CLI associative arguments.
-   */
-  public function activate($args, $assoc_args) {
-
-    // Only install plugin if not already installed.
-    $fetcher = new \WP_CLI\Fetchers\Plugin();
-    $plugin_installed = $fetcher->get('civicrm');
-    if (!$plugin_installed) {
-      WP_CLI::error('You need to install CiviCRM first.');
-    }
-
-    // Get the path to the CiviCRM plugin directory.
-    $plugin_path = $this->plugin_path_get();
-
-    /*
-     * Check for the presence of the CiviCRM core codebase.
-     *
-     * NOTE: This is *not* the CiviCRM plugin - it is the directory where the common
-     * CiviCRM code lives. It always lives in a sub-directory of the plugin directory
-     * called "civicrm".
-     */
-    global $crmPath;
-    $crmPath = trailingslashit($plugin_path) . 'civicrm';
-    if (!is_dir($crmPath)) {
-      WP_CLI::error('CiviCRM core files are missing.');
-    }
-
-    // We need the CiviCRM classloader so that we can run `Civi\Setup`.
-    $classLoaderPath = "$crmPath/CRM/Core/ClassLoader.php";
-    if (!file_exists($classLoaderPath)) {
-      WP_CLI::error('CiviCRM installer helper file is missing.');
-    }
-
-    // Grab associative arguments.
-    $dbuser = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'dbuser', (defined('DB_USER') ? DB_USER : ''));
-    $dbpass = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'dbpass', (defined('DB_PASSWORD') ? DB_PASSWORD : ''));
-    $dbhost = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'dbhost', (defined('DB_HOST') ? DB_HOST : ''));
-    $dbname = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'dbname', (defined('DB_NAME') ? DB_NAME : ''));
-    $locale = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'locale', 'en_US');
-    $ssl = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'ssl', 'on');
-    $base_url = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'site-url', '');
-
-    // Show database parameters.
-    WP_CLI::log(WP_CLI::colorize('%GCiviCRM database credentials:%n'));
-    $assoc_args['format'] = 'table';
-    $feedback = [
-      'Database' => $dbname,
-      'Username' => $dbuser,
-      'Password' => $dbpass,
-      'Host' => $dbhost,
-      'Locale' => $locale,
-      'SSL' => $ssl,
-    ];
-    $assoc_args['fields'] = array_keys($feedback);
-    $formatter = $this->formatter_get($assoc_args);
-    $formatter->display_item($feedback);
-
-    // Let's give folks a chance to exit now.
-    WP_CLI::confirm(WP_CLI::colorize('%GDo you want to continue?%n'), $assoc_args);
-
-    // ----------------------------------------------------------------------------
-    // Activation and installation.
-    // ----------------------------------------------------------------------------
-
-    // Set some constants that CiviCRM requires.
-    if (!defined('CIVICRM_PLUGIN_DIR')) {
-      define('CIVICRM_PLUGIN_DIR', \WP_CLI\Utils\trailingslashit($plugin_path));
-    }
-    if (!defined('CIVICRM_PLUGIN_URL')) {
-      define('CIVICRM_PLUGIN_URL', plugin_dir_url(CIVICRM_PLUGIN_DIR));
-    }
-
-    // Maybe set SSL.
-    if ('on' === $ssl) {
-      $_SERVER['HTTPS'] = 'on';
-    }
-
-    // Initialize civicrm-setup.
-    require_once $classLoaderPath;
-    CRM_Core_ClassLoader::singleton()->register();
-    \Civi\Setup::assertProtocolCompatibility(1.0);
-    \Civi\Setup::init(['cms' => 'WordPress', 'srcPath' => $crmPath]);
-    $setup = \Civi\Setup::instance();
-
-    // Apply essential arguments.
-    $setup->getModel()->db = ['server' => $dbhost, 'username' => $dbuser, 'password' => $dbpass, 'database' => $dbname];
-    $setup->getModel()->lang = $locale;
-
-    /*
-     * The "base URL" should already be known, either by:
-     *
-     * * The "site_url()" setting in WordPress standalone
-     * * The URL flag in WordPress Multisite: --url=https://my-domain.com
-     *
-     * TODO: This means that the `--site_url` flag is basically redundant.
-     */
-    if (!empty($base_url)) {
-      $protocol = ('on' == $ssl ? 'https' : 'http');
-      $base_url = $protocol . '://' . $base_url;
-      $setup->getModel()->cmsBaseUrl = trailingslashit($base_url);
-    }
-
-    // Validate system requirements.
-    $reqs = $setup->checkRequirements();
-    foreach ($reqs->getWarnings() as $msg) {
-      WP_CLI::log(sprintf(WP_CLI::colorize('%YWARNING:%n %y(%s) %s:%n %s'), $msg['section'], $msg['name'], $msg['message']));
-    }
-    $errors = $reqs->getErrors();
-    if ($errors) {
-      foreach ($errors as $msg) {
-        WP_CLI::log(sprintf(WP_CLI::colorize('%RERROR:%n %r(%s) %s:%n %s'), $msg['section'], $msg['name'], $msg['message']));
-      }
-      WP_CLI::error('Requirements check failed.');
-    }
-
-    // Install data files.
-    $installed = $setup->checkInstalled();
-    if (!$installed->isSettingInstalled()) {
-      WP_CLI::log(sprintf(WP_CLI::colorize('%GCreating file%n %Y%s%n'), $setup->getModel()->settingsPath));
-      $setup->installFiles();
-    }
-    else {
-      WP_CLI::log(sprintf(WP_CLI::colorize('%gFound existing%n %Y%s%n %Gin%n %Y%s%n'), basename($setup->getModel()->settingsPath), dirname($setup->getModel()->settingsPath)));
-      switch ($this->conflict_action_pick('civicrm.settings.php')) {
-        case 'abort':
-          WP_CLI::log(WP_CLI::colorize('%CAborted%n'));
-          WP_CLI::halt(0);
-
-        case 'overwrite':
-          WP_CLI::log(sprintf(WP_CLI::colorize('%GRemoving%n %Y%s%n %Gfrom%n %Y%s%n'), basename($setup->getModel()->settingsPath), dirname($setup->getModel()->settingsPath)));
-          $setup->uninstallFiles();
-          WP_CLI::log(sprintf(WP_CLI::colorize('%GCreating%n %Y%s%n %Gin%n %Y%s%n'), basename($setup->getModel()->settingsPath), dirname($setup->getModel()->settingsPath)));
-          $setup->installFiles();
-          break;
-
-        case 'keep':
-          break;
-
-        default:
-          WP_CLI::error('Unrecognized action');
-      }
-    }
-
-    WP_CLI::success('CiviCRM data files initialized.');
-
-    // Clean the "templates_c" directory to avoid fatal error when overwriting the database.
-    if (function_exists('civicrm_initialize')) {
-      $this->bootstrap_civicrm();
-      $config = CRM_Core_Config::singleton();
-      $config->cleanup(1, FALSE);
-    }
-
-    // Install database.
-    if (!$installed->isDatabaseInstalled()) {
-      WP_CLI::log(sprintf(WP_CLI::colorize('%GCreating%n %Ycivicrm_*%n %Gdatabase tables in%n %Y%s%n'), $setup->getModel()->db['database']));
-      $setup->installDatabase();
-    }
-    else {
-      WP_CLI::log(sprintf(WP_CLI::colorize('%GFound existing%n %Ycivicrm_*%n database tables in%n %Y%s%n'), $setup->getModel()->db['database']));
-      switch ($this->conflict_action_pick('database tables')) {
-        case 'abort':
-          WP_CLI::log(WP_CLI::colorize('%CAborted%n'));
-          WP_CLI::halt(0);
-
-        case 'overwrite':
-          WP_CLI::log(sprintf(WP_CLI::colorize('%GRemoving%n %Ycivicrm_*%n database tables in%n %Y%s%n'), $setup->getModel()->db['database']));
-          $setup->uninstallDatabase();
-          WP_CLI::log(sprintf(WP_CLI::colorize('%GCreating%n %Ycivicrm_*%n database tables in%n %Y%s%n'), $setup->getModel()->db['database']));
-          $setup->installDatabase();
-          break;
-
-        case 'keep':
-          break;
-
-        default:
-          WP_CLI::error('Unrecognized action');
-      }
-    }
-
-    WP_CLI::success('CiviCRM database loaded.');
-
-    // Looking good, let's activate the CiviCRM plugin.
-    WP_CLI::run_command(['plugin', 'activate', 'civicrm'], []);
 
   }
 
