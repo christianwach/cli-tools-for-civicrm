@@ -594,11 +594,22 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    * ## OPTIONS
    *
    * [--show-result]
-   * : The path to the database file.
+   * : Print the result to STDOUT. Note that the echoed boolean is the reverse of the exit status.
    *
    * ## EXAMPLES
    *
+	 *     # Check if CiviCRM shares a database with WordPress. Exit status 0 if shared, otherwise 1.
    *     $ wp civicrm db is-shared
+	 *     $ echo $?
+	 *     0
+   *
+	 *     # Show whether CiviCRM shares a database with WordPress. Prints 1 if shared, otherwise 0.
+   *     $ wp civicrm db is-shared --show-result
+	 *     1
+   *
+	 *     # Shell command that shows if CiviCRM shares a database with WordPress.
+	 *     if wp civicrm db is-shared; then echo "Yup"; else echo "Nope"; fi
+	 *     Nope
    *
    * @subcommand is-shared
    *
@@ -623,7 +634,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
 
     // Exit with code if not showing result.
     if (empty($show)) {
-      if (empty($shared)) {
+      if (!empty($shared)) {
         WP_CLI::halt(0);
       }
       else {
@@ -633,10 +644,10 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
 
     // Show result.
     if (empty($shared)) {
-      WP_CLI::log(0);
+      echo "0\n";
     }
     else {
-      WP_CLI::log(1);
+      echo "1\n";
     }
 
   }
