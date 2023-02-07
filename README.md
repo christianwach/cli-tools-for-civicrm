@@ -106,7 +106,7 @@ All previous commands still exist for the time being. However, because they were
 | `wp civicrm cache-clear` | `wp civicrm cache flush` |
 | `wp civicrm disable-debug` | `wp civicrm debug disable` |
 | `wp civicrm enable-debug` | `wp civicrm debug enable` |
-| `wp civicrm install` | See Composite Commands below |
+| `wp civicrm install` | See [Composite Commands](#composite-commands) below |
 | `wp civicrm member-records` | `wp civicrm job member-records` or `wp civicrm job membership` |
 | `wp civicrm process-mail-queue` | `wp civicrm job process-mail-queue` or `wp civicrm job mailing` |
 | `wp civicrm restore` | Only works with backups made by `wp civicrm upgrade` |
@@ -116,7 +116,7 @@ All previous commands still exist for the time being. However, because they were
 | `wp civicrm sql-dump` | `wp civicrm db export` |
 | `wp civicrm sql-query` | `wp civicrm db query` |
 | `wp civicrm update-cfg` | `wp civicrm core update-cfg` |
-| `wp civicrm upgrade` | See Composite Commands below |
+| `wp civicrm upgrade` | See [Composite Commands](#composite-commands) below |
 | `wp civicrm upgrade-db` | `wp civicrm core update-db` |
 
 As above, use `wp help civicrm <command>` for full details and examples.
