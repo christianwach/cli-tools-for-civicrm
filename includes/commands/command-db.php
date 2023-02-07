@@ -321,8 +321,8 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
 
     // Use "wp civicrm db query" to drop the CiviCRM database.
     $command = 'civicrm db query ' . sprintf('DROP DATABASE IF EXISTS %s', $dsn['database']);
-    $options = ['launch' => FALSE, 'return' => TRUE];
-    $shared = WP_CLI::runcommand($command, $options);
+    $options = ['launch' => FALSE, 'return' => FALSE];
+    WP_CLI::runcommand($command, $options);
 
   }
 
