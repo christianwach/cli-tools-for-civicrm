@@ -132,7 +132,7 @@ class CLI_Tools_CiviCRM_Command_Upgrade extends CLI_Tools_CiviCRM_Command {
 
     // Use "wp civicrm sql-dump" to dump database.
     $options = ['launch' => FALSE, 'return' => FALSE];
-    WP_CLI::runcommand("civicrm sql-dump --result-file={$backup_root_dir}/plugins/{$date}/{$filename}.sql", $options);
+    WP_CLI::runcommand("civicrm sql-dump --result-file={$backup_sql_file}", $options);
     WP_CLI::success('1. Database backed up.');
 
     // Move existing CiviCRM plugin directory to backup directory.
