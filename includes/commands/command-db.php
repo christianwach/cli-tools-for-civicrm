@@ -398,6 +398,10 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *     $ wp civicrm db export --result-file=/tmp/civi-db.sql
    *     Success: Exported to /tmp/civi-db.sql
    *
+   *     # Restrict the exported tables using a wildcard argument as a filter.
+   *     $ wp civicrm db export --tables='*_log' --result-file=/tmp/civi-db.sql
+   *     Success: Exported to /tmp/civi-db.sql
+   *
    *     # Use an extra wildcard when some table names are not registered with CiviCRM.
    *     $ wp civicrm db export --also-include='cdntaxreceipts_*' --result-file=/tmp/civi-db.sql
    *     Success: Exported to /tmp/civi-db.sql
@@ -405,7 +409,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *     # Restrict the exported tables using a wildcard argument as a filter.
    *     # Also uses an extra wildcard when some table names are not registered with CiviCRM.
    *     # In this case, also exports tables for the "Canadian Tax Receipts" extension.
-   *     $ wp civicrm db export --tables='*_log' --also-include='cdn*' --result-file=/tmp/civi-db.sql
+   *     $ wp civicrm db export --tables='*_log' --also-include='cdntaxreceipts_*' --result-file=/tmp/civi-db.sql
    *     Success: Exported to /tmp/civi-db.sql
    *
    * @alias dump
