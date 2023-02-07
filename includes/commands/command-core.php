@@ -1466,9 +1466,6 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
 
     WP_CLI::log(WP_CLI::colorize('%GGathering system information.%n'));
 
-    // Get backup directory.
-    $backup_dir = \WP_CLI\Utils\get_flag_value($assoc_args, 'backup-dir', trailingslashit(dirname(ABSPATH)) . 'civicrm');
-
     // Bootstrap CiviCRM.
     $this->bootstrap_civicrm();
 
