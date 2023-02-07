@@ -275,6 +275,58 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   }
 
   /**
+   * Drop an entire CiviCRM database.
+   *
+   * It is not possible to drop the CiviCRM database when it is shared with WordPress.
+   *
+   * To create a fresh CiviCRM database, use `wp civicrm db import` to load an existing
+   * database file or make sure you have the CiviCRM plugin installed (e.g. using the
+   *  `wp civicrm core install` command) and then call `wp civicrm core activate`.
+   *
+   * ## OPTIONS
+   *
+   * [--yes]
+   * : Answer yes to the confirmation message.
+   *
+   * ## EXAMPLES
+   *
+   *     # Drop the CiviCRM database.
+   *     $ wp civicrm db drop
+   *
+   *     # Drop the CiviCRM database without the confirm message.
+   *     $ wp civicrm db drop --yes
+   *
+   * @since 1.0.0
+   *
+   * @param array $args The WP-CLI positional arguments.
+   * @param array $assoc_args The WP-CLI associative arguments.
+   */
+  public function drop($args, $assoc_args) {
+
+    // Use "wp civicrm db is-shared" to check if the CiviCRM database is shared with WordPress.
+    $command = 'civicrm db is-shared --show-result';
+    $options = ['launch' => FALSE, 'return' => TRUE];
+    $shared = WP_CLI::runcommand($command, $options);
+
+    // Bail if sharing database with WordPress.
+    if (!empty($shared)) {
+      WP_CLI::error('You cannot drop the CiviCRM database when it is shared with WordPress.');
+    }
+
+    // Let's give folks a chance to bail.
+    WP_CLI::confirm(WP_CLI::colorize('%GAre you sure you want to drop the CiviCRM database?%n'), $assoc_args);
+
+    // Get CiviCRM credentials.
+    $dsn = $this->cividb_dsn_get();
+
+    // Use "wp civicrm db query" to drop the CiviCRM database.
+    $command = 'civicrm db query ' . sprintf('DROP DATABASE IF EXISTS %s', $dsn['database']);
+    $options = ['launch' => FALSE, 'return' => TRUE];
+    $shared = WP_CLI::runcommand($command, $options);
+
+  }
+
+  /**
    * Drop the CiviCRM tables and views from the database.
    *
    * ## OPTIONS
