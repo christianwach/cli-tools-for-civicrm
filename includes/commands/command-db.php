@@ -163,7 +163,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
       'host' => $dsn['hostspec'],
       'database' => $dsn['database'],
       'user' => $dsn['username'],
-      'password' => $dsn['password'],
+      'pass' => $dsn['password'],
     ];
 
     \WP_CLI\Utils\run_mysql_command('mysql --no-defaults', $mysql_args);
@@ -632,7 +632,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
       'host'     => $dsn['hostspec'],
       'database' => $dsn['database'],
       'user'     => $dsn['username'],
-      'password' => $dsn['password'],
+      'pass' => $dsn['password'],
       'execute'  => 'SOURCE ' . $load_file,
     ];
 
@@ -810,7 +810,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
       'host'     => $dsn['hostspec'],
       'database' => $dsn['database'],
       'user'     => $dsn['username'],
-      'password' => $dsn['password'],
+      'pass' => $dsn['password'],
       'execute'  => $query,
     ];
 
