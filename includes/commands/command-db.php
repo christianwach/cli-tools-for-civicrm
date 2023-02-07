@@ -47,16 +47,26 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   /**
    * Drop all CiviCRM tables, views, functions and stored procedures from the database.
    *
+   * ## OPTIONS
+   *
+   * [--extra-filters=<extra-filters>]
+   * : A comma separated list of additional tables to drop based on wildcard search.
+   *
+   * [--yes]
+   * : Answer yes to the confirmation message.
+   *
    * ## EXAMPLES
    *
    *     # Clear all CiviCRM entities from the database.
    *     $ wp civicrm db clear
    *     Dropping CiviCRM database tables...
-   *     Success: CiviCRM database tables dropped.
-   *     Dropping CiviCRM database views...
-   *     Success: CiviCRM database views dropped.
-   *     Dropping CiviCRM database functions...
-   *     Success: CiviCRM database functions dropped.
+   *     ...
+   *
+   *     # Use an extra wildcard when some table names are not registered with CiviCRM.
+   *     # In this case, also clear tables for the "Canadian Tax Receipts" extension.
+   *     $ wp civicrm db clear --extra-filters='cdntaxreceipts_*'
+   *     Dropping CiviCRM database tables...
+   *     ...
    *
    * @since 1.0.0
    *
@@ -65,11 +75,14 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    */
   public function clear($args, $assoc_args) {
 
+    // Let's give folks a chance to bail.
+    WP_CLI::confirm(WP_CLI::colorize('%GAre you sure you want to all CiviCRM entities from the database?%n'), $assoc_args);
+
     // Get all CiviCRM database entities.
     $functions = $this->cividb_functions_get();
     $procedures = $this->cividb_procedures_get();
-    $tables = $this->cividb_tables_get();
-    $views = $this->cividb_views_get();
+    $tables = $this->cividb_tables_get($assoc_args);
+    $views = $this->cividb_views_get($assoc_args);
 
     // Get an instance of wpdb with CiviCRM credentials.
     $cividb = $this->cividb_get();
@@ -80,7 +93,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
       WP_CLI::log('Dropping CiviCRM database tables...');
       foreach ($tables as $table) {
         $query = 'DROP TABLE IF EXISTS ' . \WP_CLI\Utils\esc_sql_ident($table);
-        WP_CLI::debug($query);
+        WP_CLI::debug($query, 'civicrm');
         $cividb->query($query);
       }
       WP_CLI::success('CiviCRM database tables dropped.');
@@ -91,7 +104,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
       WP_CLI::log('Dropping CiviCRM database views...');
       foreach ($views as $view) {
         $query = 'DROP VIEW IF EXISTS ' . \WP_CLI\Utils\esc_sql_ident($view);
-        WP_CLI::debug($query);
+        WP_CLI::debug($query, 'civicrm');
         $cividb->query($query);
       }
       WP_CLI::success('CiviCRM database views dropped.');
@@ -102,7 +115,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
       WP_CLI::log('Dropping CiviCRM database functions...');
       foreach ($functions as $function) {
         $query = 'DROP FUNCTION IF EXISTS ' . \WP_CLI\Utils\esc_sql_ident($function);
-        WP_CLI::debug($query);
+        WP_CLI::debug($query, 'civicrm');
         $cividb->query($query);
       }
       WP_CLI::success('CiviCRM database functions dropped.');
@@ -113,7 +126,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
       WP_CLI::log('Dropping CiviCRM database procedures...');
       foreach ($procedures as $procedure) {
         $query = 'DROP PROCEDURE IF EXISTS ' . \WP_CLI\Utils\esc_sql_ident($procedure);
-        WP_CLI::debug($query);
+        WP_CLI::debug($query, 'civicrm');
         $cividb->query($query);
       }
       WP_CLI::success('CiviCRM database procedures dropped.');
@@ -143,14 +156,8 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    */
   public function cli($args, $assoc_args) {
 
-    // Bootstrap CiviCRM.
-    $this->bootstrap_civicrm();
-
-    if (!defined('CIVICRM_DSN')) {
-      WP_CLI::error('CIVICRM_DSN is not defined.');
-    }
-
-    $dsn = DB::parseDSN(CIVICRM_DSN);
+    // Get CiviCRM credentials.
+    $dsn = $this->cividb_dsn_get();
 
     $mysql_args = [
       'host' => $dsn['hostspec'],
@@ -205,14 +212,8 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    */
   public function config($args, $assoc_args) {
 
-    // Bootstrap CiviCRM.
-    $this->bootstrap_civicrm();
-
-    if (!defined('CIVICRM_DSN')) {
-      WP_CLI::error('CIVICRM_DSN is not defined.');
-    }
-
-    $dsn = DB::parseDSN(CIVICRM_DSN);
+    // Get CiviCRM credentials.
+    $dsn = $this->cividb_dsn_get();
 
     $format = \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'table');
     switch ($format) {
@@ -254,14 +255,8 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    */
   public function connect($args, $assoc_args) {
 
-    // Bootstrap CiviCRM.
-    $this->bootstrap_civicrm();
-
-    if (!defined('CIVICRM_DSN')) {
-      WP_CLI::error('CIVICRM_DSN is not defined.');
-    }
-
-    $dsn = DB::parseDSN(CIVICRM_DSN);
+    // Get CiviCRM credentials.
+    $dsn = $this->cividb_dsn_get();
 
     $command = sprintf(
       'mysql --database=%s --host=%s --user=%s --password=%s',
@@ -290,6 +285,12 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    * [--views-only]
    * : Drop only views.
    *
+   * [--extra-filters=<extra-filters>]
+   * : A comma separated list of additional tables to drop based on wildcard search.
+   *
+   * [--yes]
+   * : Answer yes to the confirmation message.
+   *
    * ## EXAMPLES
    *
    *     # Drop all CiviCRM tables and views.
@@ -300,6 +301,10 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *
    *     # Drop just the CiviCRM views.
    *     $ wp civicrm db drop-tables --views-only
+   *
+   *     # Use an extra wildcard when some table names are not registered with CiviCRM.
+   *     # In this case, also drop tables for the "Canadian Tax Receipts" extension.
+   *     $ wp civicrm db drop-tables --extra-filters='cdntaxreceipts_*' --tables-only
    *
    * @subcommand drop-tables
    *
@@ -314,9 +319,21 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     $tables_only = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'tables-only', FALSE);
     $views_only = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'views-only', FALSE);
 
+    // Let's give folks a chance to bail.
+    if (empty($views_only) && empty($tables_only)) {
+      $message = 'tables and views';
+    }
+    elseif (!empty($views_only)) {
+      $message = 'views';
+    }
+    elseif (!empty($tables_only)) {
+      $message = 'tables';
+    }
+    WP_CLI::confirm(sprintf(WP_CLI::colorize('%GAre you sure you want to drop the CiviCRM %s from the database?%n'), $message), $assoc_args);
+
     // Get CiviCRM tables and views.
-    $tables = $this->cividb_tables_get();
-    $views = $this->cividb_views_get();
+    $tables = $this->cividb_tables_get($assoc_args);
+    $views = $this->cividb_views_get($assoc_args);
 
     // Get an instance of wpdb with CiviCRM credentials.
     $cividb = $this->cividb_get();
@@ -327,7 +344,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
       WP_CLI::log('Dropping CiviCRM database tables...');
       foreach ($tables as $table) {
         $query = 'DROP TABLE IF EXISTS ' . \WP_CLI\Utils\esc_sql_ident($table);
-        WP_CLI::debug($query);
+        WP_CLI::debug($query, 'civicrm');
         $cividb->query($query);
       }
       WP_CLI::success('CiviCRM database tables dropped.');
@@ -338,7 +355,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
       WP_CLI::log('Dropping CiviCRM database views...');
       foreach ($views as $view) {
         $query = 'DROP VIEW ' . \WP_CLI\Utils\esc_sql_ident($view);
-        WP_CLI::debug($query);
+        WP_CLI::debug($query, 'civicrm');
         $cividb->query($query);
       }
       WP_CLI::success('CiviCRM database views dropped.');
@@ -358,7 +375,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    * ## OPTIONS
    *
    * [--tables=<tables>]
-   * : The comma separated list of specific tables to export. Excluding this parameter will export all tables in the database.
+   * : The comma separated list of specific tables to export. Excluding this parameter will export all CiviCRM tables in the database.
    *
    * [--result-file=<result-file>]
    * : The path to the saved file. Excluding this parameter will export to STDOUT.
@@ -390,15 +407,8 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     // Grab associative arguments.
     $tables = \WP_CLI\Utils\get_flag_value($assoc_args, 'tables', FALSE);
 
-    // Bootstrap CiviCRM.
-    $this->bootstrap_civicrm();
-
-    if (!defined('CIVICRM_DSN')) {
-      WP_CLI::error('CIVICRM_DSN is not defined.');
-    }
-
-    $mysqldump_binary = \WP_CLI\Utils\force_env_on_nix_systems('mysqldump');
-    $dsn = DB::parseDSN(CIVICRM_DSN);
+    // Get CiviCRM credentials.
+    $dsn = $this->cividb_dsn_get();
 
     // Do we want only certain CiviCRM tables?
     $runcommand_args = '';
@@ -416,6 +426,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     $tables = explode(',', $tables);
 
     // Build command and escaped shell arguments.
+    $mysqldump_binary = \WP_CLI\Utils\force_env_on_nix_systems('mysqldump');
     $command = $mysqldump_binary . " --opt --triggers --routines --events --host={$dsn['hostspec']} --user={$dsn['username']} --password='{$dsn['password']}' %s";
     $command_esc_args = [$dsn['database']];
     $command .= ' --tables';
@@ -534,14 +545,8 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     // Grab associative arguments.
     $load_file = \WP_CLI\Utils\get_flag_value($assoc_args, 'load-file', FALSE);
 
-    // Bootstrap CiviCRM.
-    $this->bootstrap_civicrm();
-
-    if (!defined('CIVICRM_DSN')) {
-      WP_CLI::error('CIVICRM_DSN is not defined.');
-    }
-
-    $dsn = DB::parseDSN(CIVICRM_DSN);
+    // Get CiviCRM credentials.
+    $dsn = $this->cividb_dsn_get();
 
     $mysql_args = [
       'host'     => $dsn['hostspec'],
@@ -552,6 +557,59 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
     ];
 
     \WP_CLI\Utils\run_mysql_command('/usr/bin/env mysql', $mysql_args);
+
+  }
+
+  /**
+   * Check if CiviCRM shares a database with WordPress.
+   *
+   * ## OPTIONS
+   *
+   * [--show-result]
+   * : The path to the database file.
+   *
+   * ## EXAMPLES
+   *
+   *     $ wp civicrm db is-shared
+   *
+   * @subcommand is-shared
+   *
+   * @since 1.0.0
+   *
+   * @param array $args The WP-CLI positional arguments.
+   * @param array $assoc_args The WP-CLI associative arguments.
+   */
+  public function is_shared($args, $assoc_args) {
+
+    // Grab associative arguments.
+    $show = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'show-result', FALSE);
+
+    // Get CiviCRM credentials.
+    $dsn = $this->cividb_dsn_get();
+
+    // True when host and database name are identical.
+    $shared = FALSE;
+    if ($dsn['hostspec'] === DB_HOST && $dsn['database'] === DB_NAME) {
+      $shared = TRUE;
+    }
+
+    // Exit with code if not showing result.
+    if (empty($show)) {
+      if (empty($shared)) {
+        WP_CLI::halt(0);
+      }
+      else {
+        WP_CLI::halt(1);
+      }
+    }
+
+    // Show result.
+    if (empty($shared)) {
+      WP_CLI::log(0);
+    }
+    else {
+      WP_CLI::log(1);
+    }
 
   }
 
@@ -654,14 +712,8 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
 
     $query = $args[0];
 
-    // Bootstrap CiviCRM.
-    $this->bootstrap_civicrm();
-
-    if (!defined('CIVICRM_DSN')) {
-      WP_CLI::error('CIVICRM_DSN is not defined.');
-    }
-
-    $dsn = DB::parseDSN(CIVICRM_DSN);
+    // Get CiviCRM credentials.
+    $dsn = $this->cividb_dsn_get();
 
     $mysql_args = [
       'host'     => $dsn['hostspec'],
@@ -689,6 +741,9 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    * [--views-only]
    * : Restrict returned tables to those that are views.
    *
+   * [--extra-filters=<extra-filters>]
+   * : A comma separated list of additional wildcards to search.
+   *
    * [--format=<format>]
    * : Render output in a particular format.
    * ---
@@ -701,6 +756,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
+   *     # Use a wildcard to get matching table names from the set of CiviCRM tables.
    *     $ wp civicrm db tables 'civicrm_*_group' --tables-only
    *     civicrm_campaign_group
    *     civicrm_custom_group
@@ -708,6 +764,34 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *     civicrm_mailing_group
    *     civicrm_option_group
    *     civicrm_uf_group
+   *
+   *     # Use wildcards to get matching view names from the set of CiviCRM multi-lingual views.
+   *     % wp civicrm db tables 'civicrm_*_group_de_de' 'civicrm_*_group_en_us' --views-only
+   *     civicrm_custom_group_de_de
+   *     civicrm_custom_group_en_us
+   *     civicrm_option_group_de_de
+   *     civicrm_option_group_en_us
+   *     civicrm_uf_group_de_de
+   *     civicrm_uf_group_en_us
+   *
+   *     # Use an extra wildcard when some table names are not registered with CiviCRM.
+   *     # In this case, include tables for the "Canadian Tax Receipts" extension.
+   *     $ wp civicrm db tables '*_log' --extra-filters='cdntaxreceipts_*' --tables-only
+   *     cdntaxreceipts_log
+   *     civicrm_action_log
+   *     civicrm_job_log
+   *     civicrm_log
+   *     civicrm_membership_log
+   *     civicrm_system_log
+   *     civirule_rule_log
+   *
+   *     # When CiviCRM shares a database with WordPress, use an extra wildcard to include
+   *     # WordPress tables in a query. Here `$wpdb->prefix` is set to the default 'wp_'.
+   *     % wp civicrm db tables '*_user*' --extra-filters='wp_*' --tables-only
+   *     civicrm_user_job
+   *     log_civicrm_user_job
+   *     wp_usermeta
+   *     wp_users
    *
    * @since 1.0.0
    *
@@ -717,9 +801,10 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   public function tables($args, $assoc_args) {
 
     // Grab associative arguments.
-    $tables_only = \WP_CLI\Utils\get_flag_value($assoc_args, 'tables-only');
-    $views_only = \WP_CLI\Utils\get_flag_value($assoc_args, 'views-only');
-    $format = \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'list');
+    $tables_only = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'tables-only', FALSE);
+    $views_only = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'views-only', FALSE);
+    $extra_filters = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'extra-filters', '');
+    $format = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'list');
 
     // Bail if incompatible args have been supplied.
     if (!empty($tables_only) && !empty($views_only)) {
@@ -749,6 +834,16 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
       'log_civicrm_*',
       'snap_civicrm_*',
     ];
+
+    // Add in any extra wildcard filters.
+    if (!empty($extra_filters)) {
+      $wildcards = explode(',', $extra_filters);
+      foreach ($wildcards as $wildcard) {
+        $pre_filter[] = trim($wildcard);
+      }
+    }
+
+    // Pre-filter now.
     $tables = $this->names_filter($pre_filter, $tables);
 
     // When tables are part of the query, add tables that are present in civicrm tables.
@@ -889,12 +984,20 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *
    * @since 1.0.0
    *
+   * @param array $assoc_args The WP-CLI associative arguments.
    * @return array $tables The array of CiviCRM database tables.
    */
-  private function cividb_tables_get() {
+  private function cividb_tables_get($assoc_args) {
+
+    // Maybe add extra filters.
+    $extra_filters = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'extra-filters', '');
+    $runcommand_args = '';
+    if (!empty($extra_filters)) {
+      $runcommand_args = " --extra-filters={$extra_filters}";
+    }
 
     // Use "wp civicrm db tables" to find the CiviCRM database tables.
-    $command = "civicrm db tables --tables-only --format=json";
+    $command = "civicrm db tables{$runcommand_args} --tables-only --format=json";
     $options = ['launch' => FALSE, 'return' => TRUE];
     $core_tables = WP_CLI::runcommand($command, $options);
 
@@ -913,12 +1016,20 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *
    * @since 1.0.0
    *
+   * @param array $assoc_args The WP-CLI associative arguments.
    * @return array $views The array of CiviCRM database views.
    */
-  private function cividb_views_get() {
+  private function cividb_views_get($assoc_args) {
+
+    // Maybe add extra filters.
+    $extra_filters = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'extra-filters', '');
+    $runcommand_args = '';
+    if (!empty($extra_filters)) {
+      $runcommand_args = " --extra-filters={$extra_filters}";
+    }
 
     // Use "wp civicrm db tables" to find the CiviCRM database views.
-    $command = "civicrm db tables 'civicrm_*' --views-only --format=json";
+    $command = "civicrm db tables 'civicrm_*'{$runcommand_args} --views-only --format=json";
     $options = ['launch' => FALSE, 'return' => TRUE];
     $core_views = WP_CLI::runcommand($command, $options);
 
