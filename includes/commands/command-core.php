@@ -336,7 +336,6 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *     | Custom PHP             | Not found                                                             |
    *     | Custom templates       | Not found                                                             |
    *     | Compiled templates     | /example.com/httpdocs/wp-content/uploads/civicrm/templates_c/         |
-   *     | Compiled templates     | /example.com/httpdocs/wp-content/uploads/civicrm/templates_c/         |
    *     | Extensions directory   | /example.com/httpdocs/wp-content/uploads/civicrm/ext/                 |
    *     | Uploads directory      | /example.com/httpdocs/wp-content/uploads/civicrm/upload/              |
    *     | Image upload directory | /example.com/httpdocs/wp-content/uploads/civicrm/persist/contribute/  |
@@ -1163,7 +1162,6 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *     | Config and Log         | /example.com/httpdocs/wp-content/uploads/civicrm/ConfigAndLog/        |
    *     | Custom PHP             | Not found                                                             |
    *     | Custom templates       | Not found                                                             |
-   *     | Compiled templates     | /example.com/httpdocs/wp-content/uploads/civicrm/templates_c/         |
    *     | Compiled templates     | /example.com/httpdocs/wp-content/uploads/civicrm/templates_c/         |
    *     | Extensions directory   | /example.com/httpdocs/wp-content/uploads/civicrm/ext/                 |
    *     | Uploads directory      | /example.com/httpdocs/wp-content/uploads/civicrm/upload/              |
