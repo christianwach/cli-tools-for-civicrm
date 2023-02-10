@@ -5,7 +5,7 @@
  * GitHub Plugin URI: https://github.com/christianwach/cli-tools-for-civicrm
  * Description: Manage CiviCRM through the command line.
  * Author: Christian Wach
- * Version: 1.0.0a
+ * Version: 1.0.0b
  * Author URI: https://haystack.co.uk
  * Depends: CiviCRM
  *
@@ -16,7 +16,7 @@
 defined('ABSPATH') || exit;
 
 // Set our version here.
-define('COMMAND_LINE_CIVICRM_VERSION', '1.0.0a');
+define('COMMAND_LINE_CIVICRM_VERSION', '1.0.0b');
 
 // Store reference to this file.
 if (!defined('COMMAND_LINE_CIVICRM_FILE')) {
