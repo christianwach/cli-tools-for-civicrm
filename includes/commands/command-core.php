@@ -1561,6 +1561,9 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    * [--vv]
    * : Run the upgrade queue with extra verbose output.
    *
+   * [--vvv]
+   * : An alias of --vv for old timers more used to cv syntax.
+   *
    * [--yes]
    * : Answer yes to the confirmation messages. Does not apply to step messages.
    *
@@ -1626,6 +1629,10 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     // Get verbosity.
     $verbose = \WP_CLI\Utils\get_flag_value($assoc_args, 'v', FALSE);
     $verbose_extra = \WP_CLI\Utils\get_flag_value($assoc_args, 'vv', FALSE);
+    $verbose_old_skool = \WP_CLI\Utils\get_flag_value($assoc_args, 'vvv', FALSE);
+    if (!empty($verbose_old_skool)) {
+      $verbose_extra = TRUE;
+    }
 
     // When stepping, we need at least "verbose".
     if (!empty($step)) {
