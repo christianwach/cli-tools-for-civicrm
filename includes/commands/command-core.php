@@ -1761,7 +1761,15 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
         }
         catch (\Exception $e) {
           // WISHLIST: For interactive mode, perhaps allow retry/skip?
-          WP_CLI::error(sprintf('Error executing task "%s"', $task->title));
+          WP_CLI::log(sprintf(WP_CLI::colorize('%RError executing task%n %Y"%s"%n'), $task->title));
+          WP_CLI::log('');
+          WP_CLI::log(WP_CLI::colorize('%RError message:%n'));
+          WP_CLI::log(sprintf(WP_CLI::colorize('%r%s%n'), $e->getMessage()));
+          WP_CLI::log('');
+          WP_CLI::log(WP_CLI::colorize('%RStack trace:%n'));
+          WP_CLI::log(sprintf(WP_CLI::colorize('%r%s%n'), $e->getTraceAsString()));
+          WP_CLI::log('');
+          WP_CLI::error('Could not complete database update.');
         }
       }
 
