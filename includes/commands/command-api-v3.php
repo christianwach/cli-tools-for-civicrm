@@ -68,7 +68,7 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
 
     // Grab associative arguments.
     $input_format = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'input', 'args');
-    $wp_user_timezone = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'timezone', get_option('timezone_string'));
+    $site_timezone = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'timezone', $this->site_timezone_get());
     $format = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'pretty');
 
     // Get the Entity and Action from the first positional argument.
@@ -108,19 +108,19 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
     // Bootstrap CiviCRM.
     $this->bootstrap_civicrm();
 
-    // CRM-18062: Set CiviCRM timezone if any.
-    $wp_base_timezone = date_default_timezone_get();
-    if ($wp_user_timezone) {
-      date_default_timezone_set($wp_user_timezone);
+    // CRM-18062: Configure timezone for CiviCRM.
+    $current_timezone = date_default_timezone_get();
+    if ($site_timezone) {
+      date_default_timezone_set($site_timezone);
       CRM_Core_Config::singleton()->userSystem->setMySQLTimeZone();
     }
 
     // Now call the CiviCRM API.
     $result = civicrm_api($entity, $action, $params);
 
-    // Restore WordPress timezone.
-    if ($wp_base_timezone) {
-      date_default_timezone_set($wp_base_timezone);
+    // Restore timezone.
+    if ($current_timezone) {
+      date_default_timezone_set($current_timezone);
     }
 
     switch ($format) {

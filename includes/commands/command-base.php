@@ -33,6 +33,60 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
   }
 
   /**
+   * Returns the timezone string for the current site.
+   *
+   * If a timezone identifier is used, then return it.
+   * If an offset is used, build a suitable timezone.
+   * If all else fails, uses UTC.
+   *
+   * @since 1.0.0
+   *
+   * @return string $tzstring The site timezone string.
+   */
+  protected function site_timezone_get() {
+
+    // Check our cached value first.
+    $tzstring = wp_cache_get('cli_tools_civicrm_timezone');
+
+    // Build value if none is cached.
+    if (FALSE === $tzstring) {
+
+      // Get relevant WordPress settings.
+      $tzstring = get_option('timezone_string');
+      $offset = get_option('gmt_offset');
+
+      /*
+       * Setting manual offsets should be discouraged.
+       *
+       * The IANA timezone database that provides PHP's timezone support
+       * uses (reversed) POSIX style signs.
+       *
+       * @see https://github.com/stephenharris/Event-Organiser/issues/287
+       * @see https://www.php.net/manual/en/timezones.others.php
+       * @see https://bugs.php.net/bug.php?id=45543
+       * @see https://bugs.php.net/bug.php?id=45528
+       */
+      if (empty($tzstring) && 0 != $offset && floor($offset) == $offset) {
+        $offset_string = $offset > 0 ? "-$offset" : '+' . absint($offset);
+        $tzstring = 'Etc/GMT' . $offset_string;
+      }
+
+      // Default to "UTC" if the timezone string is empty.
+      if (empty($tzstring)) {
+        $tzstring = 'UTC';
+      }
+
+      // Cache timezone string.
+      wp_cache_set('cli_tools_civicrm_timezone', $tzstring);
+
+    }
+
+    // --<
+    return $tzstring;
+
+  }
+
+  /**
    * Downloads a remote file with a GET request.
    *
    * @since 1.0.0
