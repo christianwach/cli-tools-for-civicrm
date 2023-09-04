@@ -36,7 +36,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    * @since 1.0.0
    * @access private
    */
-  private $upgrade_url = 'https://upgrade.civicrm.org/check';
+  private $upgrade_url = 'https://download.civicrm.org/check';
 
   /**
    * @var string
