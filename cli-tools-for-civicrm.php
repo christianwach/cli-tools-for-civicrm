@@ -84,11 +84,11 @@ class Command_Line_Tools_for_CiviCRM {
 }
 
 /**
- * Bootstrap plugin if not yet loaded and returns reference.
+ * Bootstraps plugin if not yet loaded and returns reference.
  *
  * @since 1.0.0
  *
- * @return CommentPress_Plugin $plugin The plugin reference.
+ * @return Command_Line_Tools_for_CiviCRM $plugin The plugin reference.
  */
 function command_line_civicrm() {
 
