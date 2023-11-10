@@ -214,7 +214,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
      * TODO: This means that the `--site_url` flag is basically redundant.
      */
     if (!empty($base_url)) {
-      $protocol = ('on' == $ssl ? 'https' : 'http');
+      $protocol = ('on' === $ssl ? 'https' : 'http');
       $base_url = $protocol . '://' . $base_url;
       $setup->getModel()->cmsBaseUrl = trailingslashit($base_url);
     }
@@ -1614,7 +1614,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     WP_CLI::log(sprintf(WP_CLI::colorize('%GFound CiviCRM code version:%n %Y%s%n'), $code_version));
     $db_version = CRM_Core_BAO_Domain::version();
     WP_CLI::log(sprintf(WP_CLI::colorize('%GFound CiviCRM database version:%n %Y%s%n'), $db_version));
-    if (version_compare($code_version, $db_version) == 0) {
+    if (version_compare($code_version, $db_version) === 0) {
       WP_CLI::success(sprintf('You are already upgraded to CiviCRM %s', $code_version));
       WP_CLI::halt(0);
     }
