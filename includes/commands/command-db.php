@@ -1056,7 +1056,7 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
   private function cividb_procedures_get() {
 
     // Use "wp civicrm db procedures" to find the CiviCRM database procedures.
-    $command = "civicrm db procedures --format=json";
+    $command = 'civicrm db procedures --format=json';
     $options = ['launch' => FALSE, 'return' => TRUE];
     $core_procedures = WP_CLI::runcommand($command, $options);
 
