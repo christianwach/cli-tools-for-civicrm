@@ -53,20 +53,20 @@ class CLI_Tools_CiviCRM_Zip_Extractor extends WP_Upgrader {
 
     $this->extract_strings();
 
-		$options = [
+    $options = [
       'package' => $zipfile,
       'destination' => untrailingslashit($destination),
     ];
 
-		$defaults = [
+    $defaults = [
       'clear_destination' => TRUE,
       'clear_working' => TRUE,
       'abort_if_destination_exists' => FALSE,
-		];
+    ];
 
-		$settings = wp_parse_args($settings, $defaults);
+    $settings = wp_parse_args($settings, $defaults);
 
-		$options = $options + $settings;
+    $options = $options + $settings;
 
     return $this->run($options);
 

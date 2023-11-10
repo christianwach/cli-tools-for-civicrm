@@ -650,18 +650,18 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
-	 *     # Check if CiviCRM shares a database with WordPress. Exit status 0 if shared, otherwise 1.
+   *     # Check if CiviCRM shares a database with WordPress. Exit status 0 if shared, otherwise 1.
    *     $ wp civicrm db is-shared
-	 *     $ echo $?
-	 *     0
+   *     $ echo $?
+   *     0
    *
-	 *     # Show whether CiviCRM shares a database with WordPress. Prints 1 if shared, otherwise 0.
+   *     # Show whether CiviCRM shares a database with WordPress. Prints 1 if shared, otherwise 0.
    *     $ wp civicrm db is-shared --show-result
-	 *     1
+   *     1
    *
-	 *     # Shell command that shows if CiviCRM shares a database with WordPress.
-	 *     if wp civicrm db is-shared; then echo "Yup"; else echo "Nope"; fi
-	 *     Nope
+   *     # Shell command that shows if CiviCRM shares a database with WordPress.
+   *     if wp civicrm db is-shared; then echo "Yup"; else echo "Nope"; fi
+   *     Nope
    *
    * @subcommand is-shared
    *
