@@ -18,9 +18,9 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
    *
    * @var array
    */
-  protected $obj_fields = array(
+  protected $obj_fields = [
     'id',
-  );
+  ];
 
   /**
    * Access the CiviCRM API v3.
