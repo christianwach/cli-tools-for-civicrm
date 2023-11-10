@@ -40,7 +40,7 @@ if (!defined('COMMAND_LINE_CIVICRM_PATH')) {
  *
  * @since 1.0.0
  */
-class Command_Line_Tools_for_CiviCRM {
+class Command_Line_Tools_For_CiviCRM {
 
   /**
    * Constructor.
@@ -95,7 +95,7 @@ function command_line_civicrm() {
   // Maybe bootstrap plugin.
   static $plugin;
   if (!isset($plugin)) {
-    $plugin = new Command_Line_Tools_for_CiviCRM();
+    $plugin = new Command_Line_Tools_For_CiviCRM();
   }
 
   // Return reference.
