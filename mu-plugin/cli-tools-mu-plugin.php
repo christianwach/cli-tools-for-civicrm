@@ -15,11 +15,11 @@
  */
 
 // Exit if accessed directly.
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * Prevent CiviCRM from loading its wp-cli tools.
  */
-if ( ! defined( 'CIVICRM_WPCLI_LOADED' ) ) {
-  define( 'CIVICRM_WPCLI_LOADED', 1 );
+if (!defined('CIVICRM_WPCLI_LOADED')) {
+  define('CIVICRM_WPCLI_LOADED', 1);
 }

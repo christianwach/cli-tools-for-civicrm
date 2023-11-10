@@ -51,7 +51,7 @@ class CLI_Tools_CiviCRM_Command_SQL_Dump extends CLI_Tools_CiviCRM_Command {
     // Build command and escaped shell arguments.
     $command = $mysqldump_binary . " --opt --triggers --routines --events --host={$dsn['hostspec']} --user={$dsn['username']} --password='{$dsn['password']}' %s";
     $command_esc_args = [$dsn['database']];
-    if (! empty($tables)) {
+    if (!empty($tables)) {
       $requested_tables = explode(',', $tables);
       unset($assoc_args['tables']);
       $command .= ' --tables';
