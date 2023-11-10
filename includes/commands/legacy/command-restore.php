@@ -183,7 +183,7 @@ class CLI_Tools_CiviCRM_Command_Restore extends CLI_Tools_CiviCRM_Command {
       'host'     => $dsn['hostspec'],
       'user'     => $dsn['username'],
       'pass' => $dsn['password'],
-      'execute'  => sprintf("CREATE DATABASE %s", $dsn['database']),
+      'execute'  => sprintf('CREATE DATABASE %s', $dsn['database']),
     ];
     \WP_CLI\Utils\run_mysql_command('/usr/bin/env mysql --no-defaults', $mysql_args);
     WP_CLI::success('Database created.');
@@ -193,7 +193,7 @@ class CLI_Tools_CiviCRM_Command_Restore extends CLI_Tools_CiviCRM_Command {
     $command = 'civicrm db import --load-file=' . $sql_file;
     $options = ['launch' => FALSE, 'return' => FALSE];
     WP_CLI::runcommand($command, $options);
-    WP_CLI::success("Database restored.");
+    WP_CLI::success('Database restored.');
 
     // Clear caches.
     WP_CLI::log('');
