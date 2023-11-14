@@ -49,19 +49,19 @@ class Command_Line_Tools_For_CiviCRM {
    */
   public function __construct() {
 
-    // Load wp-cli tools.
+    // Load WP-CLI tools.
     $this->include_files();
 
   }
 
   /**
-   * Loads the wp-cli tools.
+   * Loads the WP-CLI tools.
    *
    * @since 1.0.0
    */
   public function include_files() {
 
-    // Bail if not wp-cli context.
+    // Bail if not WP-CLI context.
     if (!defined('WP_CLI')) {
       return;
     }
@@ -71,12 +71,12 @@ class Command_Line_Tools_For_CiviCRM {
       return;
     }
 
-    // Bail if wp-cli tools are already loaded.
-    if (class_exists('CiviCRM_Command')) {
+    // Bail if legacy or current WP-CLI tools are already loaded.
+    if (class_exists('CiviCRM_Command') || class_exists('CLI_Tools_CiviCRM_Command')) {
       return;
     }
 
-    // Load our wp-cli tools.
+    // Load our WP-CLI tools.
     require COMMAND_LINE_CIVICRM_PATH . 'includes/wp-cli-civicrm.php';
 
   }

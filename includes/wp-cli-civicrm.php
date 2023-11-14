@@ -10,6 +10,16 @@ if (!class_exists('WP_CLI')) {
   return;
 }
 
+// Bail if legacy or current WP-CLI tools are already loaded.
+if (class_exists('CiviCRM_Command') || class_exists('CLI_Tools_CiviCRM_Command')) {
+  return;
+}
+
+// Make this the one true command.
+if (!defined('CIVICRM_WPCLI_LOADED')) {
+  define('CIVICRM_WPCLI_LOADED', 1);
+}
+
 // Set up commands.
 WP_CLI::add_hook('before_wp_load', function() {
 
