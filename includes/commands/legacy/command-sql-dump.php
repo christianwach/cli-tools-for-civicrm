@@ -11,7 +11,12 @@
 class CLI_Tools_CiviCRM_Command_SQL_Dump extends CLI_Tools_CiviCRM_Command {
 
   /**
-   * Export the whole CiviCRM database and print to STDOUT or save to a file. Deprecated: use `wp civicrm db export` instead.
+   * Export the whole database that CiviCRM has credentials for and print to STDOUT or save to a file.
+   *
+   * This command is useful on servers where the user may not have direct access to the `mysqldump`
+   * command and the user wants to export the entire database in which the CiviCRM tables reside.
+   * For more granular exports of the CiviCRM tables, functions, procedures and views, use the
+   * `wp civicrm db export` command instead.
    *
    * ## OPTIONS
    *
