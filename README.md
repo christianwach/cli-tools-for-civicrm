@@ -52,7 +52,7 @@ This plugin loads the Command Line Tools in a multi-class structure that WP-CLI 
 
 ### Unchanged Commands
 
-* `wp civicrm api`: For the time-being this command is an alias of `wp civicrm api3`. It may become an alias for `wp civicrm api4` when that command is added, so it is definitely better to use `wp civicrm api3` directly to avoid problems in the future. There will, of course, be a deprecation notice issued well before the switch, so don't panic!
+* `wp civicrm api`: For the time-being this command is an alias of `wp civicrm api3`. It may become an alias for `wp civicrm api4` when that command is added, so it is definitely better to use `wp civicrm api3` directly to avoid problems in the future. There will, of course, be a deprecation notice issued well before the switch, so don't worry!
 * `wp civicrm pipe`: This command will remain in the top-level namespace.
 
 ### New Commands
@@ -69,8 +69,8 @@ There is a new command `wp civicrm core <command>` which (sort of) mirrors the f
 | `wp civicrm core install` | Installs the CiviCRM plugin. | `wp civicrm install` but without activation |
 | `wp civicrm core is-installed` | Checks if CiviCRM is installed. | Not implemented yet |
 | `wp civicrm core restore` | Restore the CiviCRM plugin, CiviCRM files and database from a backup. | Requires a backup made with `wp civicrm core backup` |
-| `wp civicrm core update` | Updates CiviCRM to a newer version. | `wp civicrm upgrade` currently broken |
-| `wp civicrm core update-cfg` | Reset paths to correct config settings. | Untested copy of `wp civicrm update-cfg` |
+| `wp civicrm core update` | Updates CiviCRM to a newer version. | `wp civicrm upgrade` |
+| `wp civicrm core update-cfg` | Reset paths to correct config settings. | `wp civicrm update-cfg` |
 | `wp civicrm core update-db` | Runs the CiviCRM database update procedure. | `wp civicrm upgrade-db` |
 | `wp civicrm core verify-checksums` | Verifies CiviCRM files against checksums via `googleapis`. | Not implemented yet |
 | `wp civicrm core version` | Displays the CiviCRM version. | New |
