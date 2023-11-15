@@ -87,7 +87,8 @@ There is a new command `wp civicrm db <command>` which (sort of) mirrors the fun
 | `wp civicrm db connect` | Get a string which connects to the CiviCRM database. | `wp civicrm sql-connect` |
 | `wp civicrm db drop` | Drop the CiviCRM database when it is not shared with WordPress. | New |
 | `wp civicrm db drop-tables` | Drop the CiviCRM tables from the database. | New |
-| `wp civicrm db export` | Export the whole CiviCRM database and print to STDOUT or save to a file.| `wp civicrm sql-dump` |
+| `wp civicrm db dump` | Dump the whole CiviCRM database and print to STDOUT or save to a file. | `wp civicrm sql-dump` |
+| `wp civicrm db export` | Export the whole CiviCRM database and print to STDOUT or save to a file. | New |
 | `wp civicrm db functions` | Get the list of CiviCRM functions in the database. | New |
 | `wp civicrm db import` | Loads a whole CiviCRM database. | New |
 | `wp civicrm db is-shared` | Check if CiviCRM shares a database with WordPress. | New |
