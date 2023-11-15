@@ -25,7 +25,7 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
    *
    * @since 1.0.0
    */
-  public function bootstrap_civicrm() {
+  protected function bootstrap_civicrm() {
     self::check_dependencies();
     if (!civicrm_initialize()) {
       WP_CLI::error('Unable to initialize CiviCRM.');
