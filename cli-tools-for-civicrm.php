@@ -7,7 +7,6 @@
  * Author: Christian Wach
  * Version: 1.0.0
  * Author URI: https://haystack.co.uk
- * Depends: CiviCRM
  *
  * @package Command_Line_Tools_for_CiviCRM
  */
