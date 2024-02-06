@@ -132,8 +132,7 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    * options:
    *   - table
    *   - json
-   *   - url
-   *   - version
+   *   - pretty
    * ---
    *
    * @since 1.0.0
