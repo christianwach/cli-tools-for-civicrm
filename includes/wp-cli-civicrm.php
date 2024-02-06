@@ -1,6 +1,9 @@
 <?php
 /**
- * WP-CLI port of drush-civicrm integration.
+ * WP-CLI integration based on CiviCRM `cv` functionality.
+ *
+ * @see https://github.com/civicrm/cv
+ * @see https://github.com/civicrm-wordpress/wp-cli
  *
  * @package Command_Line_Tools_for_CiviCRM
  */
