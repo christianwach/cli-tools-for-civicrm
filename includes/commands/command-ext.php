@@ -13,6 +13,9 @@
  *     |                                              ... more rows ...                                                        |
  *     +----------+---------------+---------------+---------+--------------+-------------+--------+----------------------------+
  *
+ *     $ wp civicrm ext list --refresh
+ *     Success: CiviCRM Extensions refreshed.
+ *
  * @since 1.0.0
  *
  * @package Command_Line_Tools_for_CiviCRM
@@ -33,6 +36,9 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    *     |                                              ... more rows ...                                                        |
    *     +----------+---------------+---------------+---------+--------------+-------------+--------+----------------------------+
    *
+   *     $ wp civicrm ext list --refresh
+   *     Success: CiviCRM Extensions refreshed.
+   *
    * ## OPTIONS
    *
    * [--local]
@@ -40,6 +46,9 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    *
    * [--remote]
    * : List only remotely available CiviCRM Extensions.
+   *
+   * [--refresh]
+   * : Refresh the list of CiviCRM Extensions.
    *
    * [--format=<format>]
    * : Render output in a particular format.
@@ -63,13 +72,39 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
     $format = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'table');
     $local = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'local', FALSE);
     $remote = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'remote', FALSE);
+    $refresh = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'refresh', FALSE);
+
+    // Bootstrap CiviCRM.
+    $this->bootstrap_civicrm();
+
+    // Was a refresh requested?
+    if (!empty($refresh)) {
+
+      // Pass on to "wp civicrm api".
+      $options = ['launch' => FALSE, 'return' => TRUE];
+      $result = WP_CLI::runcommand('civicrm api extension.refresh --format=json --quiet', $options);
+
+      // Convert to array.
+      $result = json_decode($result, TRUE);
+      if (JSON_ERROR_NONE !== json_last_error()) {
+        WP_CLI::error(sprintf(WP_CLI::colorize('Failed to decode JSON: %y%s.%n'), json_last_error_msg()));
+      }
+
+      // How did we do?
+      if (!empty($result['is_error']) && 1 === (int) $result['is_error']) {
+        WP_CLI::error(sprintf(WP_CLI::colorize('Failed to refresh CiviCRM Extensions: %y%s%n'), $result['error_message']));
+      }
+
+      WP_CLI::success('CiviCRM Extensions refreshed.');
+      return;
+
+    }
+
+    // When both args are missing, show all.
     if (empty($local) && empty($remote)) {
       $local = TRUE;
       $remote = TRUE;
     }
-
-    // Bootstrap CiviCRM.
-    $this->bootstrap_civicrm();
 
     $rows = [];
 
