@@ -98,6 +98,15 @@ There is a new command `wp civicrm db <command>` which (sort of) mirrors the fun
 
 Use `wp help civicrm db <command>` for full details and examples.
 
+There is a new command `wp civicrm ext <command>` which (sort of) mirrors the functionality in `cv ext`. It holds the commands that apply to interaction with CiviCRM Extensions.
+
+| Command | Description | Equivalent in `cv` |
+| --- | --- | --- |
+| `wp civicrm ext download` | Download and optionally install a CiviCRM Extension.. | `cv ext:download` |
+| `wp civicrm ext list` | List the set of CiviCRM Extensions. | `cv ext:list` |
+
+Use `wp help civicrm ext <command>` for full details and examples.
+
 ### Deprecated Commands
 
 All previous commands still exist for the time being. However, because they were attached to the top-level `wp civicrm` namespace, it seems sensible to deprecate them in favour of better-namespaced new commands. The following table shows you replacement commands:
