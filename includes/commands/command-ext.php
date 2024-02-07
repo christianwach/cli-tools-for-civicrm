@@ -42,7 +42,10 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    * : The extension full key ("org.example.foobar") or short name ("foobar").
    *
    * [--install]
-   * : Download and install the specified CiviCRM Extension.
+   * : Install the specified CiviCRM Extension after downloading.
+   *
+   * [--yes]
+   * : Answer yes to the confirmation message.
    *
    * @alias dl
    *
@@ -56,11 +59,63 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
     // Grab associative arguments.
     $install = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'install', FALSE);
 
-    // Tease out URL when present.
+    // Tease out key and URL when present.
     $key_or_name = $args[0];
     $url = '';
     if (FALSE !== strpos($args[0], '@')) {
       list ($key_or_name, $url) = explode('@', $args[0], 2);
+    }
+
+    // Use "wp civicrm ext info" to get info for the Extension.
+    $command = 'civicrm ext info ' . $key_or_name . ' --format=json';
+    $options = ['launch' => FALSE, 'return' => TRUE, 'parse' => 'json', 'exit_error' => FALSE, 'command_args' => ['--quiet']];
+    $result = WP_CLI::runcommand($command, $options);
+
+    // Skip if not found.
+    if (empty($result)) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('%gCould not find Extension:%n %y%s.%n'), $key_or_name));
+    }
+
+    // Show existing information.
+    WP_CLI::log(WP_CLI::colorize('%GGathering Extension information:%n'));
+
+    $feedback = [];
+    foreach ($result as $extension) {
+      $feedback[] = [
+        'Location' => $extension['location'],
+        'Label' => $extension['label'],
+        'Version' => $extension['version'],
+        'Status' => $extension['status'],
+      ];
+    }
+
+    $assoc_args['format'] = 'table';
+    $assoc_args['fields'] = ['Location', 'Label', 'Version', 'Status'];
+    $formatter = $this->formatter_get($assoc_args);
+    $formatter->display_items($feedback);
+
+    // Do we have local and remote info?
+    $local_exists = FALSE;
+    $remote_exists = FALSE;
+    foreach ($result as $extension) {
+      if ('local' === $extension['location']) {
+        $local_exists = TRUE;
+      }
+      if ('remote' === $extension['location']) {
+        $remote_exists = TRUE;
+      }
+    }
+
+    if ($local_exists && !$remote_exists) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('%gCould not find a remote Extension to download:%n %y%s.%n'), $key_or_name));
+    }
+
+    // Let's give folks a chance to exit.
+    if ($local_exists && $remote_exists) {
+      WP_CLI::confirm(WP_CLI::colorize('%GDo you want to overwrite with the remote Extension?%n'), $assoc_args);
+    }
+    if (!$local_exists && $remote_exists) {
+      WP_CLI::confirm(WP_CLI::colorize('%GDo you want to download the remote Extension?%n'), $assoc_args);
     }
 
     // Build API vars.
