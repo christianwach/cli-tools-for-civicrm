@@ -129,14 +129,8 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
 
     // Use "wp civicrm api" to do the download.
     $command = 'civicrm api extension.download ' . $vars . ' --format=json --quiet';
-    $options = ['launch' => FALSE, 'return' => TRUE];
+    $options = ['launch' => FALSE, 'return' => TRUE, 'parse' => 'json', 'exit_error' => FALSE, 'command_args' => ['--quiet']];
     $result = WP_CLI::runcommand($command, $options);
-
-    // Convert to array.
-    $result = json_decode($result, TRUE);
-    if (JSON_ERROR_NONE !== json_last_error()) {
-      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to decode JSON: %y%s.%n'), json_last_error_msg()));
-    }
 
     // Show error if present.
     if (!empty($result['is_error']) && 1 === (int) $result['is_error']) {
