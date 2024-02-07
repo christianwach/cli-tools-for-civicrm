@@ -78,7 +78,6 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
 
     // Show existing information.
     WP_CLI::log(WP_CLI::colorize('%GGathering Extension information:%n'));
-
     $feedback = [];
     foreach ($result as $extension) {
       $feedback[] = [
@@ -88,7 +87,6 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
         'Status' => $extension['status'],
       ];
     }
-
     $assoc_args['format'] = 'table';
     $assoc_args['fields'] = ['Location', 'Label', 'Version', 'Status'];
     $formatter = $this->formatter_get($assoc_args);
@@ -106,6 +104,7 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
       }
     }
 
+    // Skip if no remote has been found. Could be a custom Extension, for example.
     if ($local_exists && !$remote_exists) {
       WP_CLI::error(sprintf(WP_CLI::colorize('%gCould not find a remote Extension to download:%n %y%s.%n'), $key_or_name));
     }
