@@ -370,7 +370,13 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
       $statuses = \CRM_Extension_System::singleton()->getManager()->getStatuses();
       $mapper = \CRM_Extension_System::singleton()->getMapper();
       foreach ($keys as $key) {
-        $info = $mapper->keyToInfo($key);
+        try {
+          $info = $mapper->keyToInfo($key);
+        }
+        catch (\Exception $e) {
+          WP_CLI::warning(sprintf(WP_CLI::colorize('%gCiviCRM reported a problem:%n %y%s%n'), $e->getMessage()));
+          continue;
+        }
         if (in_array($format, ['pretty', 'json'])) {
           $row = [
             'location' => 'local',
