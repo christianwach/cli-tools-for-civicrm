@@ -117,6 +117,18 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
       WP_CLI::confirm(WP_CLI::colorize('%GDo you want to download the remote Extension?%n'), $assoc_args);
     }
 
+    // Let's take as much info as we can from the Extension data.
+    foreach ($result as $extension) {
+      if ('remote' === $extension['location']) {
+        if (empty($url) && !empty($extension['location'])) {
+          $url = $extension['downloadUrl'];
+        }
+        if ($key_or_name !== $extension['key']) {
+          $key_or_name = $extension['key'];
+        }
+      }
+    }
+
     // Build API vars.
     $vars = 'key=' . $key_or_name;
     if (!empty($url)) {
