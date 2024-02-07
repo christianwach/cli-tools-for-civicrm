@@ -470,6 +470,45 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
   }
 
   /**
+   * Apply DB upgrades for any Extensions.
+   *
+   * This command does not output parseable data. For parseable output,
+   * consider using `wp civicrm api extension.upgrade`.
+   *
+   * ## EXAMPLES
+   *
+   *     $ wp civicrm ext update-db
+   *     Applying available database upgrades for Extensions.
+   *     Success: Database upgrades for Extensions completed.
+   *
+   * @subcommand update-db
+   *
+   * @alias upgrade-db
+   *
+   * @since 1.0.0
+   *
+   * @param array $args The WP-CLI positional arguments.
+   * @param array $assoc_args The WP-CLI associative arguments.
+   */
+  public function update_db($args, $assoc_args) {
+
+    WP_CLI::log(WP_CLI::colorize('%gApplying available database upgrades for Extensions.%n'));
+
+    // Use "wp civicrm api" to do the download.
+    $command = 'civicrm api extension.upgrade --format=json --quiet';
+    $options = ['launch' => FALSE, 'return' => TRUE, 'parse' => 'json', 'exit_error' => FALSE, 'command_args' => ['--quiet']];
+    $result = WP_CLI::runcommand($command, $options);
+
+    // Show error if present.
+    if (!empty($result['is_error']) && 1 === (int) $result['is_error']) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to upgrade CiviCRM Extension: %y%s%n'), $result['error_message']));
+    }
+
+    WP_CLI::success('Database upgrades for Extensions completed.');
+
+  }
+
+  /**
    * Get a list of all available Extensions.
    *
    * @since 1.0.0
