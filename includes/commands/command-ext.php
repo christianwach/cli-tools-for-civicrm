@@ -98,6 +98,134 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
   }
 
   /**
+   * Get information about a CiviCRM Extension.
+   *
+   * ## EXAMPLES
+   *
+   *     $ wp civicrm ext info org.example.foobar
+   *     Success: CiviCRM Extension installed.
+   *
+   * ## OPTIONS
+   *
+   * <key-or-name>
+   * : The extension full key ("org.example.foobar") or short name ("foobar").
+   *
+   * [--local]
+   * : Get information only for a locally installed CiviCRM Extension.
+   *
+   * [--remote]
+   * : Get information only for a remotely available CiviCRM Extension.
+   *
+   * [--format=<format>]
+   * : Render output in a particular format.
+   * ---
+   * default: table
+   * options:
+   *   - table
+   *   - json
+   *   - pretty
+   * ---
+   *
+   * @since 1.0.0
+   *
+   * @param array $args The WP-CLI positional arguments.
+   * @param array $assoc_args The WP-CLI associative arguments.
+   */
+  public function info($args, $assoc_args) {
+
+    // Grab Extension key.
+    $key_or_name = $args[0];
+
+    // Grab associative arguments.
+    $local = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'local', FALSE);
+    $remote = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'remote', FALSE);
+    $format = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'table');
+
+    // When both args are missing, show both local and remote.
+    if (empty($local) && empty($remote)) {
+      $local = TRUE;
+      $remote = TRUE;
+    }
+
+    // When both args are missing, get all Extensions.
+    $command = 'civicrm ext list --format=json';
+    if (!empty($local) || !empty($remote)) {
+      if (!empty($local)) {
+        $command .= ' --local';
+      }
+      if (!empty($remote)) {
+        $command .= ' --remote';
+      }
+    }
+
+    // Get data for the requested Extensions.
+    $options = ['launch' => FALSE, 'return' => TRUE, 'parse' => 'json', 'command_args' => ['--quiet']];
+    $result = WP_CLI::runcommand($command, $options);
+
+    // Find the Extension if we can.
+    $rows = array();
+    foreach ($result as $extension) {
+      if ($key_or_name === $extension['key'] || $key_or_name === $extension['name']) {
+        if (in_array($format, ['pretty', 'json'])) {
+          $rows[] = $extension;
+        }
+        else {
+          $rows[] = [
+            'Location' => $extension['location'],
+            'Key' => $extension['key'],
+            'Name' => $extension['name'],
+            'Version' => $extension['version'],
+            'Label' => $extension['label'],
+            'Status' => $extension['status'],
+            'Type' => $extension['type'],
+            'Path' => $extension['path'],
+            'Download URL' => !empty($extension['downloadUrl']) ? $extension['downloadUrl'] : '',
+          ];
+          if (!empty($remote)) {
+            $row['downloadUrl'] = !empty($info->downloadUrl) ? $info->downloadUrl : '';
+          }
+        }
+      }
+    }
+
+    // Skip formatting if not found.
+    if (empty($rows)) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('%gCould not find Extension:%n %y%s.%n'), $key_or_name));
+    }
+
+    switch ($format) {
+
+      // Pretty-print output.
+      case 'pretty':
+        WP_CLI::log(print_r($rows, TRUE));
+        break;
+
+      // Display output as json.
+      case 'json':
+        $json = json_encode($rows);
+        if (JSON_ERROR_NONE !== json_last_error()) {
+          WP_CLI::error(sprintf(WP_CLI::colorize('Failed to encode JSON: %Y%s.%n'), json_last_error_msg()));
+        }
+        echo $json . "\n";
+        break;
+
+      // Display output as table.
+      case 'table':
+      default:
+        $fields = ['Location', 'Key', 'Name', 'Version', 'Label', 'Status', 'Type', 'Path'];
+        if (!empty($remote)) {
+          $fields[] = 'Download URL';
+        }
+        $args = ['format' => $format];
+        $formatter = new \WP_CLI\Formatter($args, $fields);
+        $formatter->display_items($rows);
+        break;
+
+    }
+
+  }
+
+  /**
    * List the set of CiviCRM Extensions.
    *
    * ## EXAMPLES
