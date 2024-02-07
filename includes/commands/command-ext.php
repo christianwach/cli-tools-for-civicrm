@@ -286,6 +286,100 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
   }
 
   /**
+   * Install a CiviCRM Extension.
+   *
+   * ## EXAMPLES
+   *
+   *     $ wp civicrm ext install org.example.foobar
+   *     Success: CiviCRM Extension installed.
+   *
+   * ## OPTIONS
+   *
+   * <key-or-name>
+   * : The extension full key ("org.example.foobar") or short name ("foobar").
+   *
+   * [--extpath=<extpath>]
+   * : Path to the extension. May use a wildcard (\"*\").
+   *
+   * @since 1.0.0
+   *
+   * @param array $args The WP-CLI positional arguments.
+   * @param array $assoc_args The WP-CLI associative arguments.
+   */
+  public function install($args, $assoc_args) {
+
+    // Tease out key and URL when present.
+    $key_or_name = $args[0];
+    $url = '';
+    if (FALSE !== strpos($args[0], '@')) {
+      list ($key_or_name, $url) = explode('@', $args[0], 2);
+    }
+
+    // Use "wp civicrm ext info" to get info for the Extension.
+    $command = 'civicrm ext info ' . $key_or_name . ' --local --format=json';
+    $options = ['launch' => FALSE, 'return' => TRUE, 'parse' => 'json', 'exit_error' => FALSE, 'command_args' => ['--quiet']];
+    $result = WP_CLI::runcommand($command, $options);
+
+    // Skip if not found.
+    if (empty($result)) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('%gCould not find Extension:%n %y%s.%n'), $key_or_name));
+    }
+
+    // Bail if already installed.
+    foreach ($result as $extension) {
+      // There should only be one item in the array.
+      if ('installed' === $extension['status']) {
+        WP_CLI::log(sprintf(WP_CLI::colorize('%gExtension already installed:%n %y%s.%n'), $key_or_name));
+        WP_CLI::halt(1);
+      }
+    }
+
+    // Show existing information.
+    WP_CLI::log(WP_CLI::colorize('%GGathering Extension information:%n'));
+    $feedback = [];
+    foreach ($result as $extension) {
+      $feedback[] = [
+        'Label' => $extension['label'],
+        'Version' => $extension['version'],
+        'Status' => $extension['status'],
+      ];
+    }
+    $assoc_args['format'] = 'table';
+    $assoc_args['fields'] = ['Label', 'Version', 'Status'];
+    $formatter = $this->formatter_get($assoc_args);
+    $formatter->display_items($feedback);
+
+    // Let's give folks a chance to exit.
+    WP_CLI::confirm(WP_CLI::colorize('%GDo you want to install the Extension?%n'), $assoc_args);
+
+    // Let's take as much info as we can from the Extension data.
+    foreach ($result as $extension) {
+      if ($key_or_name !== $extension['key']) {
+        $key_or_name = $extension['key'];
+      }
+    }
+
+    // Build API vars.
+    $vars = 'keys=' . $key_or_name;
+    if (!empty($url)) {
+      $vars .= ' url=' . $url;
+    }
+
+    // Use "wp civicrm api" to do the install.
+    $command = 'civicrm api extension.install ' . $vars . ' --format=json';
+    $options = ['launch' => FALSE, 'return' => TRUE, 'parse' => 'json', 'exit_error' => FALSE, 'command_args' => ['--quiet']];
+    $result = WP_CLI::runcommand($command, $options);
+
+    // Show error if present.
+    if (!empty($result['is_error']) && 1 === (int) $result['is_error']) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to install CiviCRM Extension: %y%s%n'), $result['error_message']));
+    }
+
+    WP_CLI::success('Extension installed.');
+
+  }
+
+  /**
    * List the set of CiviCRM Extensions.
    *
    * ## EXAMPLES
