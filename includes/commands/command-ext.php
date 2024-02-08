@@ -4,6 +4,19 @@
  *
  * ## EXAMPLES
  *
+ *     $ wp civicrm ext download org.example.foobar
+ *     Gathering Extension information:
+ *     +----------+-------------+---------+--------+
+ *     | Location | Label       | Version | Status |
+ *     +----------+-------------+---------+--------+
+ *     | remote   | Foo Bar Baz | 1.5     |        |
+ *     +----------+-------------+---------+--------+
+ *     Do you want to download the remote Extension? [y/n] y
+ *     Success: CiviCRM Extension downloaded.
+ *
+ *     $ wp civicrm ext list --refresh
+ *     Success: CiviCRM Extensions refreshed.
+ *
  *     $ wp civicrm ext list --local
  *     +----------+---------------+---------------+---------+--------------+-------------+--------+----------------------------+
  *     | Location | Key           | Name          | Version | Label        | Status      | Type   | Path                       |
@@ -13,11 +26,9 @@
  *     |                                              ... more rows ...                                                        |
  *     +----------+---------------+---------------+---------+--------------+-------------+--------+----------------------------+
  *
- *     $ wp civicrm ext list --refresh
- *     Success: CiviCRM Extensions refreshed.
- *
- *     $ wp civicrm ext download org.example.foobar
- *     Success: CiviCRM Extension downloaded.
+ *     $ wp civicrm ext update-db
+ *     Applying available database upgrades for Extensions.
+ *     Success: Database upgrades for Extensions completed.
  *
  * @since 1.0.0
  *
@@ -51,6 +62,9 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    * [--extpath=<extpath>]
    * : Path to the Extension. May use a wildcard (\"*\").
    *
+   * [--yes]
+   * : Answer yes to the confirmation message. Not needed when called with --quiet..
+   *
    * @since 1.0.0
    *
    * @param array $args The WP-CLI positional arguments.
@@ -79,27 +93,29 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
       // There should only be one item in the array.
       if ('disabled' === $extension['status']) {
         WP_CLI::log(sprintf(WP_CLI::colorize('%gExtension already disabled:%n %y%s.%n'), $key_or_name));
-        WP_CLI::halt(1);
+        WP_CLI::halt(0);
       }
     }
 
     // Show existing information.
-    WP_CLI::log(WP_CLI::colorize('%GGathering Extension information:%n'));
-    $feedback = [];
-    foreach ($result as $extension) {
-      $feedback[] = [
-        'Label' => $extension['label'],
-        'Version' => $extension['version'],
-        'Status' => $extension['status'],
-      ];
-    }
-    $assoc_args['format'] = 'table';
-    $assoc_args['fields'] = ['Label', 'Version', 'Status'];
-    $formatter = $this->formatter_get($assoc_args);
-    $formatter->display_items($feedback);
+    if (empty(WP_CLI::get_config('quiet'))) {
+      WP_CLI::log(WP_CLI::colorize('%GGathering Extension information:%n'));
+      $feedback = [];
+      foreach ($result as $extension) {
+        $feedback[] = [
+          'Label' => $extension['label'],
+          'Version' => $extension['version'],
+          'Status' => $extension['status'],
+        ];
+      }
+      $assoc_args['format'] = 'table';
+      $assoc_args['fields'] = ['Label', 'Version', 'Status'];
+      $formatter = $this->formatter_get($assoc_args);
+      $formatter->display_items($feedback);
 
-    // Let's give folks a chance to exit.
-    WP_CLI::confirm(WP_CLI::colorize('%GDo you want to disable the Extension?%n'), $assoc_args);
+      // Let's give folks a chance to exit.
+      WP_CLI::confirm(sprintf(WP_CLI::colorize('%gDo you want to disable Extension:%n %y%s%n%G?%n'), $key_or_name));
+    }
 
     // Let's take as much info as we can from the Extension data.
     foreach ($result as $extension) {
@@ -134,10 +150,16 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    * ## EXAMPLES
    *
    *     $ wp civicrm ext download org.example.foobar
+   *     Gathering Extension information:
+   *     +----------+-------------+---------+--------+
+   *     | Location | Label       | Version | Status |
+   *     +----------+-------------+---------+--------+
+   *     | remote   | Foo Bar Baz | 1.5     |        |
+   *     +----------+-------------+---------+--------+
+   *     Do you want to download the remote Extension? [y/n] y
    *     Success: CiviCRM Extension downloaded.
    *
-   *     $ wp civicrm ext download foobar --install
-   *     Success: CiviCRM Extension downloaded and installed.
+   *     $ wp civicrm ext download foobar --install --quiet
    *
    * ## OPTIONS
    *
@@ -148,7 +170,7 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    * : Install the specified CiviCRM Extension after downloading.
    *
    * [--yes]
-   * : Answer yes to the confirmation message.
+   * : Answer yes to the confirmation message. Not needed when called with --quiet..
    *
    * @alias dl
    *
@@ -179,22 +201,6 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
       WP_CLI::error(sprintf(WP_CLI::colorize('%gCould not find Extension:%n %y%s.%n'), $key_or_name));
     }
 
-    // Show existing information.
-    WP_CLI::log(WP_CLI::colorize('%GGathering Extension information:%n'));
-    $feedback = [];
-    foreach ($result as $extension) {
-      $feedback[] = [
-        'Location' => $extension['location'],
-        'Label' => $extension['label'],
-        'Version' => $extension['version'],
-        'Status' => $extension['status'],
-      ];
-    }
-    $assoc_args['format'] = 'table';
-    $assoc_args['fields'] = ['Location', 'Label', 'Version', 'Status'];
-    $formatter = $this->formatter_get($assoc_args);
-    $formatter->display_items($feedback);
-
     // Do we have local and remote info?
     $local_exists = FALSE;
     $remote_exists = FALSE;
@@ -212,12 +218,30 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
       WP_CLI::error(sprintf(WP_CLI::colorize('%gCould not find a remote Extension to download:%n %y%s.%n'), $key_or_name));
     }
 
-    // Let's give folks a chance to exit.
-    if ($local_exists && $remote_exists) {
-      WP_CLI::confirm(WP_CLI::colorize('%GDo you want to overwrite with the remote Extension?%n'), $assoc_args);
-    }
-    if (!$local_exists && $remote_exists) {
-      WP_CLI::confirm(WP_CLI::colorize('%GDo you want to download the remote Extension?%n'), $assoc_args);
+    // Show existing information.
+    if (empty(WP_CLI::get_config('quiet'))) {
+      WP_CLI::log(WP_CLI::colorize('%GGathering Extension information:%n'));
+      $feedback = [];
+      foreach ($result as $extension) {
+        $feedback[] = [
+          'Location' => $extension['location'],
+          'Label' => $extension['label'],
+          'Version' => $extension['version'],
+          'Status' => $extension['status'],
+        ];
+      }
+      $assoc_args['format'] = 'table';
+      $assoc_args['fields'] = ['Location', 'Label', 'Version', 'Status'];
+      $formatter = $this->formatter_get($assoc_args);
+      $formatter->display_items($feedback);
+
+      // Let's give folks a chance to exit.
+      if ($local_exists && $remote_exists) {
+        WP_CLI::confirm(WP_CLI::colorize('%GDo you want to overwrite with the remote Extension?%n'), $assoc_args);
+      }
+      if (!$local_exists && $remote_exists) {
+        WP_CLI::confirm(WP_CLI::colorize('%GDo you want to download the remote Extension?%n'), $assoc_args);
+      }
     }
 
     // Let's take as much info as we can from the Extension data.
@@ -286,6 +310,9 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    * [--extpath=<extpath>]
    * : Path to the Extension. May use a wildcard (\"*\").
    *
+   * [--yes]
+   * : Answer yes to the confirmation message. Not needed when called with --quiet..
+   *
    * @since 1.0.0
    *
    * @param array $args The WP-CLI positional arguments.
@@ -319,22 +346,24 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
     }
 
     // Show existing information.
-    WP_CLI::log(WP_CLI::colorize('%GGathering Extension information:%n'));
-    $feedback = [];
-    foreach ($result as $extension) {
-      $feedback[] = [
-        'Label' => $extension['label'],
-        'Version' => $extension['version'],
-        'Status' => $extension['status'],
-      ];
-    }
-    $assoc_args['format'] = 'table';
-    $assoc_args['fields'] = ['Label', 'Version', 'Status'];
-    $formatter = $this->formatter_get($assoc_args);
-    $formatter->display_items($feedback);
+    if (empty(WP_CLI::get_config('quiet'))) {
+      WP_CLI::log(WP_CLI::colorize('%GGathering Extension information:%n'));
+      $feedback = [];
+      foreach ($result as $extension) {
+        $feedback[] = [
+          'Label' => $extension['label'],
+          'Version' => $extension['version'],
+          'Status' => $extension['status'],
+        ];
+      }
+      $assoc_args['format'] = 'table';
+      $assoc_args['fields'] = ['Label', 'Version', 'Status'];
+      $formatter = $this->formatter_get($assoc_args);
+      $formatter->display_items($feedback);
 
-    // Let's give folks a chance to exit.
-    WP_CLI::confirm(WP_CLI::colorize('%GDo you want to enable the Extension?%n'), $assoc_args);
+      // Let's give folks a chance to exit.
+      WP_CLI::confirm(WP_CLI::colorize('%GDo you want to enable the Extension?%n'), $assoc_args);
+    }
 
     // Let's take as much info as we can from the Extension data.
     foreach ($result as $extension) {
@@ -510,6 +539,9 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    * [--extpath=<extpath>]
    * : Path to the Extension. May use a wildcard (\"*\").
    *
+   * [--yes]
+   * : Answer yes to the confirmation message. Not needed when called with --quiet..
+   *
    * @since 1.0.0
    *
    * @param array $args The WP-CLI positional arguments.
@@ -543,22 +575,24 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
     }
 
     // Show existing information.
-    WP_CLI::log(WP_CLI::colorize('%GGathering Extension information:%n'));
-    $feedback = [];
-    foreach ($result as $extension) {
-      $feedback[] = [
-        'Label' => $extension['label'],
-        'Version' => $extension['version'],
-        'Status' => $extension['status'],
-      ];
-    }
-    $assoc_args['format'] = 'table';
-    $assoc_args['fields'] = ['Label', 'Version', 'Status'];
-    $formatter = $this->formatter_get($assoc_args);
-    $formatter->display_items($feedback);
+    if (empty(WP_CLI::get_config('quiet'))) {
+      WP_CLI::log(WP_CLI::colorize('%GGathering Extension information:%n'));
+      $feedback = [];
+      foreach ($result as $extension) {
+        $feedback[] = [
+          'Label' => $extension['label'],
+          'Version' => $extension['version'],
+          'Status' => $extension['status'],
+        ];
+      }
+      $assoc_args['format'] = 'table';
+      $assoc_args['fields'] = ['Label', 'Version', 'Status'];
+      $formatter = $this->formatter_get($assoc_args);
+      $formatter->display_items($feedback);
 
-    // Let's give folks a chance to exit.
-    WP_CLI::confirm(WP_CLI::colorize('%GDo you want to install the Extension?%n'), $assoc_args);
+      // Let's give folks a chance to exit.
+      WP_CLI::confirm(WP_CLI::colorize('%GDo you want to install the Extension?%n'), $assoc_args);
+    }
 
     // Let's take as much info as we can from the Extension data.
     foreach ($result as $extension) {
@@ -645,14 +679,8 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
     if (!empty($refresh)) {
 
       // Pass on to "wp civicrm api".
-      $options = ['launch' => FALSE, 'return' => TRUE];
-      $result = WP_CLI::runcommand('civicrm api extension.refresh --format=json --quiet', $options);
-
-      // Convert to array.
-      $result = json_decode($result, TRUE);
-      if (JSON_ERROR_NONE !== json_last_error()) {
-        WP_CLI::error(sprintf(WP_CLI::colorize('Failed to decode JSON: %y%s.%n'), json_last_error_msg()));
-      }
+      $options = ['launch' => FALSE, 'return' => TRUE, 'parse' => 'json', 'exit_error' => FALSE, 'command_args' => ['--quiet']];
+      $result = WP_CLI::runcommand('civicrm api extension.refresh --format=json', $options);
 
       // How did we do?
       if (!empty($result['is_error']) && 1 === (int) $result['is_error']) {
@@ -721,32 +749,41 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
     }
 
     if ($remote) {
-      foreach ($this->extensions_remote_get() as $info) {
-        if (in_array($format, ['pretty', 'json'])) {
-          $rows[] = [
-            'location' => 'remote',
-            'key' => $info->key,
-            'name' => $info->file,
-            'version' => $info->version,
-            'label' => $info->label,
-            'status' => '',
-            'type' => $info->type,
-            'path' => '',
-            'downloadUrl' => $info->downloadUrl,
-          ];
-        }
-        else {
-          $rows[] = [
-            'Location' => 'remote',
-            'Key' => $info->key,
-            'Name' => $info->file,
-            'Version' => $info->version,
-            'Label' => $info->label,
-            'Status' => '',
-            'Type' => $info->type,
-            'Path' => '',
-            'Download URL' => $info->downloadUrl,
-          ];
+      try {
+        $extensions_remote = $this->extensions_remote_get();
+      }
+      catch (\Exception $e) {
+        WP_CLI::warning(sprintf(WP_CLI::colorize('%gCiviCRM reported a problem:%n %y%s%n'), $e->getMessage()));
+        WP_CLI::log(WP_CLI::colorize('%gTry refreshing the list of Extensions with `wp civicrm ext list --refresh`.%n'));
+      }
+      if (!empty($extensions_remote)) {
+        foreach ($this->extensions_remote_get() as $info) {
+          if (in_array($format, ['pretty', 'json'])) {
+            $rows[] = [
+              'location' => 'remote',
+              'key' => $info->key,
+              'name' => $info->file,
+              'version' => $info->version,
+              'label' => $info->label,
+              'status' => '',
+              'type' => $info->type,
+              'path' => '',
+              'downloadUrl' => $info->downloadUrl,
+            ];
+          }
+          else {
+            $rows[] = [
+              'Location' => 'remote',
+              'Key' => $info->key,
+              'Name' => $info->file,
+              'Version' => $info->version,
+              'Label' => $info->label,
+              'Status' => '',
+              'Type' => $info->type,
+              'Path' => '',
+              'Download URL' => $info->downloadUrl,
+            ];
+          }
         }
       }
     }
@@ -802,6 +839,9 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    * [--extpath=<extpath>]
    * : Path to the Extension. May use a wildcard (\"*\").
    *
+   * [--yes]
+   * : Answer yes to the confirmation message. Not needed when called with --quiet..
+   *
    * @since 1.0.0
    *
    * @param array $args The WP-CLI positional arguments.
@@ -835,22 +875,24 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
     }
 
     // Show existing information.
-    WP_CLI::log(WP_CLI::colorize('%GGathering Extension information:%n'));
-    $feedback = [];
-    foreach ($result as $extension) {
-      $feedback[] = [
-        'Label' => $extension['label'],
-        'Version' => $extension['version'],
-        'Status' => $extension['status'],
-      ];
-    }
-    $assoc_args['format'] = 'table';
-    $assoc_args['fields'] = ['Label', 'Version', 'Status'];
-    $formatter = $this->formatter_get($assoc_args);
-    $formatter->display_items($feedback);
+    if (empty(WP_CLI::get_config('quiet'))) {
+      WP_CLI::log(WP_CLI::colorize('%GGathering Extension information:%n'));
+      $feedback = [];
+      foreach ($result as $extension) {
+        $feedback[] = [
+          'Label' => $extension['label'],
+          'Version' => $extension['version'],
+          'Status' => $extension['status'],
+        ];
+      }
+      $assoc_args['format'] = 'table';
+      $assoc_args['fields'] = ['Label', 'Version', 'Status'];
+      $formatter = $this->formatter_get($assoc_args);
+      $formatter->display_items($feedback);
 
-    // Let's give folks a chance to exit.
-    WP_CLI::confirm(WP_CLI::colorize('%GDo you want to uninstall the Extension?%n'), $assoc_args);
+      // Let's give folks a chance to exit.
+      WP_CLI::confirm(WP_CLI::colorize('%GDo you want to uninstall the Extension?%n'), $assoc_args);
+    }
 
     // Let's take as much info as we can from the Extension data.
     foreach ($result as $extension) {
