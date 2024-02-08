@@ -154,7 +154,7 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
    * @param string $url The URL to execute the GET request on.
    * @param array $headers Optional. Associative array of headers.
    * @param array $options Optional. Associative array of options.
-   * @return object $response The response object.
+   * @return object|bool $response The response object, or false on failure.
    */
   protected function http_get_response($url, $headers = [], $options = []) {
 
@@ -163,7 +163,13 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
       $options
     );
 
-    $response = \WP_CLI\Utils\http_request('GET', $url, NULL, $headers, $options);
+    try {
+      $response = \WP_CLI\Utils\http_request('GET', $url, NULL, $headers, $options);
+    }
+    catch (Exception $exception) {
+      WP_CLI::error(sprintf(WP_CLI::colorize("Couldn't fetch response from %y%s%n (Error: %y%s%n)."), $url, $exception->getMessage()));
+    }
+
     if (!$response->success || 200 > (int) $response->status_code || 300 <= $response->status_code) {
       WP_CLI::error(sprintf(WP_CLI::colorize("Couldn't fetch response from %y%s%n (HTTP code %y%s%n)."), $url, $response->status_code));
     }
