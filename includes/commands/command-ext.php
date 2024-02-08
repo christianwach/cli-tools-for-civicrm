@@ -26,6 +26,109 @@
 class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
 
   /**
+   * Disable a CiviCRM Extension.
+   *
+   * This command does not output parseable data. For parseable output,
+   * consider using `wp civicrm api extension.disable`.
+   *
+   * ## EXAMPLES
+   *
+   *     $ wp civicrm ext disable org.example.foobar
+   *     Gathering Extension information:
+   *     +-------------+---------+-----------+
+   *     | Label       | Version | Status    |
+   *     +-------------+---------+-----------+
+   *     | Foo Bar Baz | 1.5     | installed |
+   *     +-------------+---------+-----------+
+   *     Do you want to disable the Extension? [y/n] y
+   *     Success: CiviCRM Extension disabled.
+   *
+   * ## OPTIONS
+   *
+   * <key-or-name>
+   * : The extension full key ("org.example.foobar") or short name ("foobar").
+   *
+   * [--extpath=<extpath>]
+   * : Path to the Extension. May use a wildcard (\"*\").
+   *
+   * @since 1.0.0
+   *
+   * @param array $args The WP-CLI positional arguments.
+   * @param array $assoc_args The WP-CLI associative arguments.
+   */
+  public function disable($args, $assoc_args) {
+
+    // Grab associative arguments.
+    $extpath = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'extpath', '');
+
+    // Grab Extension key.
+    $key_or_name = $args[0];
+
+    // Use "wp civicrm ext info" to get info for the Extension.
+    $command = 'civicrm ext info ' . $key_or_name . ' --local --format=json';
+    $options = ['launch' => FALSE, 'return' => TRUE, 'parse' => 'json', 'exit_error' => FALSE, 'command_args' => ['--quiet']];
+    $result = WP_CLI::runcommand($command, $options);
+
+    // Skip if not found.
+    if (empty($result)) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('%gCould not find Extension:%n %y%s.%n'), $key_or_name));
+    }
+
+    // Bail if already disabled.
+    foreach ($result as $extension) {
+      // There should only be one item in the array.
+      if ('disabled' === $extension['status']) {
+        WP_CLI::log(sprintf(WP_CLI::colorize('%gExtension already disabled:%n %y%s.%n'), $key_or_name));
+        WP_CLI::halt(1);
+      }
+    }
+
+    // Show existing information.
+    WP_CLI::log(WP_CLI::colorize('%GGathering Extension information:%n'));
+    $feedback = [];
+    foreach ($result as $extension) {
+      $feedback[] = [
+        'Label' => $extension['label'],
+        'Version' => $extension['version'],
+        'Status' => $extension['status'],
+      ];
+    }
+    $assoc_args['format'] = 'table';
+    $assoc_args['fields'] = ['Label', 'Version', 'Status'];
+    $formatter = $this->formatter_get($assoc_args);
+    $formatter->display_items($feedback);
+
+    // Let's give folks a chance to exit.
+    WP_CLI::confirm(WP_CLI::colorize('%GDo you want to disable the Extension?%n'), $assoc_args);
+
+    // Let's take as much info as we can from the Extension data.
+    foreach ($result as $extension) {
+      if ($key_or_name !== $extension['key']) {
+        $key_or_name = $extension['key'];
+      }
+    }
+
+    // Build API vars.
+    $vars = 'keys=' . $key_or_name;
+    if (!empty($extpath)) {
+      $vars .= ' path=' . $extpath;
+    }
+
+    // Use "wp civicrm api" to do the enabling.
+    $command = 'civicrm api extension.disable ' . $vars . ' --format=json';
+    $options = ['launch' => FALSE, 'return' => TRUE, 'parse' => 'json', 'exit_error' => FALSE, 'command_args' => ['--quiet']];
+    $result = WP_CLI::runcommand($command, $options);
+
+    // Show error if present.
+    if (!empty($result['is_error']) && 1 === (int) $result['is_error']) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to disable CiviCRM Extension: %y%s%n'), $result['error_message']));
+    }
+
+    WP_CLI::success('CiviCRM Extension disabled.');
+
+  }
+
+  /**
    * Download a CiviCRM Extension.
    *
    * ## EXAMPLES
@@ -154,6 +257,109 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
     else {
       WP_CLI::success('CiviCRM Extension downloaded and installed.');
     }
+
+  }
+
+  /**
+   * Enable a CiviCRM Extension.
+   *
+   * This command does not output parseable data. For parseable output,
+   * consider using `wp civicrm api extension.enable`.
+   *
+   * ## EXAMPLES
+   *
+   *     $ wp civicrm ext enable org.example.foobar
+   *     Gathering Extension information:
+   *     +-------------+---------+-------------+
+   *     | Label       | Version | Status      |
+   *     +-------------+---------+-------------+
+   *     | Foo Bar Baz | 1.5     | uninstalled |
+   *     +-------------+---------+-------------+
+   *     Do you want to enable the Extension? [y/n] y
+   *     Success: CiviCRM Extension enabled.
+   *
+   * ## OPTIONS
+   *
+   * <key-or-name>
+   * : The extension full key ("org.example.foobar") or short name ("foobar").
+   *
+   * [--extpath=<extpath>]
+   * : Path to the Extension. May use a wildcard (\"*\").
+   *
+   * @since 1.0.0
+   *
+   * @param array $args The WP-CLI positional arguments.
+   * @param array $assoc_args The WP-CLI associative arguments.
+   */
+  public function enable($args, $assoc_args) {
+
+    // Grab associative arguments.
+    $extpath = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'extpath', '');
+
+    // Grab Extension key.
+    $key_or_name = $args[0];
+
+    // Use "wp civicrm ext info" to get info for the Extension.
+    $command = 'civicrm ext info ' . $key_or_name . ' --local --format=json';
+    $options = ['launch' => FALSE, 'return' => TRUE, 'parse' => 'json', 'exit_error' => FALSE, 'command_args' => ['--quiet']];
+    $result = WP_CLI::runcommand($command, $options);
+
+    // Skip if not found.
+    if (empty($result)) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('%gCould not find Extension:%n %y%s.%n'), $key_or_name));
+    }
+
+    // Bail if already enabled.
+    foreach ($result as $extension) {
+      // There should only be one item in the array.
+      if ('enabled' === $extension['status']) {
+        WP_CLI::log(sprintf(WP_CLI::colorize('%gExtension already enabled:%n %y%s.%n'), $key_or_name));
+        WP_CLI::halt(1);
+      }
+    }
+
+    // Show existing information.
+    WP_CLI::log(WP_CLI::colorize('%GGathering Extension information:%n'));
+    $feedback = [];
+    foreach ($result as $extension) {
+      $feedback[] = [
+        'Label' => $extension['label'],
+        'Version' => $extension['version'],
+        'Status' => $extension['status'],
+      ];
+    }
+    $assoc_args['format'] = 'table';
+    $assoc_args['fields'] = ['Label', 'Version', 'Status'];
+    $formatter = $this->formatter_get($assoc_args);
+    $formatter->display_items($feedback);
+
+    // Let's give folks a chance to exit.
+    WP_CLI::confirm(WP_CLI::colorize('%GDo you want to enable the Extension?%n'), $assoc_args);
+
+    // Let's take as much info as we can from the Extension data.
+    foreach ($result as $extension) {
+      if ($key_or_name !== $extension['key']) {
+        $key_or_name = $extension['key'];
+      }
+    }
+
+    // Build API vars.
+    $vars = 'keys=' . $key_or_name;
+    if (!empty($extpath)) {
+      $vars .= ' path=' . $extpath;
+    }
+
+    // Use "wp civicrm api" to do the enabling.
+    $command = 'civicrm api extension.enable ' . $vars . ' --format=json';
+    $options = ['launch' => FALSE, 'return' => TRUE, 'parse' => 'json', 'exit_error' => FALSE, 'command_args' => ['--quiet']];
+    $result = WP_CLI::runcommand($command, $options);
+
+    // Show error if present.
+    if (!empty($result['is_error']) && 1 === (int) $result['is_error']) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to enable CiviCRM Extension: %y%s%n'), $result['error_message']));
+    }
+
+    WP_CLI::success('CiviCRM Extension enabled.');
 
   }
 
