@@ -578,6 +578,102 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
   }
 
   /**
+   * Uninstall a CiviCRM Extension.
+   *
+   * This command does not output parseable data. For parseable output,
+   * consider using `wp civicrm api extension.uninstall`.
+   *
+   * ## EXAMPLES
+   *
+   *     $ wp civicrm ext uninstall org.example.foobar
+   *     Success: CiviCRM Extension uninstalled.
+   *
+   * ## OPTIONS
+   *
+   * <key-or-name>
+   * : The extension full key ("org.example.foobar") or short name ("foobar").
+   *
+   * [--extpath=<extpath>]
+   * : Path to the Extension. May use a wildcard (\"*\").
+   *
+   * @since 1.0.0
+   *
+   * @param array $args The WP-CLI positional arguments.
+   * @param array $assoc_args The WP-CLI associative arguments.
+   */
+  public function uninstall($args, $assoc_args) {
+
+    // Grab associative arguments.
+    $extpath = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'extpath', '');
+
+    // Grab Extension key.
+    $key_or_name = $args[0];
+
+    // Use "wp civicrm ext info" to get info for the Extension.
+    $command = 'civicrm ext info ' . $key_or_name . ' --local --format=json';
+    $options = ['launch' => FALSE, 'return' => TRUE, 'parse' => 'json', 'exit_error' => FALSE, 'command_args' => ['--quiet']];
+    $result = WP_CLI::runcommand($command, $options);
+
+    // Skip if not found.
+    if (empty($result)) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('%gCould not find Extension:%n %y%s.%n'), $key_or_name));
+    }
+
+    // Bail if already uninstalled.
+    foreach ($result as $extension) {
+      // There should only be one item in the array.
+      if ('uninstalled' === $extension['status']) {
+        WP_CLI::log(sprintf(WP_CLI::colorize('%gExtension already uninstalled:%n %y%s.%n'), $key_or_name));
+        WP_CLI::halt(1);
+      }
+    }
+
+    // Show existing information.
+    WP_CLI::log(WP_CLI::colorize('%GGathering Extension information:%n'));
+    $feedback = [];
+    foreach ($result as $extension) {
+      $feedback[] = [
+        'Label' => $extension['label'],
+        'Version' => $extension['version'],
+        'Status' => $extension['status'],
+      ];
+    }
+    $assoc_args['format'] = 'table';
+    $assoc_args['fields'] = ['Label', 'Version', 'Status'];
+    $formatter = $this->formatter_get($assoc_args);
+    $formatter->display_items($feedback);
+
+    // Let's give folks a chance to exit.
+    WP_CLI::confirm(WP_CLI::colorize('%GDo you want to uninstall the Extension?%n'), $assoc_args);
+
+    // Let's take as much info as we can from the Extension data.
+    foreach ($result as $extension) {
+      if ($key_or_name !== $extension['key']) {
+        $key_or_name = $extension['key'];
+      }
+    }
+
+    // Build API vars.
+    $vars = 'keys=' . $key_or_name;
+    if (!empty($extpath)) {
+      $vars .= ' path=' . $extpath;
+    }
+
+    // Use "wp civicrm api" to do the uninstall.
+    $command = 'civicrm api extension.uninstall ' . $vars . ' --format=json';
+    $options = ['launch' => FALSE, 'return' => TRUE, 'parse' => 'json', 'exit_error' => FALSE, 'command_args' => ['--quiet']];
+    $result = WP_CLI::runcommand($command, $options);
+
+    // Show error if present.
+    if (!empty($result['is_error']) && 1 === (int) $result['is_error']) {
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to uninstall CiviCRM Extension: %y%s%n'), $result['error_message']));
+    }
+
+    WP_CLI::success('Extension uninstalled.');
+
+  }
+
+  /**
    * Apply DB upgrades for any Extensions.
    *
    * This command does not output parseable data. For parseable output,
