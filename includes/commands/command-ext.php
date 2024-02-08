@@ -63,7 +63,7 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    * : Path to the Extension. May use a wildcard (\"*\").
    *
    * [--yes]
-   * : Answer yes to the confirmation message. Not needed when called with --quiet..
+   * : Answer yes to the confirmation message. Not needed when called with --quiet.
    *
    * @since 1.0.0
    *
@@ -170,7 +170,7 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    * : Install the specified CiviCRM Extension after downloading.
    *
    * [--yes]
-   * : Answer yes to the confirmation message. Not needed when called with --quiet..
+   * : Answer yes to the confirmation message. Not needed when called with --quiet.
    *
    * @alias dl
    *
@@ -311,7 +311,7 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    * : Path to the Extension. May use a wildcard (\"*\").
    *
    * [--yes]
-   * : Answer yes to the confirmation message. Not needed when called with --quiet..
+   * : Answer yes to the confirmation message. Not needed when called with --quiet.
    *
    * @since 1.0.0
    *
@@ -540,7 +540,7 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    * : Path to the Extension. May use a wildcard (\"*\").
    *
    * [--yes]
-   * : Answer yes to the confirmation message. Not needed when called with --quiet..
+   * : Answer yes to the confirmation message. Not needed when called with --quiet.
    *
    * @since 1.0.0
    *
@@ -840,7 +840,7 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    * : Path to the Extension. May use a wildcard (\"*\").
    *
    * [--yes]
-   * : Answer yes to the confirmation message. Not needed when called with --quiet..
+   * : Answer yes to the confirmation message. Not needed when called with --quiet.
    *
    * @since 1.0.0
    *
