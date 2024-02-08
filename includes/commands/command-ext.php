@@ -288,6 +288,9 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
   /**
    * Install a CiviCRM Extension.
    *
+   * This command does not output parseable data. For parseable output,
+   * consider using `wp civicrm api extension.install`.
+   *
    * ## EXAMPLES
    *
    *     $ wp civicrm ext install org.example.foobar
@@ -299,7 +302,7 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    * : The extension full key ("org.example.foobar") or short name ("foobar").
    *
    * [--extpath=<extpath>]
-   * : Path to the extension. May use a wildcard (\"*\").
+   * : Path to the Extension. May use a wildcard (\"*\").
    *
    * @since 1.0.0
    *
@@ -308,12 +311,11 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    */
   public function install($args, $assoc_args) {
 
-    // Tease out key and URL when present.
+    // Grab associative arguments.
+    $extpath = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'extpath', '');
+
+    // Grab Extension key.
     $key_or_name = $args[0];
-    $url = '';
-    if (FALSE !== strpos($args[0], '@')) {
-      list ($key_or_name, $url) = explode('@', $args[0], 2);
-    }
 
     // Use "wp civicrm ext info" to get info for the Extension.
     $command = 'civicrm ext info ' . $key_or_name . ' --local --format=json';
@@ -361,8 +363,8 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
 
     // Build API vars.
     $vars = 'keys=' . $key_or_name;
-    if (!empty($url)) {
-      $vars .= ' url=' . $url;
+    if (!empty($extpath)) {
+      $vars .= ' path=' . $extpath;
     }
 
     // Use "wp civicrm api" to do the install.
