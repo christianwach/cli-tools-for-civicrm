@@ -1038,6 +1038,127 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
 
   }
 
+  /**
+   * Get the list of CiviCRM triggers in the database.
+   *
+   * ## OPTIONS
+   *
+   * [<trigger>...]
+   * : List triggers based on wildcard search, e.g. 'civicrm_*' or 'civicrm_email?'.
+   *
+   * [--rebuild]
+   * : Rebuild the triggers.
+   *
+   * [--force]
+   * : Force rebuild the triggers.
+   *
+   * [--format=<format>]
+   * : Render output in a particular format.
+   * ---
+   * default: list
+   * options:
+   *   - list
+   *   - json
+   *   - csv
+   * ---
+   *
+   * ## EXAMPLES
+   *
+   *     $ wp civicrm db triggers
+   *     civicrm_activity_before_insert
+   *     civicrm_activity_before_update
+   *     civicrm_activity_before_delete
+   *     civicrm_address_after_insert
+   *     civicrm_address_after_update
+   *     civicrm_address_after_delete
+   *
+   *     # Use a wildcard to get matching trigger names from the set of CiviCRM triggers.
+   *     $ wp civicrm db triggers 'civicrm_email*'
+   *     civicrm_email_after_insert
+   *     civicrm_email_after_update
+   *     civicrm_email_after_delete
+   *
+   *     $ wp civicrm db triggers --rebuild
+   *     Success: Triggers rebuilt.
+   *
+   * @since 1.0.0
+   *
+   * @param array $args The WP-CLI positional arguments.
+   * @param array $assoc_args The WP-CLI associative arguments.
+   */
+  public function triggers($args, $assoc_args) {
+
+    // Grab associative arguments.
+    $rebuild = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'rebuild', FALSE);
+    $force = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'force', FALSE);
+    $format = \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'list');
+
+    // Let's use an instance of wpdb with CiviCRM credentials.
+    $cividb = $this->cividb_get();
+
+    // Default query.
+    $dsn = $this->cividb_dsn_get();
+    $triggers_sql = "SHOW TRIGGERS FROM {$dsn['database']}";
+
+    // Perform query.
+    $triggers = $cividb->get_col($triggers_sql, 0);
+
+    // Filter by `$args` wildcards.
+    if ($args) {
+      $triggers = $this->names_filter($args, $triggers);
+    }
+
+    // Maybe rebuild triggers.
+    if (!empty($rebuild)) {
+
+      // Bootstrap CiviCRM.
+      $this->bootstrap_civicrm();
+
+      // If there were `$args`, rebuild each trigger's table in turn.
+      if ($args) {
+        $done = [];
+        foreach ($triggers as $trigger) {
+          // The table name is the trigger name with the event and action stripped.
+          $array = explode('_', $trigger);
+          $table_name = implode('_', array_slice($array, 0, -2));
+          if (in_array($table_name, $done)) {
+            continue;
+          }
+          WP_CLI::log(sprintf(WP_CLI::colorize('%GRebuilding table%n %Y%s%n'), $table_name));
+          Civi::service('sql_triggers')->rebuild($table_name, $force);
+          $done[] = $table_name;
+        }
+      }
+      else {
+        // Rebuild all triggers.
+        Civi::service('sql_triggers')->rebuild(NULL, $force);
+      }
+
+      // No need to carry on.
+      WP_CLI::success('Triggers rebuilt.');
+      return;
+
+    }
+
+    // Render output.
+    if ('csv' === $format) {
+      WP_CLI::log(implode(',', $triggers));
+    }
+    elseif ('json' === $format) {
+      $json = json_encode($triggers);
+      if (JSON_ERROR_NONE !== json_last_error()) {
+        WP_CLI::error(sprintf(WP_CLI::colorize('Failed to encode JSON: %Y%s.%n'), json_last_error_msg()));
+      }
+      echo $json . "\n";
+    }
+    else {
+      foreach ($triggers as $trigger) {
+        WP_CLI::log($trigger);
+      }
+    }
+
+  }
+
   // ----------------------------------------------------------------------------
   // Private methods.
   // ----------------------------------------------------------------------------
