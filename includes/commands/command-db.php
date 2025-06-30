@@ -1116,18 +1116,19 @@ class CLI_Tools_CiviCRM_Command_DB extends CLI_Tools_CiviCRM_Command {
 
       // If there were `$args`, rebuild each trigger's table in turn.
       if ($args) {
-        $done = [];
-        foreach ($triggers as $trigger) {
-          // The table name is the trigger name with the event and action stripped.
-          $array = explode('_', $trigger);
-          $table_name = implode('_', array_slice($array, 0, -2));
-          if (in_array($table_name, $done)) {
-            continue;
-          }
+
+        // Get trigger tables column and re-filter.
+        $triggers = $cividb->get_col($triggers_sql, 2);
+        if ($args) {
+          $triggers = $this->names_filter($args, $triggers);
+        }
+
+        // Rebuild each table.
+        foreach (array_unique($triggers) as $table_name) {
           WP_CLI::log(sprintf(WP_CLI::colorize('%GRebuilding table%n %Y%s%n'), $table_name));
           Civi::service('sql_triggers')->rebuild($table_name, $force);
-          $done[] = $table_name;
         }
+
       }
       else {
         // Rebuild all triggers.
