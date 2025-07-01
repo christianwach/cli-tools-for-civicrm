@@ -1031,6 +1031,11 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    * This command does not output parseable data. For parseable output,
    * consider using `wp civicrm api extension.upgrade`.
    *
+   * ## OPTIONS
+   *
+   * [--vvv]
+   * : Run the upgrade with verbose output.
+   *
    * ## EXAMPLES
    *
    *     $ wp civicrm ext update-db
@@ -1048,16 +1053,33 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    */
   public function update_db($args, $assoc_args) {
 
+    // Get verbosity.
+    $verbose = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'vvv', FALSE);
+
     WP_CLI::log(WP_CLI::colorize('%gApplying available database upgrades for Extensions.%n'));
 
-    // Use "wp civicrm api" to do the download.
+    // Maybe show feedback.
+    if (!empty($verbose)) {
+      WP_CLI::log('Calling Extension upgrade API');
+    }
+
+    // Use "wp civicrm api" to do the upgrade.
     $command = 'civicrm api extension.upgrade --format=json --quiet';
+    if (!empty($verbose)) {
+      $command .= ' --xdebug';
+    }
     $options = ['launch' => FALSE, 'return' => TRUE, 'parse' => 'json', 'exit_error' => FALSE, 'command_args' => ['--quiet']];
     $result = WP_CLI::runcommand($command, $options);
 
     // Show error if present.
     if (!empty($result['is_error']) && 1 === (int) $result['is_error']) {
-      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to upgrade CiviCRM Extension: %y%s%n'), $result['error_message']));
+      WP_CLI::error(sprintf(WP_CLI::colorize('Failed to upgrade CiviCRM Extensions: %y%s%n'), $result['error_message']));
+    }
+
+    // Maybe show feedback.
+    if (!empty($verbose)) {
+      WP_CLI::log('API success.');
+      WP_CLI::log(print_r($result, TRUE));
     }
 
     WP_CLI::success('Database upgrades for Extensions completed.');
