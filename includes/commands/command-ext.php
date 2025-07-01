@@ -1031,6 +1031,10 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    * This command does not output parseable data. For parseable output,
    * consider using `wp civicrm api extension.upgrade`.
    *
+   * In order to avoid an "API Request Authorization failed" backtrace
+   * in your logs from the CiviImport Extension, specify a WordPress
+   * User with the relevant permissions in CiviCRM.
+   *
    * ## OPTIONS
    *
    * [--vvv]
@@ -1038,7 +1042,13 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
+   *     # Basic example.
    *     $ wp civicrm ext update-db
+   *     Applying available database upgrades for Extensions.
+   *     Success: Database upgrades for Extensions completed.
+   *
+   *     # Avoid "Authorization failed" backtrace by specifying a permissioned User.
+   *     $ wp civicrm ext update-db --user=1
    *     Applying available database upgrades for Extensions.
    *     Success: Database upgrades for Extensions completed.
    *
