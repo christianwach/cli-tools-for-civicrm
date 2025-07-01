@@ -649,6 +649,9 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    * [--refresh]
    * : Refresh the list of CiviCRM Extensions.
    *
+   * [--fields=<fields>]
+   * : Limit the output to specific fields.
+   *
    * [--format=<format>]
    * : Render output in a particular format.
    * ---
@@ -671,6 +674,7 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
     $local = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'local', FALSE);
     $remote = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'remote', FALSE);
     $refresh = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'refresh', FALSE);
+    $fields = \WP_CLI\Utils\get_flag_value($assoc_args, 'fields', []);
 
     // Bootstrap CiviCRM.
     $this->bootstrap_civicrm();
@@ -748,7 +752,7 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
       }
     }
 
-    if ($remote) {
+    if (!empty($remote)) {
       try {
         $extensions_remote = $this->extensions_remote_get();
       }
@@ -788,6 +792,68 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
       }
     }
 
+    // Build field map.
+    $field_map = [
+      'location' => 'Location',
+      'key' => 'Key',
+      'name' => 'Name',
+      'version' => 'Version',
+      'label' => 'Label',
+      'status' => 'Status',
+      'type' => 'Type',
+      'path' => 'Path',
+    ];
+    if (!empty($remote)) {
+      $field_map['downloadUrl'] = 'Download URL';
+    }
+
+    if (!empty($fields)) {
+
+      // Parse fields into sanitised array.
+      if (!is_array($fields)) {
+        $fields_array = explode(',', $fields);
+      }
+      $fields_array = array_map('trim', $fields_array);
+      $fields_array = array_map('strtolower', $fields_array);
+
+      // Only use those which are present in both.
+      $field_keys = array_intersect($fields_array, array_keys($field_map));
+
+      // Rebuild fields array.
+      $fields = [];
+      foreach ($field_keys as $field_key) {
+        if (in_array($format, ['pretty', 'json'])) {
+          $fields[] = $field_key;
+        }
+        else {
+          $fields[] = $field_map[$field_key];
+        }
+      }
+
+    }
+    else {
+
+      // Use entire map array.
+      $fields = array_values($field_map);
+      if (in_array($format, ['pretty', 'json'])) {
+        $fields = array_keys($field_map);
+      }
+
+    }
+
+    // Manually filter pretty and json output.
+    if (in_array($format, ['pretty', 'json'])) {
+      $filtered = [];
+      foreach ($rows as $key => $row) {
+        foreach ($fields as $field) {
+          if (array_key_exists($field, $row)) {
+            $filtered[$key][$field] = $row[$field];
+          }
+        }
+      }
+      $rows = $filtered;
+    }
+
     switch ($format) {
 
       // Pretty-print output.
@@ -807,10 +873,6 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
       // Display output as table.
       case 'table':
       default:
-        $fields = ['Location', 'Key', 'Name', 'Version', 'Label', 'Status', 'Type', 'Path'];
-        if (!empty($remote)) {
-          $fields[] = 'Download URL';
-        }
         $args = ['format' => $format];
         $formatter = new \WP_CLI\Formatter($args, $fields);
         $formatter->display_items($rows);
