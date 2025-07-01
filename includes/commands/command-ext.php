@@ -626,6 +626,7 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    *
    * ## EXAMPLES
    *
+   *     # Show all local extensions.
    *     $ wp civicrm ext list --local
    *     +----------+---------------+---------------+---------+--------------+-------------+--------+----------------------------+
    *     | Location | Key           | Name          | Version | Label        | Status      | Type   | Path                       |
@@ -635,6 +636,17 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    *     |                                              ... more rows ...                                                        |
    *     +----------+---------------+---------------+---------+--------------+-------------+--------+----------------------------+
    *
+   *     # Show only certain fields for local extensions using cv syntax. Note that options must be lowercase.
+   *     $  wp cv ext list --l --columns=key,name,status,version
+   *     +---------------------------+---------------------------+-------------+-------------+
+   *     | Key                       | Name                      | Status      | Version     |
+   *     +---------------------------+---------------------------+-------------+-------------+
+   *     | authx                     | authx                     | installed   | 6.3.1       |
+   *     | chart_kit                 | chart_kit                 | uninstalled | 6.3.1       |
+   *     | civi_campaign             | civi_campaign             | installed   | 6.3.1       |
+   *     |                                ... more rows ...                                  |
+   *     +---------------------------+---------------------------+-------------+-------------+
+   *
    *     $ wp civicrm ext list --refresh
    *     Success: CiviCRM Extensions refreshed.
    *
@@ -643,14 +655,23 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
    * [--local]
    * : List only locally installed CiviCRM Extensions.
    *
+   * [--l]
+   * : An alias of --local for old timers more used to cv syntax.
+   *
    * [--remote]
    * : List only remotely available CiviCRM Extensions.
+   *
+   * [--r]
+   * : An alias of --remote for old timers more used to cv syntax.
    *
    * [--refresh]
    * : Refresh the list of CiviCRM Extensions.
    *
    * [--fields=<fields>]
    * : Limit the output to specific fields.
+   *
+   * [--columns=<columns>]
+   * : An alias of --fields for old timers more used to cv syntax.
    *
    * [--format=<format>]
    * : Render output in a particular format.
@@ -675,6 +696,20 @@ class CLI_Tools_CiviCRM_Command_Ext extends CLI_Tools_CiviCRM_Command {
     $remote = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'remote', FALSE);
     $refresh = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'refresh', FALSE);
     $fields = \WP_CLI\Utils\get_flag_value($assoc_args, 'fields', []);
+
+    // Support cv syntax.
+    $local_old_skool = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'l', FALSE);
+    if (!empty($local_old_skool)) {
+      $local = TRUE;
+    }
+    $remote_old_skool = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'r', FALSE);
+    if (!empty($remote_old_skool)) {
+      $remote = TRUE;
+    }
+    $fields_old_skool = \WP_CLI\Utils\get_flag_value($assoc_args, 'columns', []);
+    if (!empty($fields_old_skool)) {
+      $fields = $fields_old_skool;
+    }
 
     // Bootstrap CiviCRM.
     $this->bootstrap_civicrm();
