@@ -5,7 +5,7 @@
  * GitHub Plugin URI: https://github.com/christianwach/cli-tools-for-civicrm
  * Description: Prevents CiviCRM from loading its command line tools and allows Command Line Tools for CiviCRM to do so instead.
  * Author: Christian Wach
- * Version: 1.0.2
+ * Version: 1.0.3a
  * Author URI: https://haystack.co.uk
  * Depends: CiviCRM
  *

@@ -4,7 +4,7 @@
 **Tags:** civicrm, command-line, utility, wp-cli<br/>
 **Requires at least:** 4.9<br/>
 **Tested up to:** 6.9-alpha<br/>
-**Stable tag:** 1.0.2<br/>
+**Stable tag:** 1.0.3a<br/>
 **License:** GNU Affero General Public License v3.0<br/>
 **License URI:** https://github.com/christianwach/cli-tools-for-civicrm/blob/master/LICENSE
 
