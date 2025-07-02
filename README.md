@@ -95,6 +95,7 @@ There is a new command `wp civicrm db <command>` which (sort of) mirrors the fun
 | `wp civicrm db procedures` | Get the list of CiviCRM procedures in the database. | New |
 | `wp civicrm db query` | Perform a query on the CiviCRM database. | `wp civicrm sql-query` |
 | `wp civicrm db tables` | Gets a set of CiviCRM tables in the database. | New |
+| `wp civicrm db triggers` | Gets a set of CiviCRM triggers in the database. | New |
 
 Use `wp help civicrm db <command>` for full details and examples.
 
@@ -102,8 +103,14 @@ There is a new command `wp civicrm ext <command>` which (sort of) mirrors the fu
 
 | Command | Description | Equivalent in `cv` |
 | --- | --- | --- |
-| `wp civicrm ext download` | Download and optionally install a CiviCRM Extension.. | `cv ext:download` |
+| `wp civicrm ext disable` | Enables a CiviCRM Extension. | `cv ext:disable` |
+| `wp civicrm ext download` | Download and optionally install a CiviCRM Extension. | `cv ext:download` |
+| `wp civicrm ext enable` | Enables a CiviCRM Extension. | `cv ext:enable` |
+| `wp civicrm ext info` | Gets the information for a CiviCRM Extension. | None |
+| `wp civicrm ext install` | Installs a CiviCRM Extension. | `cv ext:install` |
 | `wp civicrm ext list` | List the set of CiviCRM Extensions. | `cv ext:list` |
+| `wp civicrm ext uninstall` | Uninstalls a CiviCRM Extension. | `cv ext:uninstall` |
+| `wp civicrm ext update-db` | Applies DB upgrades for any Extensions. | `cv ext:update-db` |
 
 Use `wp help civicrm ext <command>` for full details and examples.
 
