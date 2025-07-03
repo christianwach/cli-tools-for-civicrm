@@ -19,6 +19,8 @@ class CLI_Tools_CiviCRM_Command_Cache extends CLI_Tools_CiviCRM_Command {
    *
    *     $ wp civicrm cache flush
    *
+   * @alias clear
+   *
    * @since 1.0.0
    *
    * @param array $args The WP-CLI positional arguments.
