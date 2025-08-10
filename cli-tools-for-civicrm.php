@@ -1,12 +1,14 @@
 <?php
 /**
- * Plugin Name: Command Line Tools for CiviCRM
- * Plugin URI: https://github.com/christianwach/cli-tools-for-civicrm
+ * Command Line Tools for CiviCRM
+ *
+ * Plugin Name:       Command Line Tools for CiviCRM
+ * Description:       Manage CiviCRM through the command line.
+ * Version:           1.0.3a
+ * Plugin URI:        https://github.com/christianwach/cli-tools-for-civicrm
  * GitHub Plugin URI: https://github.com/christianwach/cli-tools-for-civicrm
- * Description: Manage CiviCRM through the command line.
- * Author: Christian Wach
- * Version: 1.0.3a
- * Author URI: https://haystack.co.uk
+ * Author:            Christian Wach
+ * Author URI:        https://haystack.co.uk
  *
  * @package Command_Line_Tools_for_CiviCRM
  */

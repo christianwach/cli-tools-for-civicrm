@@ -1,13 +1,14 @@
 <?php
 /**
- * Plugin Name: Command Line Tools for CiviCRM (MU Plugin)
- * Plugin URI: https://github.com/christianwach/cli-tools-for-civicrm
+ * Command Line Tools for CiviCRM (MU Plugin)
+ *
+ * Plugin Name:       Command Line Tools for CiviCRM (MU Plugin)
+ * Description:       Prevents CiviCRM from loading its command line tools and allows Command Line Tools for CiviCRM to do so instead.
+ * Version:           1.0.3a
+ * Plugin URI:        https://github.com/christianwach/cli-tools-for-civicrm
  * GitHub Plugin URI: https://github.com/christianwach/cli-tools-for-civicrm
- * Description: Prevents CiviCRM from loading its command line tools and allows Command Line Tools for CiviCRM to do so instead.
- * Author: Christian Wach
- * Version: 1.0.3a
- * Author URI: https://haystack.co.uk
- * Depends: CiviCRM
+ * Author:            Christian Wach
+ * Author URI:        https://haystack.co.uk
  *
  * Put this plugin in /wp-content/mu-plugins/
  *
