@@ -4,7 +4,7 @@
  *
  * Plugin Name:       Command Line Tools for CiviCRM
  * Description:       Manage CiviCRM through the command line.
- * Version:           1.0.3
+ * Version:           1.0.4a
  * Plugin URI:        https://github.com/christianwach/cli-tools-for-civicrm
  * GitHub Plugin URI: https://github.com/christianwach/cli-tools-for-civicrm
  * Author:            Christian Wach
@@ -17,7 +17,7 @@
 defined('ABSPATH') || exit;
 
 // Set our version here.
-define('COMMAND_LINE_CIVICRM_VERSION', '1.0.3');
+define('COMMAND_LINE_CIVICRM_VERSION', '1.0.4a');
 
 // Store reference to this file.
 if (!defined('COMMAND_LINE_CIVICRM_FILE')) {
