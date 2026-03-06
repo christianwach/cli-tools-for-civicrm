@@ -18,8 +18,8 @@ class CLI_Tools_CiviCRM_Command_Status extends CLI_Tools_CiviCRM_Command {
    *
    * ## OPTIONS
    *
-   * [--variable=<variable>]
-   * : Specify the variable to get.
+   * [--source=<source>]
+   * : Specify the source variable to get.
    * ---
    * default: all
    * options:
@@ -44,7 +44,7 @@ class CLI_Tools_CiviCRM_Command_Status extends CLI_Tools_CiviCRM_Command {
    *
    *     $ wp civicrm status
    *     $ wp civicrm status --format=json
-   *     $ wp civicrm status --variable=smarty --format=table
+   *     $ wp civicrm status --source=smarty --format=table
    *
    * @since 1.0.3
    *
@@ -54,7 +54,7 @@ class CLI_Tools_CiviCRM_Command_Status extends CLI_Tools_CiviCRM_Command {
   public function __invoke($args, $assoc_args) {
 
     // Grab associative arguments.
-    $variable = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'variable', 'all');
+    $source = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'source', 'all');
     $format = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'format', 'table');
 
     // Bootstrap CiviCRM.
@@ -79,25 +79,25 @@ class CLI_Tools_CiviCRM_Command_Status extends CLI_Tools_CiviCRM_Command {
 
       // Number-only output.
       case 'number':
-        if (!in_array($variable, ['civicrm', 'db', 'mysql', 'wp', 'smarty'])) {
-          WP_CLI::error(WP_CLI::colorize('You must specify %Y--variable=<variable>%n%n to use this output format.'));
+        if (!in_array($source, ['civicrm', 'db', 'mysql', 'wp', 'smarty'])) {
+          WP_CLI::error(WP_CLI::colorize('You must specify %Y--source=<source>%n%n to use this output format.'));
         }
-        if ('civicrm' === $variable) {
+        if ('civicrm' === $source) {
           echo $civicrm_version . "\n";
         }
-        if ('db' === $variable) {
+        if ('db' === $source) {
           echo $db_version . "\n";
         }
-        if ('smarty' === $variable) {
+        if ('smarty' === $source) {
           echo $smarty_version . "\n";
         }
-        if ('wp' === $variable) {
+        if ('wp' === $source) {
           echo $wp_version . "\n";
         }
-        if ('mysql' === $variable) {
+        if ('mysql' === $source) {
           echo $mysql_version . "\n";
         }
-        if ('php' === $variable) {
+        if ('php' === $source) {
           echo $php_version . "\n";
         }
         break;
@@ -105,22 +105,22 @@ class CLI_Tools_CiviCRM_Command_Status extends CLI_Tools_CiviCRM_Command {
       // Display output as json.
       case 'json':
         $info = [];
-        if (in_array($variable, ['all', 'civicrm'])) {
+        if (in_array($source, ['all', 'civicrm'])) {
           $info['civicrm'] = $civicrm_version;
         }
-        if (in_array($variable, ['all', 'db'])) {
+        if (in_array($source, ['all', 'db'])) {
           $info['db'] = $db_version;
         }
-        if (in_array($variable, ['all', 'smarty'])) {
+        if (in_array($source, ['all', 'smarty'])) {
           $info['smarty'] = $smarty_version;
         }
-        if (in_array($variable, ['all', 'wp'])) {
+        if (in_array($source, ['all', 'wp'])) {
           $info['wp'] = $wp_version;
         }
-        if (in_array($variable, ['all', 'mysql'])) {
+        if (in_array($source, ['all', 'mysql'])) {
           $info['mysql'] = $mysql_version;
         }
-        if (in_array($variable, ['all', 'php'])) {
+        if (in_array($source, ['all', 'php'])) {
           $info['php'] = $php_version;
         }
         $json = json_encode($info);
@@ -136,37 +136,37 @@ class CLI_Tools_CiviCRM_Command_Status extends CLI_Tools_CiviCRM_Command {
         // Build the rows.
         $rows = [];
         $fields = ['Name', 'Value'];
-        if (in_array($variable, ['all', 'civicrm'])) {
+        if (in_array($source, ['all', 'civicrm'])) {
           $rows[] = [
             'Name' => 'CiviCRM',
             'Value' => $civicrm_version,
           ];
         }
-        if (in_array($variable, ['all', 'db'])) {
+        if (in_array($source, ['all', 'db'])) {
           $rows[] = [
             'Name' => 'Database',
             'Value' => $db_version,
           ];
         }
-        if (in_array($variable, ['all', 'smarty'])) {
+        if (in_array($source, ['all', 'smarty'])) {
           $rows[] = [
             'Name' => 'Smarty',
             'Value' => $smarty_version,
           ];
         }
-        if (in_array($variable, ['all', 'wp'])) {
+        if (in_array($source, ['all', 'wp'])) {
           $rows[] = [
             'Name' => 'WordPress',
             'Value' => $wp_version,
           ];
         }
-        if (in_array($variable, ['all', 'php'])) {
+        if (in_array($source, ['all', 'php'])) {
           $rows[] = [
             'Name' => 'PHP',
             'Value' => $php_version,
           ];
         }
-        if (in_array($variable, ['all', 'mysql'])) {
+        if (in_array($source, ['all', 'mysql'])) {
           $rows[] = [
             'Name' => 'MySQL',
             'Value' => $mysql_version,
