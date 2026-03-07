@@ -20,8 +20,8 @@
  *     +-----------+---------+-------------------------------------------------------------------------------------------+
  *     | Package   | Version | Package URL                                                                               |
  *     +-----------+---------+-------------------------------------------------------------------------------------------+
- *     | WordPress | 5.57.2  | https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-wordpress.zip |
- *     | L10n      | 5.57.2  | https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-l10n.tar.gz   |
+ *     | WordPress | 5.67.0  | https://storage.googleapis.com/civicrm/civicrm-stable/5.67.0/civicrm-5.67.0-wordpress.zip |
+ *     | L10n      | 5.67.0  | https://storage.googleapis.com/civicrm/civicrm-stable/5.67.0/civicrm-5.67.0-l10n.tar.gz   |
  *     +-----------+---------+-------------------------------------------------------------------------------------------+
  *
  * @since 1.0.0
@@ -775,17 +775,17 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *     +-----------+---------+-------------------------------------------------------------------------------------------+
    *     | Package   | Version | Package URL                                                                               |
    *     +-----------+---------+-------------------------------------------------------------------------------------------+
-   *     | WordPress | 5.57.2  | https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-wordpress.zip |
-   *     | L10n      | 5.57.2  | https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-l10n.tar.gz   |
+   *     | WordPress | 5.67.0  | https://storage.googleapis.com/civicrm/civicrm-stable/5.67.0/civicrm-5.67.0-wordpress.zip |
+   *     | L10n      | 5.67.0  | https://storage.googleapis.com/civicrm/civicrm-stable/5.67.0/civicrm-5.67.0-l10n.tar.gz   |
    *     +-----------+---------+-------------------------------------------------------------------------------------------+
    *
    *     # Get the URL for the latest stable version of CiviCRM core
    *     $ wp civicrm core check-update --format=url
-   *     https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-wordpress.zip
+   *     https://storage.googleapis.com/civicrm/civicrm-stable/5.67.0/civicrm-5.67.0-wordpress.zip
    *
    *     # Get the URL for the latest stable version of CiviCRM localisation archive
    *     $ wp civicrm core check-update --format=url --l10n
-   *     https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-l10n.tar.gz
+   *     https://storage.googleapis.com/civicrm/civicrm-stable/5.67.0/civicrm-5.67.0-l10n.tar.gz
    *
    *     # Get the complete JSON-formatted data for the latest RC version of CiviCRM core
    *     $ wp civicrm core check-update --version=rc --format=json
@@ -1914,7 +1914,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *     +----------+---------+
    *     | Plugin   | 5.57.1  |
    *     | Database | 5.46.3  |
-   *     | Smarty   | 5       |
+   *     | Smarty   | 2       |
    *     +----------+---------+
    *
    *     # Get just the CiviCRM database version number.
@@ -1927,11 +1927,11 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    *
    *     # Get just the CiviCRM Smarty version number.
    *     $ wp civicrm core version --source=smarty --format=number
-   *     5
+   *     2
    *
    *     # Get all CiviCRM version information as JSON-formatted data.
    *     $ wp civicrm core version --format=json
-   *     {"plugin":"5.57.1","db":"5.46.3"}
+   *     {"plugin":"5.57.1","db":"5.46.3","smarty":"2"}
    *
    * @since 1.0.0
    *
