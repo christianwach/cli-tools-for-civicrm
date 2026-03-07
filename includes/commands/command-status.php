@@ -43,8 +43,23 @@ class CLI_Tools_CiviCRM_Command_Status extends CLI_Tools_CiviCRM_Command {
    * ## EXAMPLES
    *
    *     $ wp civicrm status
+   *     +-----------+--------------------------------+
+   *     | Name      | Value                          |
+   *     +-----------+--------------------------------+
+   *     | CiviCRM   | 6.12.0                         |
+   *     | Database  | 6.12.0                         |
+   *     | Smarty    | 5                              |
+   *     | WordPress | 6.9.1                          |
+   *     | PHP       | 8.3.30 (cli, usr-bin)          |
+   *     | MySQL     | 10.11.14-MariaDB-0+deb12u2-log |
+   *     +-----------+--------------------------------+
+   *
    *     $ wp civicrm status --format=json
-   *     $ wp civicrm status --source=smarty --format=table
+   *     {"civicrm":"6.12.0","db":"6.12.0","smarty":5,"wp":"6.9.1","php":"8.3.30 (cli, usr-bin)","mysql":"10.11.14-MariaDB-0+deb12u2-log"}
+   *
+   *     # Get just the Smarty version number.
+   *     $ wp civicrm status --source=smarty --format=number
+   *     5
    *
    * @since 1.0.3
    *
@@ -94,11 +109,11 @@ class CLI_Tools_CiviCRM_Command_Status extends CLI_Tools_CiviCRM_Command {
         if ('wp' === $source) {
           echo $wp_version . "\n";
         }
-        if ('mysql' === $source) {
-          echo $mysql_version . "\n";
-        }
         if ('php' === $source) {
           echo $php_version . "\n";
+        }
+        if ('mysql' === $source) {
+          echo $mysql_version . "\n";
         }
         break;
 
@@ -117,11 +132,11 @@ class CLI_Tools_CiviCRM_Command_Status extends CLI_Tools_CiviCRM_Command {
         if (in_array($source, ['all', 'wp'])) {
           $info['wp'] = $wp_version;
         }
-        if (in_array($source, ['all', 'mysql'])) {
-          $info['mysql'] = $mysql_version;
-        }
         if (in_array($source, ['all', 'php'])) {
           $info['php'] = $php_version;
+        }
+        if (in_array($source, ['all', 'mysql'])) {
+          $info['mysql'] = $mysql_version;
         }
         $json = json_encode($info);
         if (JSON_ERROR_NONE !== json_last_error()) {
