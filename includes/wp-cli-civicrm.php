@@ -13,7 +13,7 @@ if (!class_exists('WP_CLI')) {
   return;
 }
 
-// Bail if legacy or current WP-CLI tools are already loaded.
+// Bail if either legacy or current WP-CLI tools are already loaded.
 if (class_exists('CiviCRM_Command') || class_exists('CLI_Tools_CiviCRM_Command')) {
   return;
 }
