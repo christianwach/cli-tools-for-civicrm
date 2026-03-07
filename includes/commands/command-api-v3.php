@@ -120,7 +120,7 @@ class CLI_Tools_CiviCRM_Command_API_V3 extends CLI_Tools_CiviCRM_Command {
     }
 
     // Maybe add debug param.
-    if(!empty($debug)) {
+    if (!empty($debug)) {
       $params['debug'] = 1;
     }
 
