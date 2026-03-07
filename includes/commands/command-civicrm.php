@@ -20,8 +20,8 @@
  *     +-----------+---------+-------------------------------------------------------------------------------------------+
  *     | Package   | Version | Package URL                                                                               |
  *     +-----------+---------+-------------------------------------------------------------------------------------------+
- *     | WordPress | 5.57.2  | https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-wordpress.zip |
- *     | L10n      | 5.57.2  | https://storage.googleapis.com/civicrm/civicrm-stable/5.57.2/civicrm-5.57.2-l10n.tar.gz   |
+ *     | WordPress | 5.67.0  | https://storage.googleapis.com/civicrm/civicrm-stable/5.67.0/civicrm-5.67.0-wordpress.zip |
+ *     | L10n      | 5.67.0  | https://storage.googleapis.com/civicrm/civicrm-stable/5.67.0/civicrm-5.67.0-l10n.tar.gz   |
  *     +-----------+---------+-------------------------------------------------------------------------------------------+
  *
  *     # Check the CiviCRM database config.

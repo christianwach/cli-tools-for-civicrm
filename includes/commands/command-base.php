@@ -154,7 +154,7 @@ abstract class CLI_Tools_CiviCRM_Command_Base extends \WP_CLI\CommandWithDBObjec
    * @param string $url The URL to execute the GET request on.
    * @param array $headers Optional. Associative array of headers.
    * @param array $options Optional. Associative array of options.
-   * @return object|bool $response The response object, or false on failure.
+   * @return object $response The response object.
    */
   protected function http_get_response($url, $headers = [], $options = []) {
 
