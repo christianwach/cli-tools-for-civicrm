@@ -88,6 +88,9 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
    * [--site-url=<site-url>]
    * : Domain for your website, e.g. 'mysite.com'.
    *
+   * [--sample-data]
+   * : Load sample data about fake people. Only available in "en_US" locale.
+   *
    * [--yes]
    * : Answer yes to the confirmation message.
    *
@@ -158,6 +161,7 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
     $locale = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'locale', 'en_US');
     $ssl = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'ssl', 'on');
     $base_url = (string) \WP_CLI\Utils\get_flag_value($assoc_args, 'site-url', '');
+    $sample_data = (bool) \WP_CLI\Utils\get_flag_value($assoc_args, 'sample-data', FALSE);
 
     // Show database parameters.
     WP_CLI::log(WP_CLI::colorize('%GCiviCRM database credentials:%n'));
@@ -189,6 +193,14 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
       define('CIVICRM_PLUGIN_URL', plugin_dir_url(CIVICRM_PLUGIN_DIR));
     }
 
+    /*
+     * Set CMS Directory constant. This has to be done to avoid PHP warnings because
+     * "civicrm.files" is not set during the sample data install process.
+     */
+    if (!defined('CIVICRM_CMSDIR')) {
+      define('CIVICRM_CMSDIR', ABSPATH);
+    }
+
     // Maybe set SSL.
     if ('on' === $ssl) {
       $_SERVER['HTTPS'] = 'on';
@@ -217,6 +229,11 @@ class CLI_Tools_CiviCRM_Command_Core extends CLI_Tools_CiviCRM_Command {
       $protocol = ('on' === $ssl ? 'https' : 'http');
       $base_url = $protocol . '://' . $base_url;
       $setup->getModel()->cmsBaseUrl = trailingslashit($base_url);
+    }
+
+    // Maybe load sample data.
+    if ($locale === 'en_US' && $sample_data) {
+      $setup->getModel()->loadGenerated = TRUE;
     }
 
     // Validate system requirements.
